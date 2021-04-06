@@ -1,0 +1,18 @@
+1) p1 og p2 i fys4411 for to bosontilfeller
+
+2) svakt vv booster, legge til He4
+
+3) VMC for fermioner
+
+4) RBM for fermioner og sammenlikne med 3)  hvor du beholder slater det men RBM kun for Jastrow faktor
+
+5)  bonus: bosoner og fermioner erstatter jastrow med et neuralt nettverk.
+
+https://arxiv.org/abs/2007.14282
+
+Hiroki Saito, “Method to solve quantum few-body
+problems with artificial neural networks,” Journal of
+the Physical Society of Japan 87, 074002 (2018),
+https://doi.org/10.7566/JPSJ.87.074002.
+
+
