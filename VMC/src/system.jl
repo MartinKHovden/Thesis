@@ -50,22 +50,22 @@ function metropolisStepBruteForce(step_length, system)
     # #Update the coordinate:
     old_position = copy(system.particles)
     # println("Coors ", system.particles)
-    old_slater_wf = slaterWaveFunction(system)
+    # old_slater_wf = slaterWaveFunction(system)
     # old_rbm_wf = computePsi(system.nqs)
     # println(old_slater_wf)
     system.particles[particleToUpdate, coordinateToUpdate] += (rand(Float64) - 0.5)*step_length
     # system.nqs.x[:] = reshape(system.particles', 1,:)
 
     slaterMatrixUpdate(system, particleToUpdate)
-    new_slater_wf = slaterWaveFunction(system)
+    # new_slater_wf = slaterWaveFunction(system)
     # new_rbm_wf = computePsi(system.nqs)
     # println(new_slater_wf)
     # ratioSlaterDeterminant = (abs(new_slater_wf)^2)/(abs(old_slater_wf)^2)
-    println("\n Analytic = ", (abs(new_slater_wf)^2)/(abs(old_slater_wf)^2))
+    # println("\n Analytic = ", (abs(new_slater_wf)^2)/(abs(old_slater_wf)^2))
 
     # ratioRBM = (abs(new_rbm_wf)^2)/(abs(old_rbm_wf)^2)
     ratioSlaterDeterminant = slaterMatrixComputeRatio(system, particleToUpdate)
-    println("Fast = ", ratioSlaterDeterminant)
+    # println("Fast = ", ratioSlaterDeterminant)
 
     # if ratioSlaterDeterminant > 10
     #     println(" Analytic = ", ratioSlaterDeterminant)
@@ -104,13 +104,13 @@ function slaterMatrixComputeRatio(system, particleMoved)
     if particleMoved <= system.n_particles/2
         newSlaterMatrixSpinUp = deepcopy(system.slaterMatrixSpinUp)
         oldInverseSlaterMatrixSpinUp = deepcopy(system.inverseSlaterMatrixSpinUp)
-        R = dot(newSlaterMatrixSpinUp[particleMoved, :], oldInverseSlaterMatrixSpinUp[:,particleMoved])
+        R = dot(newSlaterMatrixSpinUp[particleMoved, :], system.inverseSlaterMatrixSpinUp[:,particleMoved])
     else 
         newSlaterMatrixSpinDown = deepcopy(system.slaterMatrixSpinDown)
         oldInverseSlaterMatrixSpinDown = deepcopy(system.inverseSlaterMatrixSpinDown)
-        R = dot(newSlaterMatrixSpinDown[Int64(particleMoved - system.n_particles/2), :], oldInverseSlaterMatrixSpinDown[:, Int64(particleMoved - system.n_particles/2)])
+        R = dot(newSlaterMatrixSpinDown[Int64(particleMoved - system.n_particles/2), :], system.inverseSlaterMatrixSpinDown[:, Int64(particleMoved - system.n_particles/2)])
     end 
-    return R
+    return R^2
 end
 
 
@@ -234,7 +234,7 @@ function slaterDeterminantSpinUpComputeGradient(system, particle_num)
         grad[:] += singleParticleHermitianGradient(particles[particle_num,:], nx, ny, alpha, omega)*system.inverseSlaterMatrixSpinUp[j, particle_num]
     end
     return grad
-end
+end 
 
 
 function slaterDeterminantSpinDownComputeGradient(system, particle_num)
