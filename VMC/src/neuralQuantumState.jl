@@ -32,5 +32,3 @@ for p in params(model)
     println(grads[p])
 end 
 
-for i=1:10
-    

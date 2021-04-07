@@ -2,11 +2,15 @@ module system
 export initializeSystem, slaterMatrixUpdate, System, slaterMatrixSpinUpUpdateRow, slaterMatrixSpinDownUpdateRow, inverseSlaterMatrixUpdate, slaterMatrixComputeRatio
 export slaterGaussianComputeRatio, slaterMatrixComputeRatio
 
-# Library for simulating fermions in a potential trap. Different methods are 
-# used for representing the wavefunction elements. Currently implemented:
-# #   Restricted Boltzmann Machine 
-# #   Neural Network 
-#
+
+#Library for simulating fermions in a potential trap. Different methods are 
+#used for representing the wavefunction elements. Currently implemented:
+#    Restricted Boltzmann Machine 
+
+# TODO: 
+#- Return nothing for functions with no return value (println already returns nothing). 
+#- Can use f.ex map(x -> x^2 + 2x -1 , [1,2,3])
+
 # Author: Martin Krokan Hovden
 
 include("hermite.jl")
@@ -188,6 +192,8 @@ function inverseSlaterMatrixUpdate(system, col, R)
     else 
         inverseSlaterMatrixSpinDownUpdateCol(system, Int64(col - system.n_particles/2), R)
     end 
+
+    return nothing
 end
 
 
@@ -205,6 +211,8 @@ function inverseSlaterMatrixSpinUpUpdateCol(system, col, R)
     end
     value = (1/R)*oldSlaterInverse[:,col]
     system.inverseSlaterMatrixSpinUp[:, col] = copy(value)
+
+    return nothing
 end
 
 
@@ -222,6 +230,8 @@ function inverseSlaterMatrixSpinDownUpdateCol(system, col, R)
     end
     value = (1/R)*oldSlaterInverse[:,col]
     system.inverseSlaterMatrixSpinDown[:, col] = copy(value)
+
+    return nothing
 end
 
 
