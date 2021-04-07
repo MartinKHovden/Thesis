@@ -81,7 +81,11 @@ function metropolisStepBruteForce(step_length, system)
     if U < ratio
         # println(1)
         # u,d = (copy(system.inverseSlaterMatrixSpinUp), copy(system.inverseSlaterMatrixSpinDown))
-        # inverseSlaterMatrixUpdate(system, particleToUpdate, ratioSlaterDeterminant)
+        # inverseSlaterMatrixUpdate(system, particleToUpdate, sqrt(ratioSlaterDeterminant))
+
+        # println(system.inverseSlaterMatrixSpinUp, system.inverseSlaterMatrixSpinDown)
+        # println(inv(system.slaterMatrixSpinUp), inv(system.slaterMatrixSpinDown), "\n")
+        # println(isapprox(system.inverseSlaterMatrixSpinUp, inv(system.slaterMatrixSpinUp) ), isapprox(system.inverseSlaterMatrixSpinDown, inv(system.slaterMatrixSpinDown) ))
 
         system.inverseSlaterMatrixSpinUp[:, :] = inv(system.slaterMatrixSpinUp)
         system.inverseSlaterMatrixSpinDown[:, :] = inv(system.slaterMatrixSpinDown)

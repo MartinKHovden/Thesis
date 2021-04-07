@@ -17,8 +17,8 @@ function testInverseFast()
     s = initializeSystem(1.1)
     println("Coors old = ", s.particles)
     println("Slater up = ", s.slaterMatrixSpinUp)
-    println("Inverse up = ", s.inverseSlaterMatrixSpinUp)
     println("Slater down = ", s.slaterMatrixSpinDown)
+    println("Inverse up = ", s.inverseSlaterMatrixSpinUp)
     println("Inverse down = ", s.inverseSlaterMatrixSpinDown)
     old_position = copy(s.particles)
     particle_to_update = 2
@@ -29,12 +29,49 @@ function testInverseFast()
     println("Inv analytic up =", inv(s.slaterMatrixSpinUp))
     println("Inv analytic down = ", inv(s.slaterMatrixSpinDown))
     ratioSlater = slaterMatrixComputeRatio(s, particle_to_update)
-    inverseSlaterMatrixUpdate(s, particle_to_update, ratioSlater)
+    inverseSlaterMatrixUpdate(s, particle_to_update, sqrt(ratioSlater))
     println("Slater up = ", s.slaterMatrixSpinUp)
-    println("Inverse up = ", s.inverseSlaterMatrixSpinUp)
     println("Slater down = ", s.slaterMatrixSpinDown)
+    println("Inverse up = ", s.inverseSlaterMatrixSpinUp)
     println("Inverse down = ", s.inverseSlaterMatrixSpinDown)
     println("Up: ", isapprox(inv(s.slaterMatrixSpinUp), s.inverseSlaterMatrixSpinUp ), "  Down: ", isapprox(inv(s.slaterMatrixSpinDown), s.inverseSlaterMatrixSpinDown))
+
+    println("\n ITERATION 2: \n")
+
+    old_position = copy(s.particles)
+    particle_to_update = 3
+    coordinate_to_update = 1
+    s.particles[particle_to_update,coordinate_to_update] += (rand(Float64)-0.5)*0.1
+    println("Coors new = ", s.particles)
+    slaterMatrixUpdate(s, particle_to_update)
+    println("Inv analytic up =", inv(s.slaterMatrixSpinUp))
+    println("Inv analytic down = ", inv(s.slaterMatrixSpinDown))
+    ratioSlater = slaterMatrixComputeRatio(s, particle_to_update)
+    inverseSlaterMatrixUpdate(s, particle_to_update, sqrt(ratioSlater))
+    println("Slater up = ", s.slaterMatrixSpinUp)
+    println("Slater down = ", s.slaterMatrixSpinDown)
+    println("Inverse up = ", s.inverseSlaterMatrixSpinUp)
+    println("Inverse down = ", s.inverseSlaterMatrixSpinDown)
+    println("Up: ", isapprox(inv(s.slaterMatrixSpinUp), s.inverseSlaterMatrixSpinUp ), "  Down: ", isapprox(inv(s.slaterMatrixSpinDown), s.inverseSlaterMatrixSpinDown))
+
+    println("\n ITERATION 3: \n")
+
+    old_position = copy(s.particles)
+    particle_to_update = 1
+    coordinate_to_update = 2
+    s.particles[particle_to_update,coordinate_to_update] += (rand(Float64)-0.5)*0.1
+    println("Coors new = ", s.particles)
+    slaterMatrixUpdate(s, particle_to_update)
+    println("Inv analytic up =", inv(s.slaterMatrixSpinUp))
+    println("Inv analytic down = ", inv(s.slaterMatrixSpinDown))
+    ratioSlater = slaterMatrixComputeRatio(s, particle_to_update)
+    inverseSlaterMatrixUpdate(s, particle_to_update, sqrt(ratioSlater))
+    println("Slater up = ", s.slaterMatrixSpinUp)
+    println("Slater down = ", s.slaterMatrixSpinDown)
+    println("Inverse up = ", s.inverseSlaterMatrixSpinUp)
+    println("Inverse down = ", s.inverseSlaterMatrixSpinDown)
+    println("Up: ", isapprox(inv(s.slaterMatrixSpinUp), s.inverseSlaterMatrixSpinUp ), "  Down: ", isapprox(inv(s.slaterMatrixSpinDown), s.inverseSlaterMatrixSpinDown))
+
 end
 
 function gaussianWaveFunction(alpha, omega, particles)

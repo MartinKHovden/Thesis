@@ -1,31 +1,36 @@
 using Flux
+using Zygote
 
-f(x) = 3*x^2 + 2*x + 1;
-
-df(x) = gradient(f, x)[1];
-
-println(df(2))
-
-W1 = rand(3,5)
-b1 = rand(3)
-
-layer1(x) = W1*x .+ b1 
-
-W2 = rand(2,3)
-b2 = rand(2)
-layer2(x) = W2*x .+ b2 
-
-model(x) = layer2(sigmoid.(layer1(x)))
-
-model(rand(5))
-
-# function loss(x, y)
-#     y_hat = model(x) 
+# struct NNQS
+#     W::Array{Float64, 2}
+#     b::Array{Float64, 1}
 # end
-    
 
-df = gradient(model, W2)
+# W = rand(2,2)
+# b = rand(2)
 
-function neuralWaveFunction(system)
-    return 0
+# nn = NNQS(W, b)
+
+x = rand(10)
+
+# y( x) = sum(W*x .+ b)
+
+# g = gradient(()->y(x), params([W,b]))
+
+# println("Grads: ", g[W], g[b])
+
+model = Chain(Dense(10, 5), Dense(5, 1))
+
+println("Output: ", model(x))
+loss(x) = sum(model(x))
+
+grads = gradient(params(model)) do 
+    loss(x)
 end
+
+for p in params(model)
+    println(grads[p])
+end 
+
+for i=1:10
+    
