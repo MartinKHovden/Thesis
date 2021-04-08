@@ -1,6 +1,30 @@
 module slaterDeterminant
 
 export slaterWaveFunction, slaterGaussianWaveFunction
+export slaterMatrixComputeRatio, slaterGaussianComputeRatio
+export slaterMatrixUpdate
+export inverseSlaterMatrixUpdate
+export slaterDeterminantComputeGradient
+export slaterDeterminantComputeLaplacian
+export slaterGaussianComputeGradient
+export slaterGaussianComputeLaplacian
+
+include("singleParticle.jl")
+
+using Random
+using LinearAlgebra
+using .singleParticle
+
+quantumNumbers = [0 0
+                1 0 
+                0 1 
+                2 0 
+                1 1 
+                0 2 
+                3 0 
+                2 1 
+                1 2 
+                0 3]
 
 function slaterWaveFunction(system)
     N = system.n_particles
@@ -34,7 +58,7 @@ function slaterMatrixComputeRatio(system, particleMoved)
         oldInverseSlaterMatrixSpinDown = deepcopy(system.inverseSlaterMatrixSpinDown)
         R = dot(newSlaterMatrixSpinDown[Int64(particleMoved - system.n_particles/2), :], system.inverseSlaterMatrixSpinDown[:, Int64(particleMoved - system.n_particles/2)])
     end 
-    return R^2
+    return R
 end
 
 
