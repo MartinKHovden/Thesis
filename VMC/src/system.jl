@@ -80,23 +80,14 @@ function metropolisStepBruteForce(step_length, system)
 
     U = rand(Float64)
 
-    ratio = ratioSlaterDeterminant*ratioSlaterGaussian#*ratioRBM
+    ratio = (ratioSlaterDeterminant^2)*ratioSlaterGaussian#*ratioRBM
 
     if U < ratio
         # println(1)
-        # u,d = (copy(system.inverseSlaterMatrixSpinUp), copy(system.inverseSlaterMatrixSpinDown))
-        # inverseSlaterMatrixUpdate(system, particleToUpdate, sqrt(ratioSlaterDeterminant))
+        inverseSlaterMatrixUpdate(system, particleToUpdate, (ratioSlaterDeterminant))
 
-        # println(system.inverseSlaterMatrixSpinUp, system.inverseSlaterMatrixSpinDown)
-        # println(inv(system.slaterMatrixSpinUp), inv(system.slaterMatrixSpinDown), "\n")
-        # println(isapprox(system.inverseSlaterMatrixSpinUp, inv(system.slaterMatrixSpinUp) ), isapprox(system.inverseSlaterMatrixSpinDown, inv(system.slaterMatrixSpinDown) ))
-
-        system.inverseSlaterMatrixSpinUp[:, :] = inv(system.slaterMatrixSpinUp)
-        system.inverseSlaterMatrixSpinDown[:, :] = inv(system.slaterMatrixSpinDown)
-        # println(isapprox(u,  system.inverseSlaterMatrixSpinUp),"   ", isapprox(d, system.inverseSlaterMatrixSpinDown))
-
-        # println(computeLocalEnergy(system))
-
+        # system.inverseSlaterMatrixSpinUp[:, :] = inv(system.slaterMatrixSpinUp)
+        # system.inverseSlaterMatrixSpinDown[:, :] = inv(system.slaterMatrixSpinDown)
     else 
         # println(2)
         system.particles[particleToUpdate, coordinateToUpdate] = old_position[particleToUpdate, coordinateToUpdate]
@@ -118,7 +109,7 @@ function slaterMatrixComputeRatio(system, particleMoved)
         oldInverseSlaterMatrixSpinDown = deepcopy(system.inverseSlaterMatrixSpinDown)
         R = dot(newSlaterMatrixSpinDown[Int64(particleMoved - system.n_particles/2), :], system.inverseSlaterMatrixSpinDown[:, Int64(particleMoved - system.n_particles/2)])
     end 
-    return R^2
+    return R
 end
 
 
