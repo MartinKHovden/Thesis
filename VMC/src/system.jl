@@ -17,6 +17,7 @@ include("Wavefunctions/hermite.jl")
 include("Wavefunctions/singleParticle.jl")
 include("Wavefunctions/boltzmannMachine.jl")
 include("Wavefunctions/slaterDeterminant.jl")
+include("Wavefunctions/jastrow.jl")
 
 using Random
 using LinearAlgebra
@@ -24,23 +25,24 @@ using .singleParticle
 using .hermite
 using .boltzmannMachine
 using .slaterDeterminant
+using .jastrow
 
 
-function metropolisStepBruteForce(step_length, system)
-    n_particles = system.n_particles 
-    n_dims = system.n_dims
+function metropolisStepBruteForce(stepLength, system)
+    numParticles = system.n_particles 
+    numDims = system.n_dims
 
     # #Chooses one coordinate randomly to update.
-    coordinateToUpdate::Int64 = rand(1:n_dims)
-    particleToUpdate::Int64 = rand(1:n_particles)
+    coordinateToUpdate::Int64 = rand(1:numDims)
+    particleToUpdate::Int64 = rand(1:numParticles)
 
     # #Update the coordinate:
-    old_position = copy(system.particles)
+    oldPosition = copy(system.particles)
     # println("Coors ", system.particles)
     # old_slater_wf = slaterWaveFunction(system)
     # old_rbm_wf = computePsi(system.nqs)
     # println(old_slater_wf)
-    system.particles[particleToUpdate, coordinateToUpdate] += (rand(Float64) - 0.5)*step_length
+    system.particles[particleToUpdate, coordinateToUpdate] += (rand(Float64) - 0.5)*stepLength
     # system.nqs.x[:] = reshape(system.particles', 1,:)
 
     slaterMatrixUpdate(system, particleToUpdate)
@@ -59,7 +61,7 @@ function metropolisStepBruteForce(step_length, system)
     #     # println(" Num = ", slaterMatrixComputeRatio(system, particleToUpdate))
 
     # end
-    ratioSlaterGaussian = slaterGaussianComputeRatio(system, old_position, particleToUpdate, coordinateToUpdate)
+    ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
 
     U = rand(Float64)
 
@@ -73,7 +75,7 @@ function metropolisStepBruteForce(step_length, system)
         # system.inverseSlaterMatrixSpinDown[:, :] = inv(system.slaterMatrixSpinDown)
     else 
         # println(2)
-        system.particles[particleToUpdate, coordinateToUpdate] = old_position[particleToUpdate, coordinateToUpdate]
+        system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
         slaterMatrixUpdate(system, particleToUpdate)
         # system.nqs.x[:] = reshape(system.particles', 1,:)
         # println(computeLocalEnergy(system))
@@ -81,28 +83,9 @@ function metropolisStepBruteForce(step_length, system)
 end
 
 
-function jastrowComputeRatio(system, old_position, particleMoved)
-    changeInDistanceSum = 0
-    new_position = system.particles
-    for i=1:system.n_particles
-        if i != particleMoved
-            new_difference = system.particles[i, :] - system.particles[particleMoved, :]
-            new_distance = sqrt(dot(new_difference, new_difference))
-
-            old_difference = old_position[i, :] - old_position[particleMoved, :]
-            old_distance = sqrt(dot(old_difference, old_difference))
-
-            changeInDistanceSum += system.beta*(new_distance - old_distance)
-        end 
-    end
-
-    return exp(2*changeInDistanceSum)
-end 
-
-
 function rbmComputeLaplacian(system, particle_num)
     nqs = system.nqs
-    n_dims = system.n_dims
+    numDims = system.n_dims
     laplacian = 0
     precalc::Array{Float64, 2} = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(nqs.x)* nqs.w))
     num_hidden = size(nqs.h)[1]
@@ -111,7 +94,7 @@ function rbmComputeLaplacian(system, particle_num)
     if particle_num ==1
         start_index = 1
     else 
-        start_index = n_dims*particle_num - 1
+        start_index = numDims*particle_num - 1
     end
 
     for m=start_index:(start_index + n_dims-1)
@@ -154,7 +137,7 @@ end
 function computeLocalEnergy(system)
     # println("START")
     N = system.n_particles
-    E_L = 0
+    localEnergy = 0
     harmonic_term = 0
     omega = system.omega
     particle_coordinates = system.particles
@@ -178,7 +161,7 @@ function computeLocalEnergy(system)
 
         # println(laplacialSlaterGaussian," ", laplacianSlaterDeterminant, gradientSlaterGaussian, gradientSlaterDeterminant, dot(temp,temp)," ", harmonic_term)
 
-        E_L +=   laplacianSlaterDeterminant + laplacialSlaterGaussian + temp[1]^2 + temp[2]^2
+        localEnergy +=   laplacianSlaterDeterminant + laplacialSlaterGaussian + temp[1]^2 + temp[2]^2
         # E_L += laplacianSlaterDeterminant + laplacialSlaterGaussian + 2*dot(gradientSlaterDeterminant, gradientSlaterGaussian)
 
         # println(E_L)
@@ -191,7 +174,7 @@ function computeLocalEnergy(system)
 
     # println("END")
 
-    return -0.5*E_L + 0.5*harmonic_term
+    return -0.5*localEnergy + 0.5*harmonic_term
 end 
 
 
@@ -227,7 +210,7 @@ quantumNumbers = [0 0
 
 
 function initializeSystem(alpha)
-    n_particles = 4
+    n_particles = 6
     n_dims = 2
 
     alpha = alpha
@@ -272,14 +255,14 @@ function initializeSystem(alpha)
 end
 
 function runMetropolis()
-    a_vals = [0.8, 0.9, 1.0, 1.1, 1.2]
+    a_vals = [0.9, 1.0, 1.1]
     for a in a_vals
         s = initializeSystem(a)
 
         # println(s.nqs.x, s.particles)
 
         println(a)
-        N = 1000000
+        N = 10000000
         E = 0
         for i=0:N
             if i>5000
