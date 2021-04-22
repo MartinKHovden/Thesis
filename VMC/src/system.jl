@@ -18,6 +18,7 @@ include("Wavefunctions/singleParticle.jl")
 include("Wavefunctions/boltzmannMachine.jl")
 include("Wavefunctions/slaterDeterminant.jl")
 include("Wavefunctions/jastrow.jl")
+include("Wavefunctions/neuralQuantumState.jl")
 
 using Random
 using LinearAlgebra
@@ -26,6 +27,7 @@ using .hermite
 using .boltzmannMachine
 using .slaterDeterminant
 using .jastrow
+using .neuralQuantumState
 
 
 function metropolisStepBruteForce(stepLength, system)
@@ -152,6 +154,8 @@ function computeLocalEnergy(system)
         # laplacianRBM = rbmComputeLaplacian(system, i)
         # gradientRBM = rbmComputeGradient(system, i)
 
+        # laplacianNN = nnComputeLaplacian()
+        # gradientNN = nnComputeGradient()
 
         coordinates = particle_coordinates[i,:]
         r_i_squared = coordinates[1]^2 + coordinates[2]^2
