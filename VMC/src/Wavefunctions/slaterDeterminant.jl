@@ -34,13 +34,13 @@ end
 
 
 function slaterGaussianWaveFunction(system)
-    n_particles = system.n_particles
-    n_dims  = system.n_dims
+    numParticles = system.numParticles
+    numDimensions  = system.numDimensions
 
     exp_argument = 0
 
-    for i=1:n_particles
-        for j=1:n_dims
+    for i=1:numParticles
+        for j=1:numDimensions
             exp_argument += system.particles[i, j]^2
         end 
     end 
@@ -49,14 +49,14 @@ end
 
 
 function slaterMatrixComputeRatio(system, particleMoved)
-    if particleMoved <= system.n_particles/2
+    if particleMoved <= system.numParticles/2
         newSlaterMatrixSpinUp = deepcopy(system.slaterMatrixSpinUp)
         oldInverseSlaterMatrixSpinUp = deepcopy(system.inverseSlaterMatrixSpinUp)
         R = dot(newSlaterMatrixSpinUp[particleMoved, :], system.inverseSlaterMatrixSpinUp[:,particleMoved])
     else 
         newSlaterMatrixSpinDown = deepcopy(system.slaterMatrixSpinDown)
         oldInverseSlaterMatrixSpinDown = deepcopy(system.inverseSlaterMatrixSpinDown)
-        R = dot(newSlaterMatrixSpinDown[Int64(particleMoved - system.n_particles/2), :], system.inverseSlaterMatrixSpinDown[:, Int64(particleMoved - system.n_particles/2)])
+        R = dot(newSlaterMatrixSpinDown[Int64(particleMoved - system.numParticles/2), :], system.inverseSlaterMatrixSpinDown[:, Int64(particleMoved - system.numParticles/2)])
     end 
     return R
 end
@@ -68,12 +68,12 @@ end
 
 
 function slaterMatrixUpdate(system, particle)
-    n_particles = system.n_particles
+    numParticles = system.numParticles
 
-    if particle <= n_particles/2
+    if particle <= numParticles/2
         slaterMatrixSpinUpUpdateRow(system, particle)
     else 
-        slaterMatrixSpinDownUpdateRow(system, Int64(particle-n_particles/2))
+        slaterMatrixSpinDownUpdateRow(system, Int64(particle-numParticles/2))
     end
 end
 
@@ -93,7 +93,7 @@ end
 
 
 function slaterMatrixSpinDownUpdateRow(system, row)
-    coordinates = system.particles[Int(row + system.n_particles/2), :]
+    coordinates = system.particles[Int(row + system.numParticles/2), :]
 
     omega = system.omega
     alpha = system.alpha
@@ -108,10 +108,10 @@ end
 
 function inverseSlaterMatrixUpdate(system, col, R)
     # println(R, system.inverseSlaterMatrixSpinDown, system.inverseSlaterMatrixSpinUp)
-    if col <= system.n_particles/2
+    if col <= system.numParticles/2
         inverseSlaterMatrixSpinUpUpdateCol(system, col, R)
     else 
-        inverseSlaterMatrixSpinDownUpdateCol(system, Int64(col - system.n_particles/2), R)
+        inverseSlaterMatrixSpinDownUpdateCol(system, Int64(col - system.numParticles/2), R)
     end 
 
     return nothing
@@ -121,7 +121,7 @@ end
 function inverseSlaterMatrixSpinUpUpdateCol(system, col, R)
     newSlater = deepcopy(system.slaterMatrixSpinUp)
     oldSlaterInverse = deepcopy(system.inverseSlaterMatrixSpinUp)
-    N = system.n_particles/2
+    N = system.numParticles/2
     for j = 1:N
         if j != col
             j=Int(j)
@@ -140,7 +140,7 @@ end
 function inverseSlaterMatrixSpinDownUpdateCol(system, col, R)
     newSlater = deepcopy(system.slaterMatrixSpinDown)
     oldSlaterInverse = deepcopy(system.inverseSlaterMatrixSpinDown)
-    N = system.n_particles/2
+    N = system.numParticles/2
     for j = 1:N
         if j != col
             j = Int(j)
@@ -157,7 +157,7 @@ end
 
 
 function slaterDeterminantComputeGradient(system, particle_num)
-    if particle_num <= system.n_particles/2
+    if particle_num <= system.numParticles/2
         return slaterDeterminantSpinUpComputeGradient(system, particle_num)
     else 
         return slaterDeterminantSpinDownComputeGradient(system, particle_num)
@@ -166,8 +166,8 @@ end
 
 
 function slaterDeterminantSpinUpComputeGradient(system, particle_num)
-    d = system.n_dims
-    N = Int64(system.n_particles/2)
+    d = system.numDimensions
+    N = Int64(system.numParticles/2)
     omega = system.omega
     alpha = system.alpha
     grad = zeros(d)
@@ -182,9 +182,9 @@ end
 
 
 function slaterDeterminantSpinDownComputeGradient(system, particle_num)
-    d = system.n_dims
-    row = Int(particle_num - system.n_particles/2)
-    N = Int64(system.n_particles/2)
+    d = system.numDimensions
+    row = Int(particle_num - system.numParticles/2)
+    N = Int64(system.numParticles/2)
     omega = system.omega
     alpha = system.alpha
     grad = zeros(d)
@@ -200,7 +200,7 @@ end
 
 
 function slaterDeterminantComputeLaplacian(system, particle_num)
-    if particle_num <= system.n_particles/2
+    if particle_num <= system.numParticles/2
         return slaterDeterminantSpinUpComputeLaplacian(system, particle_num)
     else 
         return slaterDeterminantSpinDownComputeLaplacian(system, particle_num)
@@ -210,7 +210,7 @@ end
 
 function slaterDeterminantSpinUpComputeLaplacian(system, particle_num)
 
-    N = Int64(system.n_particles/2)
+    N = Int64(system.numParticles/2)
     omega = system.omega
     alpha = system.alpha
     laplacian = 0
@@ -233,9 +233,9 @@ end
 
 
 function slaterDeterminantSpinDownComputeLaplacian(system, particle_num)
-    # d = system.n_dims
-    row = Int(particle_num - system.n_particles/2)
-    N = Int64(system.n_particles/2)
+    # d = system.numDimensions
+    row = Int(particle_num - system.numParticles/2)
+    N = Int64(system.numParticles/2)
     omega = system.omega
     alpha = system.alpha
     laplacian = 0
@@ -269,7 +269,7 @@ end
 
 
 function slaterGaussianComputeLaplacian(system)
-    d = system.n_dims 
+    d = system.numDimensions 
     alpha = system.alpha 
     omega = system.omega
 

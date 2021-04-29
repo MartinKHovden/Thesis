@@ -5,32 +5,6 @@ struct NNQS
     model
 end
 
-# # W = rand(2,2)
-# # b = rand(2)
-
-# # nn = NNQS(W, b)
-
-# x = rand(10)
-
-# # y( x) = sum(W*x .+ b)
-
-# # g = gradient(()->y(x), params([W,b]))
-
-# # println("Grads: ", g[W], g[b])
-
-# model = Chain(Dense(10, 5), Dense(5, 1))
-
-# println("Output: ", model(x))
-# loss(x) = sum(model(x))
-
-# grads = gradient(params(model)) do 
-#     loss(x)
-# end
-
-# for p in params(model)
-#     println(grads[p])
-# end 
-
 function computePsi(nnqs, x)
     # nnqs = system.NNQS
     return nnqs.model(x)
@@ -84,9 +58,18 @@ function nnTestComputeGradient()
     println("testComputeGradient ", nnComputeGradient(nn, loss, x)[x])
 end
 
-function nnComputeLaplacian()
-    # println("Hessian = ", Zygote.hessian(loss, x))
-    return 0
+function nnComputeLaplacian(loss, x)
+    return Zygote.hessian(loss, x)
+end
+
+function nnTestComputeLaplacian()
+    numDims = 2
+    numParticles = 3
+    numHidden = 2
+    x = randn(numDims*numParticles)
+    nn = NNQS(Chain(Dense(numParticles*numDims, numHidden, sigmoid), Dense(numHidden, 1)))
+    loss(x) = sum(nn.model(x))
+    println("Laplcian = ", nnComputeLaplacian(loss, x))
 end
 
 function nnComputeParameterGradient()
@@ -99,6 +82,6 @@ end
 @time nnTestComputeGradient()
 @time nnTestComputeGradient()
 
-# @time nnTestComputeLaplacian()
-# @time nnTestComputeLaplacian()
+@time nnTestComputeLaplacian()
+@time nnTestComputeLaplacian()
 

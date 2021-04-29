@@ -1,6 +1,70 @@
 module harmonicOscillator 
 
+export computeLocalEnergy
 
+# include("../initializeSystem.jl")
+# include("../Wavefunctions/slaterDeterminant.jl")
+
+using ..initializeSystem
+# import .initializeSystem.slater
+using ..slaterDeterminant
+
+# function harmonicTerm(coordinates)
+
+function computeLocalEnergy(system::slater, interacting = false)
+    N = system.numParticles
+    localEnergy = 0
+    harmonicTerm = 0
+    omega = system.omega
+    particleCoordinates = system.particles
+    for i=1:N 
+        laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
+        gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
+
+        gradientSlaterGaussian = slaterGaussianComputeGradient(system, i)
+        laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
+        
+        coordinates = particleCoordinates[i,:]
+        r_i_squared = coordinates[1]^2 + coordinates[2]^2
+        harmonicTerm += omega*omega*r_i_squared
+
+        temp =  gradientSlaterGaussian + gradientSlaterDeterminant 
+
+        localEnergy += laplacianSlaterDeterminant + laplacialSlaterGaussian + temp[1]^2 + temp[2]^2
+
+    end 
+
+    return -0.5*localEnergy + 0.5*harmonicTerm
+end
+
+# function computeLocalEnergy(system::slaterJastrow, interacting = false)
+#     N = system.numParticles
+#     localEnergy = 0
+#     harmonicTerm = 0
+#     omega = system.omega
+#     particleCoordinates = system.particles
+#     for i=1:N 
+#         laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) # (1/sqrt(factorial(N)))*
+#         gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
+
+#         gradientSlaterGaussian = slaterGaussianComputeGradient(system, i)
+#         laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
+        
+#         gradientJastrow = 0
+#         laplacianJastrow = 0
+        
+#         coordinates = particleCoordinates[i,:]
+#         r_i_squared = coordinates[1]^2 + coordinates[2]^2
+#         harmonicTerm += omega*omega*r_i_squared
+
+#         temp =  gradientSlaterGaussian + gradientSlaterDeterminant 
+
+#         localEnergy +=   laplacianSlaterDeterminant + laplacialSlaterGaussian + temp[1]^2 + temp[2]^2
+
+#     end 
+
+#     return -0.5*localEnergy + 0.5*harmonic_term
+# end
 
 # END MODULE
 end 
