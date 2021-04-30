@@ -6,8 +6,8 @@ export computeLocalEnergy
 # include("../Wavefunctions/slaterDeterminant.jl")
 
 using ..initializeSystem
-# import .initializeSystem.slater
 using ..slaterDeterminant
+using ..jastrow
 
 # function harmonicTerm(coordinates)
 
@@ -37,34 +37,36 @@ function computeLocalEnergy(system::slater, interacting = false)
     return -0.5*localEnergy + 0.5*harmonicTerm
 end
 
-# function computeLocalEnergy(system::slaterJastrow, interacting = false)
-#     N = system.numParticles
-#     localEnergy = 0
-#     harmonicTerm = 0
-#     omega = system.omega
-#     particleCoordinates = system.particles
-#     for i=1:N 
-#         laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) # (1/sqrt(factorial(N)))*
-#         gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
+function computeLocalEnergy(system::slaterJastrow, interacting = false)
+    N = system.numParticles
+    localEnergy = 0
+    harmonicTerm = 0
+    omega = system.omega
+    particleCoordinates = system.particles
+    for i=1:N 
+        laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
+        gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
 
-#         gradientSlaterGaussian = slaterGaussianComputeGradient(system, i)
-#         laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
+        gradientSlaterGaussian = slaterGaussianComputeGradient(system, i)
+        laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
+
+        gradientJastrow = jastrowComputeGradient(system, i)
+        laplacianJastrow = jastrowComputeLaplacian(system)
         
-#         gradientJastrow = 0
-#         laplacianJastrow = 0
-        
-#         coordinates = particleCoordinates[i,:]
-#         r_i_squared = coordinates[1]^2 + coordinates[2]^2
-#         harmonicTerm += omega*omega*r_i_squared
+        coordinates = particleCoordinates[i,:]
+        r_i_squared = coordinates[1]^2 + coordinates[2]^2
+        harmonicTerm += omega*omega*r_i_squared
 
-#         temp =  gradientSlaterGaussian + gradientSlaterDeterminant 
+        grad =  gradientSlaterGaussian + gradientSlaterDeterminant +gradientJastrow
 
-#         localEnergy +=   laplacianSlaterDeterminant + laplacialSlaterGaussian + temp[1]^2 + temp[2]^2
+        laplacian = laplacianSlaterDeterminant + laplacialSlaterGaussian + laplacianJastrow
 
-#     end 
+        localEnergy += laplacian + grad[1]^2 + grad[2]^2
 
-#     return -0.5*localEnergy + 0.5*harmonic_term
-# end
+    end 
+
+    return -0.5*localEnergy + 0.5*harmonicTerm
+end
 
 # END MODULE
 end 

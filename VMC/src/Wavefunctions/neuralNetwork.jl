@@ -1,13 +1,15 @@
 using Flux
 using Zygote
 
-struct NNQS
+export computePsi()
+
+struct NN
     model
 end
 
-function computePsi(nnqs, x)
-    # nnqs = system.NNQS
-    return nnqs.model(x)
+function computePsi(nn, x)
+    # nn = system.nn
+    return nn.model(x)
 end 
 
 function testComputePsi()
@@ -15,13 +17,13 @@ function testComputePsi()
     numParticles = 2
     numHidden = 10
     x = randn(numDims*numParticles)
-    nn = NNQS(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
+    nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
     println(computePsi(nn, x))
 end
 
-function nnComputeParameterGradient(nnqs, loss, x)
-    println("Params", params(nnqs.model))
-    grads = gradient(params(nnqs.model)) do 
+function nnComputeParameterGradient(nn, loss, x)
+    println("Params", params(nn.model))
+    grads = gradient(params(nn.model)) do 
         loss(x)
     end 
     return grads
@@ -32,14 +34,14 @@ function testComputeParameterGradient()
     numParticles = 2
     numHidden = 100
     x = randn(numDims*numParticles)
-    nn = NNQS(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
+    nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
     loss(x) = sum(nn.model(x))
     println(nnComputeParameterGradient(nn, loss, x))
     return 0
 
 end
 
-function nnComputeGradient(nnqs, loss, x)
+function nnComputeGradient(nn, loss, x)
     # println(x)
     grads = gradient(Params([x])) do 
         loss(x)
@@ -53,7 +55,7 @@ function nnTestComputeGradient()
     numParticles = 1
     numHidden = 2
     x = randn(numDims*numParticles)
-    nn = NNQS(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
+    nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
     loss(x) = sum(nn.model(x))
     println("testComputeGradient ", nnComputeGradient(nn, loss, x)[x])
 end
@@ -67,7 +69,7 @@ function nnTestComputeLaplacian()
     numParticles = 3
     numHidden = 2
     x = randn(numDims*numParticles)
-    nn = NNQS(Chain(Dense(numParticles*numDims, numHidden, sigmoid), Dense(numHidden, 1)))
+    nn = NN(Chain(Dense(numParticles*numDims, numHidden, sigmoid), Dense(numHidden, 1)))
     loss(x) = sum(nn.model(x))
     println("Laplcian = ", nnComputeLaplacian(loss, x))
 end

@@ -2,9 +2,11 @@ module metropolisBruteForce
 
 export metropolisStepBruteForce
 
-include("../Wavefunctions/slaterDeterminant.jl")
+# include("../Wavefunctions/slaterDeterminant.jl")
 
-using .slaterDeterminant
+using ..initializeSystem
+using ..slaterDeterminant
+using ..jastrow
 
 function metropolisStepBruteForce(stepLength, system)
     numParticles = system.numParticles 
@@ -31,7 +33,9 @@ function metropolisStepBruteForce(stepLength, system)
     # println("\n Analytic = ", (abs(new_slater_wf)^2)/(abs(old_slater_wf)^2))
 
     # ratioRBM = (abs(new_rbm_wf)^2)/(abs(old_rbm_wf)^2)
-    ratioSlaterDeterminant = slaterMatrixComputeRatio(system, particleToUpdate)
+
+    # ratioSlaterDeterminant = slaterMatrixComputeRatio(system, particleToUpdate)
+
     # println("Fast = ", ratioSlaterDeterminant)
 
     # if ratioSlaterDeterminant > 10
@@ -39,15 +43,16 @@ function metropolisStepBruteForce(stepLength, system)
     #     # println(" Num = ", slaterMatrixComputeRatio(system, particleToUpdate))
 
     # end
-    ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
+    # ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
 
     U = rand(Float64)
 
-    ratio = (ratioSlaterDeterminant^2)*ratioSlaterGaussian#*ratioRBM
+    # ratio = (ratioSlaterDeterminant^2)*ratioSlaterGaussian#*ratioRBM
+    ratio, R = computeRatio(system, particleToUpdate, coordinateToUpdate, oldPosition)
 
     if U < ratio
         # println(1)
-        inverseSlaterMatrixUpdate(system, particleToUpdate, (ratioSlaterDeterminant))
+        inverseSlaterMatrixUpdate(system, particleToUpdate, (R))
 
         # system.inverseSlaterMatrixSpinUp[:, :] = inv(system.slaterMatrixSpinUp)
         # system.inverseSlaterMatrixSpinDown[:, :] = inv(system.slaterMatrixSpinDown)
@@ -60,4 +65,19 @@ function metropolisStepBruteForce(stepLength, system)
     end
 end
 
-end
+function computeRatio(system::slater, particleToUpdate, coordinateToUpdate, oldPosition)
+    R = slaterMatrixComputeRatio(system, particleToUpdate)
+    ratioSlaterDeterminant = R^2
+    ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
+    return ratioSlaterDeterminant*ratioSlaterGaussian, R
+end 
+
+function computeRatio(system::slaterJastrow, particleToUpdate, coordinateToUpdate, oldPosition)
+    R = slaterMatrixComputeRatio(system, particleToUpdate)
+    ratioSlaterDeterminant = R^2
+    ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
+    ratioJastrow = jastrowComputeRatio(system, oldPosition, particleToUpdate)
+    return ratioSlaterDeterminant*ratioSlaterGaussian, R
+end 
+
+end #MODULE

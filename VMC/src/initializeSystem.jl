@@ -1,6 +1,7 @@
 module initializeSystem 
 
-export slater, initializeSystemSlater, slaterJatrow, slaterRBM, slaterNN
+export slater, slaterJastrow, slaterRBM, slaterNN
+export initializeSystemSlater, initializeSystemSlaterJastrow
 
 include("Various/quantumNumbers.jl")
 include("Wavefunctions/singleParticle.jl")
@@ -24,6 +25,11 @@ using .singleParticle
 #     wavefunction
 
 # end
+function initializeParticlesNormalDist(numParticles, numDimensions)
+    rng = MersenneTwister(1234)
+    particles = 0.05*randn(rng, Float64, (numParticles, numDimensions))
+    return particles
+end
 
 struct slater
     particles::Array{Float64, 2}
@@ -47,12 +53,6 @@ function initializeSystemSlater(numParticles, numDimensions; alpha = 1.0, omega 
     particles = initializeParticlesNormalDist(numParticles, numDimensions)
     sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega) 
     system = slater(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD)
-end
-
-function initializeParticlesNormalDist(numParticles, numDimensions)
-    rng = MersenneTwister(1234)
-    particles = 0.05*randn(rng, Float64, (numParticles, numDimensions))
-    return particles
 end
 
 function initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega)
@@ -84,12 +84,14 @@ end
 
 struct slaterJastrow
     particles::Array{Float64, 2}
-    n_particles::Int64 
-    n_dims::Int64
+    numParticles::Int64 
+    numDimensions::Int64
 
     alpha::Float64 
     omega::Float64
     beta::Float64
+
+    interacting::Bool
 
     slaterMatrixSpinUp::Array{Float64, 2}
     slaterMatrixSpinDown::Array{Float64, 2}
@@ -97,6 +99,12 @@ struct slaterJastrow
     inverseSlaterMatrixSpinUp::Array{Float64, 2}
     inverseSlaterMatrixSpinDown::Array{Float64, 2}
 end 
+
+function initializeSystemSlaterJastrow(numParticles, numDimensions; alpha = 1.0, omega = 1.0, beta = 1.0, interacting = false)
+    particles = initializeParticlesNormalDist(numParticles, numDimensions)
+    sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega) 
+    system = slaterJastrow(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD)
+end
 
 struct slaterRBM 
     particles::Array{Float64, 2}
