@@ -1,6 +1,6 @@
 module jastrow 
 
-export jastrowComputeRatio
+export jastrowComputeRatio, jastrowComputeGradient, jastrowComputeLaplacian
 
 using LinearAlgebra
 
@@ -24,7 +24,7 @@ function jastrowComputeRatio(system, oldPosition, particleMoved)
     return ratio
 end 
 
-function jastrowComputeGradient(system, particleNum, dimensionNum)
+function jastrowComputeGradient(system, particleNum)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
     particles = system.particles
@@ -36,7 +36,7 @@ function jastrowComputeGradient(system, particleNum, dimensionNum)
         if i != particleNum
             difference = particles[particleNum, :] - particles[i, :]
             distance = sqrt(dot(difference, difference))
-            gradient[dimensionNum] += beta*difference[dimensionNum]/distance
+            gradient += beta*difference./distance
         end
     end
 

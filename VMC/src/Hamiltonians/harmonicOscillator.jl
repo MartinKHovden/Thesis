@@ -31,7 +31,6 @@ function computeLocalEnergy(system::slater, interacting = false)
         temp =  gradientSlaterGaussian + gradientSlaterDeterminant 
 
         localEnergy += laplacianSlaterDeterminant + laplacialSlaterGaussian + temp[1]^2 + temp[2]^2
-
     end 
 
     return -0.5*localEnergy + 0.5*harmonicTerm
@@ -43,6 +42,7 @@ function computeLocalEnergy(system::slaterJastrow, interacting = false)
     harmonicTerm = 0
     omega = system.omega
     particleCoordinates = system.particles
+
     for i=1:N 
         laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
         gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
@@ -57,12 +57,11 @@ function computeLocalEnergy(system::slaterJastrow, interacting = false)
         r_i_squared = coordinates[1]^2 + coordinates[2]^2
         harmonicTerm += omega*omega*r_i_squared
 
-        grad =  gradientSlaterGaussian + gradientSlaterDeterminant +gradientJastrow
+        grad =  gradientSlaterGaussian + gradientSlaterDeterminant + gradientJastrow
 
         laplacian = laplacianSlaterDeterminant + laplacialSlaterGaussian + laplacianJastrow
 
         localEnergy += laplacian + grad[1]^2 + grad[2]^2
-
     end 
 
     return -0.5*localEnergy + 0.5*harmonicTerm
