@@ -50,30 +50,19 @@ function computeInteractionTerm(nqs::NQS)
 
     # Loops over the outer sum
     for i = 1:nqs.num_dims:nqs.num_particles*nqs.num_dims
-
         # Loops over the inner sum from the current value of the outer sum
         for j = i+nqs.num_dims:nqs.num_dims:nqs.num_particles*nqs.num_dims
-
             r_ij = 0
-
             for k = 0:nqs.num_dims-1
-
                 r_ij += (nqs.x[i + k] - nqs.x[j + k])^2
-
             end
-
             r_ij = sqrt(r_ij)
 
             interaction_term += 1.0/r_ij
-
         end
-
     end
 
     return interaction_term
-
-
-
 end
 
 function computeRBMParameterDerivative(nqs::NQS)
@@ -97,25 +86,18 @@ function computeRBMParameterDerivative(nqs::NQS)
     psi_derivative_w::Array{Float64, 2} = zeros(Float64, size(nqs.w))
 
     for n=1:num_hidden
-
         for m=1:num_visible
-
             psi_derivative_w[m,n] = nqs.x[m,1]/(nqs.sigma_squared*(exp(-precalc[n]) + 1.0))
-
         end
-
     end
 
     return psi_derivative_a, psi_derivative_b, psi_derivative_w
-
 end
 
 function optimizationStep(system, grad_a::Array{Float64, 2}, grad_b::Array{Float64, 2}, grad_w::Array{Float64, 2}, learning_rate::Float64)
-
     system.nqs.a[:] = system.nqs.a - learning_rate*grad_a
     system.nqs.b[:] = system.nqs.b - learning_rate*grad_b
     system.nqs.w[:,:] = system.nqs.w - learning_rate*grad_w
-
 end
 
 function computeLocalEnergy(nqs::NQS, precalc)
@@ -128,21 +110,15 @@ function computeLocalEnergy(nqs::NQS, precalc)
 
     # Computes the local energy by looping over the visible and hidden nodes.
     for m = 1:num_visible
-
         # Computes the first part of the derivative and double derivative of the log of the wavefunction.
         ln_psi_derivative = -(1.0/nqs.sigma_squared)*(nqs.x[m] - nqs.a[m])
         ln_psi_double_derivative = -1.0/nqs.sigma_squared
-
         for n=1:num_hidden
-
             # Adds the rest of the derivatives that varies with the hidden layer.
             ln_psi_derivative += (1.0/nqs.sigma_squared)*nqs.w[m,n]/(exp(-precalc[n]) + 1.0)
             ln_psi_double_derivative += (1.0/nqs.sigma_squared^2)*(exp(precalc[n])/((exp(precalc[n])+1)^2))*(nqs.w[m,n]^2)
-
         end
-
         local_energy += -(ln_psi_derivative)^2 - ln_psi_double_derivative + nqs.x[m]^2
-
     end
 
     local_energy *= 0.5
@@ -153,7 +129,6 @@ function computeLocalEnergy(nqs::NQS, precalc)
     end
 
     return local_energy
-
 end
 
 function computePsi(nqs::NQS)
