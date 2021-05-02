@@ -1,16 +1,25 @@
-using Flux
-using Zygote
+module neuralNetwork
 
-export computePsi()
+# using Zygote
+using Flux:Chain, Dense
 
-struct NN
-    model
+export computePsi, nnComputeRatio, nnComputeGradient, nnComputeLaplacian
+
+
+function computePsi(system, position)
+    nn = system.nn
+    println(position)
+    x = reshape(position', 1,:)'
+    println(x)
+    return nn.model(x)[1]
 end
 
-function computePsi(nn, x)
-    # nn = system.nn
-    return nn.model(x)
-end 
+function nnComputeRatio(system, oldPosition)
+    oldWavefunctionValue = computePsi(system, oldPosition)
+    newWavefunctionValue = computePsi(system, system.particles)
+    ratio = (newWavefunctionValue^2)/(oldWavefunctionValue^2)
+    return ratio
+end
 
 function testComputePsi()
     numDims = 3
@@ -61,7 +70,7 @@ function nnTestComputeGradient()
 end
 
 function nnComputeLaplacian(loss, x)
-    return Zygote.hessian(loss, x)
+    return sum(diag(Zygote.hessian(loss, x)))
 end
 
 function nnTestComputeLaplacian()
@@ -80,10 +89,11 @@ end
 
 # @time testComputePsi()
 # @time testComputeParameterGradient()
-@time nnTestComputeGradient()
-@time nnTestComputeGradient()
-@time nnTestComputeGradient()
+# @time nnTestComputeGradient()
+# @time nnTestComputeGradient()
+# @time nnTestComputeGradient()
 
-@time nnTestComputeLaplacian()
-@time nnTestComputeLaplacian()
+# @time nnTestComputeLaplacian()
+# @time nnTestComputeLaplacian()
 
+end

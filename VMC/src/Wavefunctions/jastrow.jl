@@ -44,7 +44,25 @@ function jastrowComputeGradient(system, particleNum)
 end 
 
 function jastrowComputeLaplacian(system)
-    return 0
+    numParticles = system.numParticles
+    numDimensions = system.numDimensions
+    particles = system.particles
+    beta = system.beta
+
+    laplacian = 0
+
+    for i=1:numParticles
+        for j=1:numParticles
+            if i!=j
+                difference = particles[i, :] - particles[j, :]
+                distance = sqrt(dot(difference, difference))
+                for k=1:numDimensions
+                    laplacian += (beta/distance)*(1 - (difference[k]/distance)^2)
+                end
+            end
+        end 
+    end 
+    return laplacian
 end 
 
 end
