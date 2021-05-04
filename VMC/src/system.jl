@@ -323,8 +323,6 @@ function runMetorpolisBruteForce(system, num_mc_iterations::Int64, burn_in::Floa
 
         # Calculates the estimates of the energy and derivatives. Uses only those after the burn-in period.
         if i > burn_in*num_mc_iterations
-
-
             local_energy_sum += local_energy
 
             local_energy_psi_derivative_a_sum += local_energy*psi_derivative_a
@@ -334,9 +332,7 @@ function runMetorpolisBruteForce(system, num_mc_iterations::Int64, burn_in::Floa
             psi_derivative_a_sum += psi_derivative_a
             psi_derivative_b_sum += psi_derivative_b
             psi_derivative_w_sum += psi_derivative_w
-
         end
-
     end
 
     runtime = time() - start
@@ -359,7 +355,6 @@ function runMetorpolisBruteForce(system, num_mc_iterations::Int64, burn_in::Floa
     local_energy_derivative_w = 2*(mc_local_energy_psi_derivative_w - mc_local_energy*mc_psi_derivative_w)
 
     return mc_local_energy, local_energy_derivative_a, local_energy_derivative_b, local_energy_derivative_w
-
 end
 
 function runOptimizationBruteForce(system, num_iterations::Int64, num_mc_iterations::Int64, mc_burn_in::Float64, mc_step_length::Float64, learning_rate::Float64)

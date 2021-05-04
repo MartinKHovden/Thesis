@@ -13,11 +13,11 @@ using Flux
 # using ..neuralNetwork
 
 """ 
-    initializeParticlesNormalDist(numParticles, numDimensions)
+    initializeParticlesNormalDist(numParticles::Int64, numDimensions::Int64)
 
-Returns a random array of position of particles. 
+Returns a random 2D array of position of particles. 
 """
-function initializeParticlesNormalDist(numParticles, numDimensions)
+function initializeParticlesNormalDist(numParticles::Int64, numDimensions::Int64)
     rng = MersenneTwister(1234)
     particles = 0.05*randn(rng, Float64, (numParticles, numDimensions))
     return particles
@@ -36,7 +36,7 @@ struct slater
     numParticles::Int64 
     numDimensions::Int64
 
-    alpha::Float64 
+    alpha::Float64
     omega::Float64
     beta::Float64
 
@@ -49,6 +49,12 @@ struct slater
     inverseSlaterMatrixSpinDown::Array{Float64, 2}
 end 
 
+"""
+    initializeSystemSlater(numParticles, numDimensions; alpha = 1.0, omega = 1.0,
+    beta = 1.0, interacting = false)
+
+Initializes the slater system struct with given constants and slater matrices. 
+"""
 function initializeSystemSlater(numParticles, numDimensions; alpha = 1.0, omega = 1.0, beta = 1.0, interacting = false)
     particles = initializeParticlesNormalDist(numParticles, numDimensions)
     sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega) 

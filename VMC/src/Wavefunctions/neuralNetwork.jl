@@ -1,7 +1,7 @@
 module neuralNetwork
 
 # using Zygote
-using Flux:Chain, Dense
+using Flux:Chain, Dense, Params, gradient
 
 export computePsi, nnComputeRatio, nnComputeGradient, nnComputeLaplacian
 
@@ -50,12 +50,13 @@ function testComputeParameterGradient()
 
 end
 
-function nnComputeGradient(nn, loss, x)
-    # println(x)
+function nnComputeGradient(system, x)
+    nn = system.nn
+    x = reshape(position', 1,:)'
+    loss(x) = sum(nn.model(x))
     grads = gradient(Params([x])) do 
         loss(x)
     end 
-    # println(grads.grads)
     return grads
 end
 

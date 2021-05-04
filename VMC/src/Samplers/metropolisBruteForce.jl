@@ -82,6 +82,25 @@ function computeRatio(system::slaterNN, particleToUpdate, coordinateToUpdate, ol
     ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
     ratioNN = nnComputeRatio(system, oldPosition)
     return ratioSlaterDeterminant*ratioSlaterGaussian*ratioNN, R
+end
+
+"""
+    runMetropolisBruteForce()
+
+Runs the full metropolis sampling for a set of parameters. 
+"""
+function runMetropolisBruteForce()
+    return 0
+end
+
+"""
+    runVMC()
+
+Runs the full vmc calculation by calling the runMetropolisBruteForce step multiple 
+times and updating the variational parameters accordingly. 
+"""
+function runVMC()
+    return 0
 end 
 
 end #MODULE
