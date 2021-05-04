@@ -24,7 +24,10 @@ function initializeParticlesNormalDist(numParticles, numDimensions)
 end
 
 """
-    slater 
+    slater(particles::Array{Float64, 2}, numParticles::Int64, numDimensions::Int64 
+        alpha::Float64, omega::Float64, beta::Float64, interacting::Bool, 
+        slaterMatrixSpinUp::Array{Float64, 2}, slaterMatrixSpinDown::Array{Float64, 2}
+        inverseSlaterMatrixSpinUp::Array{Float64, 2}, inverseSlaterMatrixSpinDown::Array{Float64, 2}) 
 
 Struct for storing the information about the wavefunction and the system. 
 """
