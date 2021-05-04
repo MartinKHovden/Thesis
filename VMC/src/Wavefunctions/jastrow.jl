@@ -4,6 +4,11 @@ export jastrowComputeRatio, jastrowComputeGradient, jastrowComputeLaplacian
 
 using LinearAlgebra
 
+"""
+    jastrowComputeRatio(system, oldPosition, particleMoved)
+
+Computes the ratio for the Jastrow part of the wavefunction. 
+"""
 function jastrowComputeRatio(system, oldPosition, particleMoved)
     positionDifferenceSum = 0
     newPosition = system.particles
@@ -24,6 +29,11 @@ function jastrowComputeRatio(system, oldPosition, particleMoved)
     return ratio
 end 
 
+""" 
+    jastrowComputeGradient(system, particleNum)
+
+Computes the gradient of the Jastrow part of the wavefunction. 
+"""
 function jastrowComputeGradient(system, particleNum)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
@@ -43,6 +53,11 @@ function jastrowComputeGradient(system, particleNum)
     return gradient
 end 
 
+"""
+    jastrowComputeLaplacian(system)
+
+Computes the Laplacian of the Jastrow part of the wavefunction. 
+"""
 function jastrowComputeLaplacian(system)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
