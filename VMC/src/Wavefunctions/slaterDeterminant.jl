@@ -26,13 +26,23 @@ quantumNumbers = [0 0
                 1 2 
                 0 3]
 
+"""
+    slaterWaveFunction(system)
+
+Manual computation of the wavefunction value for the slater determinant, with
+the gaussian part of the single particle wavefunction factored out. 
+"""
 function slaterWaveFunction(system)
     N = system.n_particles
     val = det(copy(system.slaterMatrixSpinUp))*det(copy(system.slaterMatrixSpinDown))
     return val
 end 
 
+"""
+    slaterGaussianWaveFunction(system)
 
+Manual computation of the gaussian part of the slater determinant. 
+"""
 function slaterGaussianWaveFunction(system)
     numParticles = system.numParticles
     numDimensions  = system.numDimensions
@@ -47,7 +57,12 @@ function slaterGaussianWaveFunction(system)
     return exp(-0.5*system.omega*system.alpha*exp_argument)
 end 
 
+"""
+    slaterMatrixComputeRatio(system, particleMoved)
 
+Fast computation of ratio of the slater part of the wavefunction. Works only
+when one particle is moved at the time. 
+"""
 function slaterMatrixComputeRatio(system, particleMoved)
     if particleMoved <= system.numParticles/2
         newSlaterMatrixSpinUp = deepcopy(system.slaterMatrixSpinUp)
@@ -61,12 +76,20 @@ function slaterMatrixComputeRatio(system, particleMoved)
     return R
 end
 
+"""
+    slaterGaussianComputeRatio(system, oldPosition, particleMoved, dimensionMoved)
 
+Fast computation of ratio of the gaussian part of the slater matrix. 
+"""
 function slaterGaussianComputeRatio(system, oldPosition, particleMoved, dimensionMoved)
     return exp(system.omega*system.alpha*(oldPosition[particleMoved,dimensionMoved]^2 - system.particles[particleMoved,dimensionMoved]^2))
 end
 
+"""
+    slaterMatrixUpdate(system, particle)
 
+Updates the slater matrix when one particle is moved. 
+"""
 function slaterMatrixUpdate(system, particle)
     numParticles = system.numParticles
 
