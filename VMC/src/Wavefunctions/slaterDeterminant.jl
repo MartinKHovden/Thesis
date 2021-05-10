@@ -276,4 +276,8 @@ function slaterGaussianComputeLaplacian(system)
     return -alpha*omega*d
 end
 
+function slaterGaussianComputeParameterGradient(system)
+    return -0.5*system.omega*sum(system.particles.^2)
+end 
+
 end

@@ -52,7 +52,7 @@ function computeLocalEnergy(system::slaterJastrow, interacting = false)
         laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
 
         gradientJastrow = jastrowComputeGradient(system, i)
-        laplacianJastrow = jastrowComputeLaplacian(system)
+        laplacianJastrow = jastrowComputeLaplacian(system, i)
         
         coordinates = particleCoordinates[i,:]
         r_i_squared = coordinates[1]^2 + coordinates[2]^2
@@ -83,7 +83,7 @@ function computeLocalEnergy(system::slaterNN, interacting = false)
         laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
 
         gradientNN = nnComputeGradient(system, i)
-        laplacianNN = nnComputeLaplacian(system)
+        laplacianNN = nnComputeLaplacian(system, i)
         
         coordinates = particleCoordinates[i,:]
         r_i_squared = coordinates[1]^2 + coordinates[2]^2

@@ -3,10 +3,8 @@ module main
 include("initializeSystem.jl")
 include("Wavefunctions/slaterDeterminant.jl")
 include("Wavefunctions/jastrow.jl")
-println("Here1")
 
 include("Wavefunctions/neuralNetwork.jl")
-println("Here")
 
 include("Samplers/metropolisBruteForce.jl")
 include("Hamiltonians/harmonicOscillator.jl")
@@ -55,7 +53,7 @@ function runSlaterJastrow()
     end
 end
 
-# runSlaterJastrow()
+runSlaterJastrow()
 
 function runSlaterNN()
     system = initializeSystemSlaterNN(4, 2)
@@ -71,8 +69,9 @@ function runSlaterNN()
     println("Local Energy = ", localEnergy/(numSamples-5000))
 end 
 
-println("Here1")
+# println("Here1")
 
-runSlaterNN()
+# runSlaterNN()
+
 
 end # MODULE

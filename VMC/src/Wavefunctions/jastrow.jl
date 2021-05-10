@@ -58,7 +58,7 @@ end
 
 Computes the Laplacian of the Jastrow part of the wavefunction. 
 """
-function jastrowComputeLaplacian(system)
+function jastrowComputeLaplacian(system, i)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
     particles = system.particles
@@ -66,16 +66,14 @@ function jastrowComputeLaplacian(system)
 
     laplacian = 0
 
-    for i=1:numParticles
-        for j=1:numParticles
-            if i!=j
-                difference = particles[i, :] - particles[j, :]
-                distance = sqrt(dot(difference, difference))
-                for k=1:numDimensions
-                    laplacian += (beta/distance)*(1 - (difference[k]/distance)^2)
-                end
+    for j=1:numParticles
+        if i!=j
+            difference = particles[i, :] - particles[j, :]
+            distance = sqrt(dot(difference, difference))
+            for k=1:numDimensions
+                laplacian += (beta/distance)*(1 - (difference[k]/distance)^2)
             end
-        end 
+        end
     end 
     return laplacian
 end 
