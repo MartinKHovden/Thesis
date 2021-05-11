@@ -6,16 +6,16 @@ include("Wavefunctions/jastrow.jl")
 
 include("Wavefunctions/neuralNetwork.jl")
 
-include("Samplers/metropolisBruteForce.jl")
 include("Hamiltonians/harmonicOscillator.jl")
+include("Samplers/metropolisBruteForce.jl")
 
 
 using .initializeSystem
 using .slaterDeterminant
 using .jastrow
 using .neuralNetwork
-using .metropolisBruteForce
 using .harmonicOscillator
+using .metropolisBruteForce
 
 function runSlater()
     alphaValues = [0.9, 1.0, 1.1]
@@ -53,7 +53,7 @@ function runSlaterJastrow()
     end
 end
 
-runSlaterJastrow()
+# runSlaterJastrow()
 
 function runSlaterNN()
     system = initializeSystemSlaterNN(4, 2)
@@ -72,6 +72,9 @@ end
 # println("Here1")
 
 # runSlaterNN()
+system = initializeSystemSlater(4, 2, alpha=0.98)
+runVMC(system, 10, 1000000, 0.1, 0.1)
+
 
 
 end # MODULE

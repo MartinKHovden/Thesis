@@ -31,7 +31,7 @@ end
 
 Struct for storing the information about the wavefunction and the system. 
 """
-struct slater
+mutable struct slater
     particles::Array{Float64, 2}
     numParticles::Int64 
     numDimensions::Int64

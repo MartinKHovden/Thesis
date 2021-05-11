@@ -8,6 +8,7 @@ export slaterDeterminantComputeGradient
 export slaterDeterminantComputeLaplacian
 export slaterGaussianComputeGradient
 export slaterGaussianComputeLaplacian
+export slaterGaussianComputeParameterGradient
 
 include("singleParticle.jl")
 

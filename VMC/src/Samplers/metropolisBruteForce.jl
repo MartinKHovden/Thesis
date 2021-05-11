@@ -1,6 +1,6 @@
 module metropolisBruteForce
 
-export metropolisStepBruteForce
+export metropolisStepBruteForce, runVMC
 
 # include("../Wavefunctions/slaterDeterminant.jl")
 
@@ -8,6 +8,7 @@ using ..initializeSystem
 using ..slaterDeterminant
 using ..jastrow
 using ..neuralNetwork
+using ..harmonicOscillator
 
 """ 
     metropolisBruteForce(stepLength, system)
@@ -89,46 +90,41 @@ end
 
 Runs the full metropolis sampling for a set of parameters. 
 """
-function runMetropolisBruteForce(system::Slater)
+function runMetropolisBruteForce(system::slater, num_mc_iterations, step_length; burn_in = 0.01, )
     local_energy_sum::Float64 = 0.0
 
-    #Initializes the arrays and matrices to save the derivatives and the sums.
-    local_energy_psi_derivative_a_sum = 0
-    psi_derivative_a_sum = 0
+    local_energy_psi_parameter_derivative_sum = 0
+    psi_parameter_derivative_sum = 0
 
-    #Vector to store the energies for each step.
     local_energies::Array{Float64, 1} = zeros(Float64, Int(num_mc_iterations))
 
     start = time()
 
     for i = 1:num_mc_iterations
-        # Does one step with the brute force method.
         metropolisStepBruteForce(step_length, system)
 
-        # Computes the contribution to Monte carlo estimate of the local energy given the new system configuration.
         local_energy = computeLocalEnergy(system)
         local_energies[i] = local_energy
 
-        # Computes the contribution to the gradients given the new system configuration.
-        psi_derivative_a = computePsiParameterDerivative(system)
+        psi_parameter_derivative = slaterGaussianComputeParameterGradient(system)
 
-        # Calculates the estimates of the energy and derivatives. Uses only those after the burn-in period.
         if i > burn_in*num_mc_iterations
             local_energy_sum += local_energy
-            local_energy_psi_derivative_a_sum += local_energy*psi_derivative_a
-            psi_derivative_a_sum += psi_derivative_a
+            local_energy_psi_parameter_derivative_sum += local_energy*psi_parameter_derivative
+            psi_parameter_derivative_sum += psi_parameter_derivative
         end
     end
 
     runtime = time() - start
 
-    # Updates the final estimates of local energy and gradients.
     samples = num_mc_iterations - burn_in*num_mc_iterations
 
     mc_local_energy = local_energy_sum/samples
-    mc_local_energy_psi_derivative_a = local_energy_psi_derivative_a_sum/samples
-    mc_psi_derivative_a = psi_derivative_a_sum/samples
+    mc_local_energy_psi_derivative_a = local_energy_psi_parameter_derivative_sum/samples
+    mc_psi_derivative_a = psi_parameter_derivative_sum/samples
     local_energy_derivative_a = 2*(mc_local_energy_psi_derivative_a - mc_local_energy*mc_psi_derivative_a)
+
+    println(mc_local_energy)
 
     return mc_local_energy, local_energy_derivative_a
 end
@@ -139,7 +135,7 @@ end
 Updates the variational parameter of the system accorind to the gradient 
 descent method. 
 """
-function optimizationStep(system::Slater, grad_a::Float64, learning_rate::Float64)
+function optimizationStep(system::slater, grad_a::Float64, learning_rate::Float64)
     system.alpha = system.alpha - learning_rate*grad_a
 end
 
@@ -149,16 +145,14 @@ end
 Runs the full vmc calculation by calling the runMetropolisBruteForce step multiple 
 times and updating the variational parameters accordingly. 
 """
-function runVMC(system::Slater, numVMCIterations::Int64, numMonteCarloIterations)
+function runVMC(system::slater, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
-    # Loops for running multiple gradient descent steps.
     for k = 1:numVMCIterations
-        local_energy, _grad_a = runMetorpolisBruteForce(system, numMonteCarloIterations, mc_burn_in, mc_step_length)
+        local_energy, _grad_a = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
         optimizationStep(system, _grad_a, learning_rate)
         local_energies[k] = local_energy
-        println("Iteration = ", k, "    E = ", local_energy)
+        println("Iteration = ", k, "    E = ", local_energy, "   alpha =  ", system.alpha)
     end
-
     return local_energies
 end 
 
