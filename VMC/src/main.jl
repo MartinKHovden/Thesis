@@ -72,9 +72,11 @@ end
 # println("Here1")
 
 # runSlaterNN()
-system = initializeSystemSlater(4, 2, alpha=0.98)
-runVMC(system, 10, 1000000, 0.1, 0.1)
+# system = initializeSystemSlater(4, 2, alpha=1.0)
+# runVMC(system, 10, 1000000, 0.1, 0.1)
 
 
-
+system = initializeSystemSlaterNN(4, 2, alpha = 1.0)
+runVMC(system, 10, 100000, 0.1, 0.1)
+# println("Grads: ", nnComputeParameterGradient(system))
 end # MODULE

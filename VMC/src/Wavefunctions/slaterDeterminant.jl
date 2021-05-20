@@ -34,7 +34,7 @@ Manual computation of the wavefunction value for the slater determinant, with
 the gaussian part of the single particle wavefunction factored out. 
 """
 function slaterWaveFunction(system)
-    N = system.n_particles
+    N = system.numParticles
     val = det(copy(system.slaterMatrixSpinUp))*det(copy(system.slaterMatrixSpinDown))
     return val
 end 

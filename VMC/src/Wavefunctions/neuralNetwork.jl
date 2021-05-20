@@ -1,16 +1,18 @@
 module neuralNetwork
 
 # using Zygote
-using Flux:Chain, Dense, Params, gradient
+using Flux:Chain, Dense, Params, gradient, params
+using Zygote:hessian
+using LinearAlgebra
 
-export computePsi, nnComputeRatio, nnComputeGradient, nnComputeLaplacian
+export computePsi, nnComputeRatio, nnComputeGradient, nnComputeLaplacian, nnComputeParameterGradient
 
 
 function computePsi(system, position)
     nn = system.nn
-    println(position)
+    # println(position)
     x = reshape(position', 1,:)'
-    println(x)
+    # println(x)
     return nn.model(x)[1]
 end
 
@@ -21,22 +23,58 @@ function nnComputeRatio(system, oldPosition)
     return ratio
 end
 
-function testComputePsi()
-    numDims = 3
-    numParticles = 2
-    numHidden = 10
-    x = randn(numDims*numParticles)
-    nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
-    println(computePsi(nn, x))
-end
-
-function nnComputeParameterGradient(nn, loss, x)
-    println("Params", params(nn.model))
-    grads = gradient(params(nn.model)) do 
+function nnComputeGradient(system)
+    numDimensions = system.numDimensions
+    nn = system.nn
+    x = reshape(system.particles', 1,:)'
+    loss(x) = sum(nn.model(x))
+    grads = gradient(Params([x])) do 
         loss(x)
     end 
+    # println(params(nn.model))
+    return grads[x]
+end
+
+function nnComputeLaplacian(system)
+    x = reshape(system.particles', 1,:)'
+    loss(x) = sum(system.nn.model(x))
+    return diag(hessian(loss, x))
+end
+
+function nnComputeParameterGradient(system)
+    nn = system.nn
+    ps = params(system.nn.model)
+    x = reshape(system.particles', 1,:)'
+    loss(x) = sum(nn.model(x))
+    grads = gradient(ps) do 
+        loss(x)
+    end 
+    # println("Lengde = ", length(params(system.nn.model)))
+    # println(grads[ps[2]])
     return grads
 end 
+
+
+function nnTestComputeGradient()
+    numDims = 2
+    numParticles = 1
+    numHidden = 2
+    x = randn(numDims*numParticles)
+    nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
+    loss(x) = sum(nn.model(x))
+    println("testComputeGradient ", nnComputeGradient(nn, loss, x)[x])
+end
+
+
+function nnTestComputeLaplacian()
+    numDims = 2
+    numParticles = 3
+    numHidden = 2
+    x = randn(numDims*numParticles)
+    nn = NN(Chain(Dense(numParticles*numDims, numHidden, sigmoid), Dense(numHidden, 1)))
+    loss(x) = sum(nn.model(x))
+    println("Laplcian = ", nnComputeLaplacian(loss, x))
+end
 
 function testComputeParameterGradient()
     numDims = 3
@@ -50,43 +88,14 @@ function testComputeParameterGradient()
 
 end
 
-function nnComputeGradient(system, x)
-    nn = system.nn
-    x = reshape(position', 1,:)'
-    loss(x) = sum(nn.model(x))
-    grads = gradient(Params([x])) do 
-        loss(x)
-    end 
-    return grads
-end
-
-function nnTestComputeGradient()
-    numDims = 2
-    numParticles = 1
-    numHidden = 2
+function testComputePsi()
+    numDims = 3
+    numParticles = 2
+    numHidden = 10
     x = randn(numDims*numParticles)
     nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
-    loss(x) = sum(nn.model(x))
-    println("testComputeGradient ", nnComputeGradient(nn, loss, x)[x])
+    println(computePsi(nn, x))
 end
-
-function nnComputeLaplacian(loss, x)
-    return sum(diag(Zygote.hessian(loss, x)))
-end
-
-function nnTestComputeLaplacian()
-    numDims = 2
-    numParticles = 3
-    numHidden = 2
-    x = randn(numDims*numParticles)
-    nn = NN(Chain(Dense(numParticles*numDims, numHidden, sigmoid), Dense(numHidden, 1)))
-    loss(x) = sum(nn.model(x))
-    println("Laplcian = ", nnComputeLaplacian(loss, x))
-end
-
-function nnComputeParameterGradient()
-    return 0
-end 
 
 # @time testComputePsi()
 # @time testComputeParameterGradient()

@@ -78,4 +78,8 @@ function jastrowComputeLaplacian(system, i)
     return laplacian
 end 
 
+function jastrowComputeParameterGradient(system)
+    return 
+end 
+
 end

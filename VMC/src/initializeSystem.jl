@@ -88,7 +88,7 @@ function initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, o
     return (slaterMatrixSpinUp, slaterMatrixSpinDown, invSlaterMatrixSpinUp, invSlaterMatrixSpinDown)
 end
 
-struct slaterJastrow
+mutable struct slaterJastrow
     particles::Array{Float64, 2}
     numParticles::Int64 
     numDimensions::Int64
@@ -112,7 +112,7 @@ function initializeSystemSlaterJastrow(numParticles, numDimensions; alpha = 1.0,
     system = slaterJastrow(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD)
 end
 
-struct slaterRBM 
+mutable struct slaterRBM 
     particles::Array{Float64, 2}
     n_particles::Int64 
     n_dims::Int64
@@ -155,7 +155,7 @@ struct slaterNN
 end 
 
 function initializeNN(numParticles, numDimensions, numHiddenNeurons)
-    nn = NN(Chain(Dense(numParticles*numDimensions, numHiddenNeurons), Dense(numHiddenNeurons, 1)))
+    nn = NN(Chain(Dense(numParticles*numDimensions, numHiddenNeurons, sigmoid), Dense(numHiddenNeurons, 1)))
 end 
 
 function initializeSystemSlaterNN(numParticles, numDimensions; alpha = 1.0, omega = 1.0, beta = 1.0, interacting = false, numHiddenNeurons = 10)
