@@ -25,7 +25,7 @@ struct NQS
 
 end
 
-function setUpSystemRandomUniform(num_particles::Int64, num_dims::Int64, M::Int64, N::Int64, sig_sq::Float64 = 0.5, inter::Bool = false)
+function setUpSystemRandomUniform(position, num_particles::Int64, num_dims::Int64, M::Int64, N::Int64, sig_sq::Float64 = 0.5, inter::Bool = false)
 
     # Initializes the biases
     b = rand(Float64, N, 1) .-0.5
@@ -35,7 +35,7 @@ function setUpSystemRandomUniform(num_particles::Int64, num_dims::Int64, M::Int6
     w = rand(Float64, M, N) .-0.5
 
     # Initializes the visble and the hidden layer.
-    x = rand(Float64, M, 1) .-0.5
+    x = reshape(position', 1,:)'
     h = rand(0:1, N, 1)
 
     interacting = inter

@@ -76,7 +76,11 @@ end
 # runVMC(system, 10, 1000000, 0.1, 0.1)
 
 
-system = initializeSystemSlaterNN(4, 2, alpha = 1.0)
-runVMC(system, 10, 100000, 0.1, 0.1)
+# system = initializeSystemSlaterNN(4, 2, alpha = 1.0)
+# runVMC(system, 10, 100000, 0.1, 0.1)
 # println("Grads: ", nnComputeParameterGradient(system))
+
+
+system = initializeSystemSlaterRBM(4, 2, 4, alpha=1)
+
 end # MODULE

@@ -1,7 +1,8 @@
 module initializeSystem 
 
 export slater, slaterJastrow, slaterRBM, slaterNN
-export initializeSystemSlater, initializeSystemSlaterJastrow, initializeSystemSlaterNN
+export initializeSystemSlater, initializeSystemSlaterJastrow
+export initializeSystemSlaterRBM, initializeSystemSlaterNN
 
 include("Various/quantumNumbers.jl")
 include("Wavefunctions/singleParticle.jl")
@@ -112,6 +113,27 @@ function initializeSystemSlaterJastrow(numParticles, numDimensions; alpha = 1.0,
     system = slaterJastrow(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD)
 end
 
+struct NQS
+    num_particles::Int64
+    num_dims::Int64
+
+    # Bias for hidden layer
+    b::Array{Float64, 2}
+    # Bias for visible layer
+    a::Array{Float64, 2}
+
+    # Weights
+    w::Array{Float64, 2}
+
+    # Visible layer
+    x::Array{Float64, 2}
+    # Hidden layer
+    h::Array{Float64, 2}
+
+    sigma_squared::Float64
+    interacting::Bool
+end
+
 mutable struct slaterRBM 
     particles::Array{Float64, 2}
     n_particles::Int64 
@@ -127,8 +149,32 @@ mutable struct slaterRBM
     inverseSlaterMatrixSpinUp::Array{Float64, 2}
     inverseSlaterMatrixSpinDown::Array{Float64, 2}
 
-    # nqs::NQS
+    nqs::NQS
 end 
+
+function initializeRBM(position, num_particles::Int64, num_dims::Int64, M::Int64, N::Int64, sig_sq::Float64 = 0.5, inter::Bool = false)
+    # Initializes the biases
+    b = rand(Float64, N, 1) .-0.5
+    a = rand(Float64, M, 1) .-0.5
+
+    # Initializes the weights.
+    w = rand(Float64, M, N) .-0.5
+
+    # Initializes the visble and the hidden layer.
+    x = reshape(position', 1,:)'
+    h = rand(0:1, N, 1)
+
+    interacting = inter
+
+    return NQS(num_particles, num_dims, b, a, w, x, h, sig_sq, interacting)
+end
+
+function initializeSystemSlaterRBM(numParticles, numDimensions, numHidden; alpha = 1.0, omega = 1.0, beta = 1.0, sigmaSquared = 0.5, interacting = false)
+    particles = initializeParticlesNormalDist(numParticles, numDimensions)
+    sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega) 
+    nqs = initializeRBM(particles, numParticles, numDimensions, numParticles*numDimensions, numHidden, sigmaSquared, interacting)
+    system = slaterRBM(particles, numParticles, numDimensions, alpha, omega, beta, sSU, sSD, iSSU, iSSD, nqs)
+end
 
 struct NN
     model

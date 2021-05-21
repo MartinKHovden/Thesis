@@ -168,12 +168,12 @@ end
 
 ################################################################################
 
-###   ##    ###   ##    
-####  ##    ####  ##
-## ## ##    ## ## ##
-##  ####    ##  ####
-##   ###    ##   ###
-##    ##    ##    ##
+###    ##    ###    ##    
+####   ##    ####   ##
+## ##  ##    ## ##  ##
+##  ## ##    ##  ## ##
+##   ####    ##   ####
+##    ###    ##    ###
 
 ################################################################################
 
@@ -259,5 +259,93 @@ end
 
 ################################################################################
 
+"""
+    runMetorpolisBruteForce(nqs::NQS, num_mc_iterations::Int64, burn_in::Float64, step_length::Float64, write_to_file::Bool)
+
+Uses the Metropolis Brute force algorithm to produce num_mc_iterations samples from the distribution and writes the samples to file if wanted.
+Only the samples after the burn-in are used to calculate the local energy and gradient estimate that is returned.
+Calculates the estimate for the local energy as well as the gradients.
+"""
+function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, burn_in::Float64, step_length::Float64, write_to_file::Bool)
+
+    local_energy_sum::Float64 = 0.0
+
+    #Initializes the arrays and matrices to save the derivatives and the sums.
+    local_energy_psi_derivative_a_sum::Array{Float64, 2} = zeros(Float64, size(nqs.a))
+    local_energy_psi_derivative_b_sum::Array{Float64, 2} = zeros(Float64, size(nqs.b))
+    local_energy_psi_derivative_w_sum::Array{Float64, 2} = zeros(Float64, size(nqs.w))
+
+    psi_derivative_a_sum::Array{Float64, 2} = zeros(Float64, size(nqs.a))
+    psi_derivative_b_sum::Array{Float64, 2} = zeros(Float64, size(nqs.b))
+    psi_derivative_w_sum::Array{Float64, 2} = zeros(Float64, size(nqs.w))
+
+    psi_derivative_a::Array{Float64, 2} = zeros(Float64, size(nqs.a))
+    psi_derivative_b::Array{Float64, 2} = zeros(Float64, size(nqs.b))
+    psi_derivative_w::Array{Float64, 2} = zeros(Float64, size(nqs.w))
+
+    precalc::Array{Float64, 2} = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(nqs.x)* nqs.w))
+
+    #Vector to store the energies for each step.
+    local_energies::Array{Float64, 1} = zeros(Float64, Int(num_mc_iterations))
+
+    start = time()
+
+    for i = 1:num_mc_iterations
+
+        # Does one step with the brute force method.
+        metropolisStepBruteForce(system, step_length, precalc)
+
+        precalc = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(nqs.x)* nqs.w))
+
+        # Computes the contribution to Monte carlo estimate of the local energy given the new system configuration.
+        local_energy = computeLocalEnergy(nqs, precalc)
+
+        local_energies[i] = local_energy
+
+        # Computes the contribution to the gradients given the new system configuration.
+        computePsiParameterDerivative!(nqs, psi_derivative_a, psi_derivative_b, psi_derivative_w, precalc)
+
+        # Calculates the estimates of the energy and derivatives. Uses only those after the burn-in period.
+        if i > burn_in*num_mc_iterations
+
+
+            local_energy_sum += local_energy
+
+            local_energy_psi_derivative_a_sum += local_energy*psi_derivative_a
+            local_energy_psi_derivative_b_sum += local_energy*psi_derivative_b
+            local_energy_psi_derivative_w_sum += local_energy*psi_derivative_w
+
+            psi_derivative_a_sum += psi_derivative_a
+            psi_derivative_b_sum += psi_derivative_b
+            psi_derivative_w_sum += psi_derivative_w
+
+        end
+
+    end
+
+    # Updates the final estimates of local energy and gradients.
+    samples = num_mc_iterations - burn_in*num_mc_iterations
+
+    mc_local_energy = local_energy_sum/samples
+
+    mc_local_energy_psi_derivative_a = local_energy_psi_derivative_a_sum/samples
+    mc_local_energy_psi_derivative_b = local_energy_psi_derivative_b_sum/samples
+    mc_local_energy_psi_derivative_w = local_energy_psi_derivative_w_sum/samples
+
+    mc_psi_derivative_a = psi_derivative_a_sum/samples
+    mc_psi_derivative_b = psi_derivative_b_sum/samples
+    mc_psi_derivative_w = psi_derivative_w_sum/samples
+
+    local_energy_derivative_a = 2*(mc_local_energy_psi_derivative_a - mc_local_energy*mc_psi_derivative_a)
+    local_energy_derivative_b = 2*(mc_local_energy_psi_derivative_b - mc_local_energy*mc_psi_derivative_b)
+    local_energy_derivative_w = 2*(mc_local_energy_psi_derivative_w - mc_local_energy*mc_psi_derivative_w)
+
+    return mc_local_energy, local_energy_derivative_a, local_energy_derivative_b, local_energy_derivative_w
+
+end
+
+function runVMC(system::SlaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
+    return 0
+end 
 
 end #MODULE
