@@ -9,6 +9,7 @@ using ..slaterDeterminant
 using ..jastrow
 using ..neuralNetwork
 using ..harmonicOscillator
+using ..boltzmannMachine
 using Flux:params
 
 """ 
@@ -27,7 +28,6 @@ function metropolisStepBruteForce(stepLength, system)
     # Update the coordinate:
     oldPosition = copy(system.particles)
     system.particles[particleToUpdate, coordinateToUpdate] += (rand(Float64) - 0.5)*stepLength
-    # system.nqs.x[:] = reshape(system.particles', 1,:)
 
     # Update the slater matrix:
     slaterMatrixUpdate(system, particleToUpdate)
@@ -41,7 +41,6 @@ function metropolisStepBruteForce(stepLength, system)
     else 
         system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
         slaterMatrixUpdate(system, particleToUpdate)
-        # system.nqs.x[:] = reshape(system.particles', 1,:)
     end
 end
 
@@ -84,6 +83,21 @@ function computeRatio(system::slaterNN, particleToUpdate, coordinateToUpdate, ol
     ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
     ratioNN = nnComputeRatio(system, oldPosition)
     return ratioSlaterDeterminant*ratioSlaterGaussian*ratioNN, R
+end
+
+""" 
+    computeRatio(system::slaterRBM, particleToUpdate, coordinateToUpdate, oldPosition)
+
+Returns the wavefunction ratio for the system with the Slater-RBM wavefunction,
+given the particle moved, the dimension, and the old position. 
+"""
+function computeRatio(system::slaterRBM, particleToUpdate, coordinateToUpdate, oldPosition)
+    R = slaterMatrixComputeRatio(system, particleToUpdate)
+    ratioSlaterDeterminant = R^2
+    ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
+    ratioRBM = rbmComputeRatio(system, oldPosition)
+    # println(ratioSlaterDeterminant,"   ", ratioSlaterGaussian,"    ",  ratioRBM)
+    return ratioSlaterDeterminant*ratioSlaterGaussian*ratioRBM, R
 end
 
 """
@@ -266,7 +280,11 @@ Uses the Metropolis Brute force algorithm to produce num_mc_iterations samples f
 Only the samples after the burn-in are used to calculate the local energy and gradient estimate that is returned.
 Calculates the estimate for the local energy as well as the gradients.
 """
-function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, burn_in::Float64, step_length::Float64, write_to_file::Bool)
+function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, step_length::Float64; burn_in = 0.01)
+
+    nqs = system.nqs
+
+    x = reshape(system.particles', 1,:)'
 
     local_energy_sum::Float64 = 0.0
 
@@ -283,7 +301,7 @@ function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, bu
     psi_derivative_b::Array{Float64, 2} = zeros(Float64, size(nqs.b))
     psi_derivative_w::Array{Float64, 2} = zeros(Float64, size(nqs.w))
 
-    precalc::Array{Float64, 2} = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(nqs.x)* nqs.w))
+    precalc::Array{Float64, 2} = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(x)* nqs.w))
 
     #Vector to store the energies for each step.
     local_energies::Array{Float64, 1} = zeros(Float64, Int(num_mc_iterations))
@@ -293,17 +311,20 @@ function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, bu
     for i = 1:num_mc_iterations
 
         # Does one step with the brute force method.
-        metropolisStepBruteForce(system, step_length, precalc)
+        metropolisStepBruteForce(step_length, system)
 
-        precalc = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(nqs.x)* nqs.w))
+        precalc = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(x)* nqs.w))
 
         # Computes the contribution to Monte carlo estimate of the local energy given the new system configuration.
-        local_energy = computeLocalEnergy(nqs, precalc)
+        local_energy = computeLocalEnergy(system, precalc)
 
         local_energies[i] = local_energy
 
         # Computes the contribution to the gradients given the new system configuration.
-        computePsiParameterDerivative!(nqs, psi_derivative_a, psi_derivative_b, psi_derivative_w, precalc)
+        rbmComputeParameterGradient!(system, psi_derivative_a, psi_derivative_b, psi_derivative_w, precalc)
+
+        slater_psi = slaterGaussianWaveFunction(system)*slaterWaveFunction(system)
+
 
         # Calculates the estimates of the energy and derivatives. Uses only those after the burn-in period.
         if i > burn_in*num_mc_iterations
@@ -311,13 +332,13 @@ function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, bu
 
             local_energy_sum += local_energy
 
-            local_energy_psi_derivative_a_sum += local_energy*psi_derivative_a
-            local_energy_psi_derivative_b_sum += local_energy*psi_derivative_b
-            local_energy_psi_derivative_w_sum += local_energy*psi_derivative_w
+            local_energy_psi_derivative_a_sum += slater_psi*local_energy*psi_derivative_a
+            local_energy_psi_derivative_b_sum += slater_psi*local_energy*psi_derivative_b
+            local_energy_psi_derivative_w_sum += slater_psi*local_energy*psi_derivative_w
 
-            psi_derivative_a_sum += psi_derivative_a
-            psi_derivative_b_sum += psi_derivative_b
-            psi_derivative_w_sum += psi_derivative_w
+            psi_derivative_a_sum += slater_psi*psi_derivative_a
+            psi_derivative_b_sum += slater_psi*psi_derivative_b
+            psi_derivative_w_sum += slater_psi*psi_derivative_w
 
         end
 
@@ -341,11 +362,24 @@ function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, bu
     local_energy_derivative_w = 2*(mc_local_energy_psi_derivative_w - mc_local_energy*mc_psi_derivative_w)
 
     return mc_local_energy, local_energy_derivative_a, local_energy_derivative_b, local_energy_derivative_w
-
 end
 
-function runVMC(system::SlaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
-    return 0
+function optimizationStep(system::slaterRBM, grad_a::Array{Float64, 2}, grad_b::Array{Float64, 2}, grad_w::Array{Float64, 2}, learning_rate::Float64)
+    nqs = system.nqs
+    nqs.a[:] = nqs.a - learning_rate*grad_a
+    nqs.b[:] = nqs.b - learning_rate*grad_b
+    nqs.w[:,:] = nqs.w - learning_rate*grad_w
+end
+
+function runVMC(system::slaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
+    local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
+    for k = 1:numVMCIterations
+        local_energy,_grad_a,  _grad_b, _grad_w = runMetorpolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+        optimizationStep(system, _grad_a, _grad_b, _grad_w, learning_rate)
+        local_energies[k] = local_energy
+        println("Iteration = ", k, "    E = ", local_energy)
+    end
+    return local_energies
 end 
 
 end #MODULE

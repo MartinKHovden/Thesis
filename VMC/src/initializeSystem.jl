@@ -125,8 +125,6 @@ struct NQS
     # Weights
     w::Array{Float64, 2}
 
-    # Visible layer
-    x::Array{Float64, 2}
     # Hidden layer
     h::Array{Float64, 2}
 
@@ -136,8 +134,8 @@ end
 
 mutable struct slaterRBM 
     particles::Array{Float64, 2}
-    n_particles::Int64 
-    n_dims::Int64
+    numParticles::Int64 
+    numDimensions::Int64
 
     alpha::Float64 
     omega::Float64
@@ -161,12 +159,11 @@ function initializeRBM(position, num_particles::Int64, num_dims::Int64, M::Int64
     w = rand(Float64, M, N) .-0.5
 
     # Initializes the visble and the hidden layer.
-    x = reshape(position', 1,:)'
     h = rand(0:1, N, 1)
 
     interacting = inter
 
-    return NQS(num_particles, num_dims, b, a, w, x, h, sig_sq, interacting)
+    return NQS(num_particles, num_dims, b, a, w, h, sig_sq, interacting)
 end
 
 function initializeSystemSlaterRBM(numParticles, numDimensions, numHidden; alpha = 1.0, omega = 1.0, beta = 1.0, sigmaSquared = 0.5, interacting = false)

@@ -8,6 +8,7 @@ export computeLocalEnergy
 using ..initializeSystem
 using ..slaterDeterminant
 using ..jastrow
+using ..boltzmannMachine
 using ..neuralNetwork
 
 # function harmonicTerm(coordinates)
@@ -76,6 +77,9 @@ function computeLocalEnergy(system::slaterRBM, interacting = false)
     omega = system.omega
     particleCoordinates = system.particles
 
+    fullGradientRBM = rbmComputeGradient(system)
+    fullLaplacianRBM = rbmComputeLaplacian(system)
+
     for i=1:N 
         laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
         gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
@@ -83,16 +87,16 @@ function computeLocalEnergy(system::slaterRBM, interacting = false)
         gradientSlaterGaussian = slaterGaussianComputeGradient(system, i)
         laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
 
-        gradientRBM = 0
-        laplacianRBM = 0
+        gradientRBM = fullGradientRBM[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions]
+        laplacianRBM = sum(fullLaplacianRBM[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions])
         
         coordinates = particleCoordinates[i,:]
         r_i_squared = coordinates[1]^2 + coordinates[2]^2
         harmonicTerm += omega*omega*r_i_squared
 
-        grad =  gradientSlaterGaussian + gradientSlaterDeterminant + gradientNN
+        grad =  gradientSlaterGaussian + gradientSlaterDeterminant + gradientRBM 
 
-        laplacian = laplacianSlaterDeterminant + laplacialSlaterGaussian + laplacianNN
+        laplacian = laplacianSlaterDeterminant + laplacialSlaterGaussian + laplacianRBM
 
         localEnergy += laplacian + grad[1]^2 + grad[2]^2
     end 

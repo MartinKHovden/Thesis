@@ -4,6 +4,8 @@ include("initializeSystem.jl")
 include("Wavefunctions/slaterDeterminant.jl")
 include("Wavefunctions/jastrow.jl")
 
+include("Wavefunctions/boltzmannMachine.jl")
+
 include("Wavefunctions/neuralNetwork.jl")
 
 include("Hamiltonians/harmonicOscillator.jl")
@@ -82,5 +84,5 @@ end
 
 
 system = initializeSystemSlaterRBM(4, 2, 4, alpha=1)
-
+runVMC(system, 10, 1000000, 0.01, 0.01)
 end # MODULE
