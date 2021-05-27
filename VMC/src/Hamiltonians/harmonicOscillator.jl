@@ -80,16 +80,21 @@ function computeLocalEnergy(system::slaterRBM, interacting = false)
     fullGradientRBM = rbmComputeGradient(system)
     fullLaplacianRBM = rbmComputeLaplacian(system)
 
+    # println("HERE: ", fullGradientRBM, fullLaplacianRBM)
+
     for i=1:N 
+        # println(i, "  ")
         laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
         gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
 
-        gradientSlaterGaussian = slaterGaussianComputeGradient(system, i)
-        laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
+        gradientSlaterGaussian = [0, 0]# slaterGaussianComputeGradient(system, i)
+        laplacialSlaterGaussian =  0 #slaterGaussianComputeLaplacian(system)
 
         gradientRBM = fullGradientRBM[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions]
         laplacianRBM = sum(fullLaplacianRBM[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions])
         
+        # println(gradientRBM, laplacianRBM)
+
         coordinates = particleCoordinates[i,:]
         r_i_squared = coordinates[1]^2 + coordinates[2]^2
         harmonicTerm += omega*omega*r_i_squared

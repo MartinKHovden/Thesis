@@ -166,7 +166,7 @@ function initializeRBM(position, num_particles::Int64, num_dims::Int64, M::Int64
     return NQS(num_particles, num_dims, b, a, w, h, sig_sq, interacting)
 end
 
-function initializeSystemSlaterRBM(numParticles, numDimensions, numHidden; alpha = 1.0, omega = 1.0, beta = 1.0, sigmaSquared = 0.5, interacting = false)
+function initializeSystemSlaterRBM(numParticles, numDimensions, numHidden; alpha = 1.0, omega = 1.0, beta = 1.0, sigmaSquared = 1.0, interacting = false)
     particles = initializeParticlesNormalDist(numParticles, numDimensions)
     sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega) 
     nqs = initializeRBM(particles, numParticles, numDimensions, numParticles*numDimensions, numHidden, sigmaSquared, interacting)

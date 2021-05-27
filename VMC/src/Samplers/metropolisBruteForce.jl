@@ -94,7 +94,7 @@ given the particle moved, the dimension, and the old position.
 function computeRatio(system::slaterRBM, particleToUpdate, coordinateToUpdate, oldPosition)
     R = slaterMatrixComputeRatio(system, particleToUpdate)
     ratioSlaterDeterminant = R^2
-    ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
+    ratioSlaterGaussian = 1 # slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
     ratioRBM = rbmComputeRatio(system, oldPosition)
     # println(ratioSlaterDeterminant,"   ", ratioSlaterGaussian,"    ",  ratioRBM)
     return ratioSlaterDeterminant*ratioSlaterGaussian*ratioRBM, R
@@ -301,7 +301,7 @@ function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, st
     psi_derivative_b::Array{Float64, 2} = zeros(Float64, size(nqs.b))
     psi_derivative_w::Array{Float64, 2} = zeros(Float64, size(nqs.w))
 
-    precalc::Array{Float64, 2} = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(x)* nqs.w))
+    # precalc::Array{Float64, 2} = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(x)* nqs.w))
 
     #Vector to store the energies for each step.
     local_energies::Array{Float64, 1} = zeros(Float64, Int(num_mc_iterations))
@@ -313,35 +313,30 @@ function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, st
         # Does one step with the brute force method.
         metropolisStepBruteForce(step_length, system)
 
+        x = reshape(system.particles', 1,:)'
+
         precalc = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(x)* nqs.w))
 
         # Computes the contribution to Monte carlo estimate of the local energy given the new system configuration.
-        local_energy = computeLocalEnergy(system, precalc)
+        local_energy = computeLocalEnergy(system)
 
         local_energies[i] = local_energy
 
         # Computes the contribution to the gradients given the new system configuration.
         rbmComputeParameterGradient!(system, psi_derivative_a, psi_derivative_b, psi_derivative_w, precalc)
 
-        slater_psi = slaterGaussianWaveFunction(system)*slaterWaveFunction(system)
-
-
         # Calculates the estimates of the energy and derivatives. Uses only those after the burn-in period.
         if i > burn_in*num_mc_iterations
-
-
             local_energy_sum += local_energy
 
-            local_energy_psi_derivative_a_sum += slater_psi*local_energy*psi_derivative_a
-            local_energy_psi_derivative_b_sum += slater_psi*local_energy*psi_derivative_b
-            local_energy_psi_derivative_w_sum += slater_psi*local_energy*psi_derivative_w
+            local_energy_psi_derivative_a_sum += local_energy*psi_derivative_a
+            local_energy_psi_derivative_b_sum += local_energy*psi_derivative_b
+            local_energy_psi_derivative_w_sum += local_energy*psi_derivative_w
 
-            psi_derivative_a_sum += slater_psi*psi_derivative_a
-            psi_derivative_b_sum += slater_psi*psi_derivative_b
-            psi_derivative_w_sum += slater_psi*psi_derivative_w
-
+            psi_derivative_a_sum += psi_derivative_a
+            psi_derivative_b_sum += psi_derivative_b
+            psi_derivative_w_sum += psi_derivative_w
         end
-
     end
 
     # Updates the final estimates of local energy and gradients.
