@@ -7,10 +7,7 @@ export hermitePolynomial, hermitePolynomialDerivative, hermitePolynomialDoubleDe
 
 Functions for calculating the hermite polynomials and it derivatives. 
 
-Author: Martin Krokan Hovden 
 """
-
-
 
 function hermitePolynomial(x, n)
     if n == 0

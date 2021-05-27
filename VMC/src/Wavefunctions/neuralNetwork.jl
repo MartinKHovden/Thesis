@@ -1,18 +1,14 @@
 module neuralNetwork
 
-# using Zygote
 using Flux:Chain, Dense, Params, gradient, params
 using Zygote:hessian
 using LinearAlgebra
 
 export computePsi, nnComputeRatio, nnComputeGradient, nnComputeLaplacian, nnComputeParameterGradient
 
-
 function computePsi(system, position)
     nn = system.nn
-    # println(position)
     x = reshape(position', 1,:)'
-    # println(x)
     return nn.model(x)[1]
 end
 
@@ -31,7 +27,6 @@ function nnComputeGradient(system)
     grads = gradient(Params([x])) do 
         loss(x)
     end 
-    # println(params(nn.model))
     return grads[x]
 end
 
@@ -49,11 +44,8 @@ function nnComputeParameterGradient(system)
     grads = gradient(ps) do 
         loss(x)
     end 
-    # println("Lengde = ", length(params(system.nn.model)))
-    # println(grads[ps[2]])
     return grads
 end 
-
 
 function nnTestComputeGradient()
     numDims = 2
@@ -64,7 +56,6 @@ function nnTestComputeGradient()
     loss(x) = sum(nn.model(x))
     println("testComputeGradient ", nnComputeGradient(nn, loss, x)[x])
 end
-
 
 function nnTestComputeLaplacian()
     numDims = 2

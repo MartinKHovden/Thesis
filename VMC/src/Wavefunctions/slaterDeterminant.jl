@@ -101,7 +101,6 @@ function slaterMatrixUpdate(system, particle)
     end
 end
 
-
 function slaterMatrixSpinUpUpdateRow(system, row)
     coordinates = system.particles[row, :]
 
@@ -114,7 +113,6 @@ function slaterMatrixSpinUpUpdateRow(system, row)
         system.slaterMatrixSpinUp[row, col] = singleParticleHermitian(coordinates, nx, ny, alpha, omega)
     end
 end 
-
 
 function slaterMatrixSpinDownUpdateRow(system, row)
     coordinates = system.particles[Int(row + system.numParticles/2), :]
@@ -129,9 +127,7 @@ function slaterMatrixSpinDownUpdateRow(system, row)
     end
 end 
 
-
 function inverseSlaterMatrixUpdate(system, col, R)
-    # println(R, system.inverseSlaterMatrixSpinDown, system.inverseSlaterMatrixSpinUp)
     if col <= system.numParticles/2
         inverseSlaterMatrixSpinUpUpdateCol(system, col, R)
     else 
@@ -140,7 +136,6 @@ function inverseSlaterMatrixUpdate(system, col, R)
 
     return nothing
 end
-
 
 function inverseSlaterMatrixSpinUpUpdateCol(system, col, R)
     newSlater = deepcopy(system.slaterMatrixSpinUp)
@@ -160,7 +155,6 @@ function inverseSlaterMatrixSpinUpUpdateCol(system, col, R)
     return nothing
 end
 
-
 function inverseSlaterMatrixSpinDownUpdateCol(system, col, R)
     newSlater = deepcopy(system.slaterMatrixSpinDown)
     oldSlaterInverse = deepcopy(system.inverseSlaterMatrixSpinDown)
@@ -179,7 +173,6 @@ function inverseSlaterMatrixSpinDownUpdateCol(system, col, R)
     return nothing
 end
 
-
 function slaterDeterminantComputeGradient(system, particle_num)
     if particle_num <= system.numParticles/2
         return slaterDeterminantSpinUpComputeGradient(system, particle_num)
@@ -187,7 +180,6 @@ function slaterDeterminantComputeGradient(system, particle_num)
         return slaterDeterminantSpinDownComputeGradient(system, particle_num)
     end 
 end
-
 
 function slaterDeterminantSpinUpComputeGradient(system, particle_num)
     d = system.numDimensions
@@ -203,7 +195,6 @@ function slaterDeterminantSpinUpComputeGradient(system, particle_num)
     end
     return grad
 end 
-
 
 function slaterDeterminantSpinDownComputeGradient(system, particle_num)
     d = system.numDimensions
@@ -222,7 +213,6 @@ function slaterDeterminantSpinDownComputeGradient(system, particle_num)
     return grad
 end
 
-
 function slaterDeterminantComputeLaplacian(system, particle_num)
     if particle_num <= system.numParticles/2
         return slaterDeterminantSpinUpComputeLaplacian(system, particle_num)
@@ -230,7 +220,6 @@ function slaterDeterminantComputeLaplacian(system, particle_num)
         return slaterDeterminantSpinDownComputeLaplacian(system, particle_num)
     end 
 end
-
 
 function slaterDeterminantSpinUpComputeLaplacian(system, particle_num)
 
@@ -255,7 +244,6 @@ function slaterDeterminantSpinUpComputeLaplacian(system, particle_num)
     return laplacian - dot(temp, temp)
 end
 
-
 function slaterDeterminantSpinDownComputeLaplacian(system, particle_num)
     # d = system.numDimensions
     row = Int(particle_num - system.numParticles/2)
@@ -279,7 +267,6 @@ function slaterDeterminantSpinDownComputeLaplacian(system, particle_num)
     return laplacian - dot(temp, temp)
 end
 
-
 function slaterGaussianComputeGradient(system, particle_num)
     coordinates = system.particles[particle_num,:]
 
@@ -290,7 +277,6 @@ function slaterGaussianComputeGradient(system, particle_num)
 
     return grad
 end 
-
 
 function slaterGaussianComputeLaplacian(system)
     d = system.numDimensions 

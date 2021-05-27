@@ -26,27 +26,6 @@ struct NQS
 
 end
 
-function computeInteractionTerm(nqs::NQS)
-
-    interaction_term = 0
-
-    # Loops over the outer sum
-    for i = 1:nqs.num_dims:nqs.num_particles*nqs.num_dims
-        # Loops over the inner sum from the current value of the outer sum
-        for j = i+nqs.num_dims:nqs.num_dims:nqs.num_particles*nqs.num_dims
-            r_ij = 0
-            for k = 0:nqs.num_dims-1
-                r_ij += (nqs.x[i + k] - nqs.x[j + k])^2
-            end
-            r_ij = sqrt(r_ij)
-
-            interaction_term += 1.0/r_ij
-        end
-    end
-
-    return interaction_term
-end
-
 function rbmComputeGradient(system)
     numDimensions = system.numDimensions
     numParticles = system.numParticles
@@ -116,30 +95,21 @@ function rbmComputeParameterGradient!(system, psi_derivative_a, psi_derivative_b
     num_visible::Int64 = size(x)[1]
     num_hidden::Int64 = size(nqs.h)[1]
 
-    #Computes the derivatives of psi with repsect to a
     psi_derivative_parameter_a = (1.0/nqs.sigma_squared)*(x - nqs.a)
 
-    #Computes the derivatives of psi with respect to b
     for n = 1:num_hidden
         psi_derivative_b[n, 1] = 1.0/((exp(-precalc[n]) + 1.0))
     end
 
-    #Computes the derivatives of psi with respect to w
     for n=1:num_hidden
-
         for m=1:num_visible
-
             psi_derivative_w[m,n] = x[m,1]/(nqs.sigma_squared*(exp(-precalc[n]) + 1.0))
-
         end
-
     end
 
 end
 
 function computePsi(nqs::NQS)
-
-    #Extracts the number of hidden and visible units.
     num_visible = nqs.num_particles*nqs.num_dims
     num_hidden = size(nqs.h)[1]
 
@@ -164,7 +134,6 @@ function computePsi(nqs::NQS)
 end
 
 function rbmComputePsi(system, x)
-    #Extracts the number of hidden and visible units.
     nqs = system.nqs
     x = reshape(x', 1,:)'
 
@@ -196,6 +165,23 @@ function rbmComputeRatio(system, oldPosition)
     ratio = (newWavefunctionValue^2)/(oldWavefunctionValue^2)
     return ratio
 end 
+
+# function computeInteractionTerm(nqs::NQS)
+    #     interaction_term = 0
+    
+    #     for i = 1:nqs.num_dims:nqs.num_particles*nqs.num_dims
+    #         for j = i+nqs.num_dims:nqs.num_dims:nqs.num_particles*nqs.num_dims
+    #             r_ij = 0
+    #             for k = 0:nqs.num_dims-1
+    #                 r_ij += (nqs.x[i + k] - nqs.x[j + k])^2
+    #             end
+    #             r_ij = sqrt(r_ij)
+    #             interaction_term += 1.0/r_ij
+    #         end
+    #     end
+    
+    #     return interaction_term
+    # end
 
 # function setUpSystemRandomUniform(position, num_particles::Int64, num_dims::Int64, M::Int64, N::Int64, sig_sq::Float64 = 0.5, inter::Bool = false)
 

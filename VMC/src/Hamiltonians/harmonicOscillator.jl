@@ -11,8 +11,6 @@ using ..jastrow
 using ..boltzmannMachine
 using ..neuralNetwork
 
-# function harmonicTerm(coordinates)
-
 function computeLocalEnergy(system::slater, interacting = false)
     N = system.numParticles
     localEnergy = 0
@@ -27,15 +25,21 @@ function computeLocalEnergy(system::slater, interacting = false)
         laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
         
         coordinates = particleCoordinates[i,:]
-        r_i_squared = coordinates[1]^2 + coordinates[2]^2
+        r_i_squared = sum(coordinates.^2)#coordinates[1]^2 + coordinates[2]^2
         harmonicTerm += omega*omega*r_i_squared
 
-        temp =  gradientSlaterGaussian + gradientSlaterDeterminant 
+        grad =  gradientSlaterGaussian + gradientSlaterDeterminant 
 
-        localEnergy += laplacianSlaterDeterminant + laplacialSlaterGaussian + temp[1]^2 + temp[2]^2
-    end 
+        localEnergy += laplacianSlaterDeterminant + laplacialSlaterGaussian + sum(grad.^2)#grad[1]^2 + grad[2]^2
+    end
+    
+    interactionTerm = 0
 
-    return -0.5*localEnergy + 0.5*harmonicTerm
+    if interacting
+        interactionTerm += computeParticleInteraction(system)
+    end
+
+    return -0.5*localEnergy + 0.5*harmonicTerm + interactionTerm
 end
 
 function computeLocalEnergy(system::slaterJastrow, interacting = false)
@@ -56,17 +60,23 @@ function computeLocalEnergy(system::slaterJastrow, interacting = false)
         laplacianJastrow = jastrowComputeLaplacian(system, i)
         
         coordinates = particleCoordinates[i,:]
-        r_i_squared = coordinates[1]^2 + coordinates[2]^2
+        r_i_squared = sum(coordinates.^2)#coordinates[1]^2 + coordinates[2]^2
         harmonicTerm += omega*omega*r_i_squared
 
         grad =  gradientSlaterGaussian + gradientSlaterDeterminant + gradientJastrow
 
         laplacian = laplacianSlaterDeterminant + laplacialSlaterGaussian + laplacianJastrow
 
-        localEnergy += laplacian + grad[1]^2 + grad[2]^2
+        localEnergy += laplacian + sum(grad.^2)#grad[1]^2 + grad[2]^2
     end 
 
-    return -0.5*localEnergy + 0.5*harmonicTerm
+    interactionTerm = 0
+
+    if interacting
+        interactionTerm += computeParticleInteraction(system)
+    end
+
+    return -0.5*localEnergy + 0.5*harmonicTerm + interactionTerm
 end
 
 function computeLocalEnergy(system::slaterRBM, interacting = false)
@@ -80,33 +90,31 @@ function computeLocalEnergy(system::slaterRBM, interacting = false)
     fullGradientRBM = rbmComputeGradient(system)
     fullLaplacianRBM = rbmComputeLaplacian(system)
 
-    # println("HERE: ", fullGradientRBM, fullLaplacianRBM)
-
     for i=1:N 
-        # println(i, "  ")
         laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
         gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
-
-        gradientSlaterGaussian = [0, 0]# slaterGaussianComputeGradient(system, i)
-        laplacialSlaterGaussian =  0 #slaterGaussianComputeLaplacian(system)
 
         gradientRBM = fullGradientRBM[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions]
         laplacianRBM = sum(fullLaplacianRBM[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions])
         
-        # println(gradientRBM, laplacianRBM)
-
         coordinates = particleCoordinates[i,:]
-        r_i_squared = coordinates[1]^2 + coordinates[2]^2
+        r_i_squared = sum(coordinates.^2)#coordinates[1]^2 + coordinates[2]^2
         harmonicTerm += omega*omega*r_i_squared
 
-        grad =  gradientSlaterGaussian + gradientSlaterDeterminant + gradientRBM 
+        grad =  gradientSlaterDeterminant + gradientRBM 
 
-        laplacian = laplacianSlaterDeterminant + laplacialSlaterGaussian + laplacianRBM
+        laplacian = laplacianSlaterDeterminant + laplacianRBM
 
-        localEnergy += laplacian + grad[1]^2 + grad[2]^2
+        localEnergy += laplacian + sum(grad.^2)# grad[1]^2 + grad[2]^2
     end 
 
-    return -0.5*localEnergy + 0.5*harmonicTerm
+    interactionTerm = 0
+
+    if interacting
+        interactionTerm += computeParticleInteraction(system)
+    end
+
+    return -0.5*localEnergy + 0.5*harmonicTerm + interactionTerm
 end
 
 function computeLocalEnergy(system::slaterNN, interacting = false)
@@ -120,9 +128,6 @@ function computeLocalEnergy(system::slaterNN, interacting = false)
     fullGradientNN = nnComputeGradient(system)
     fullLaplacianNN = nnComputeLaplacian(system)
 
-    # println("fullGrad = ", fullGradientNN, fullLaplacianNN)
-
-
     for i=1:N 
         laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
         gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
@@ -133,23 +138,27 @@ function computeLocalEnergy(system::slaterNN, interacting = false)
         gradientNN = fullGradientNN[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions]
         laplacianNN = sum(fullLaplacianNN[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions])
         
-        # println("grad = ", gradientNN, laplacianNN)
-
         coordinates = particleCoordinates[i,:]
-        r_i_squared = coordinates[1]^2 + coordinates[2]^2
+        r_i_squared = sum(coordinates.^2)#coordinates[1]^2 + coordinates[2]^2
         harmonicTerm += omega*omega*r_i_squared
 
         grad =  gradientSlaterGaussian + gradientSlaterDeterminant + gradientNN
 
         laplacian = laplacianSlaterDeterminant + laplacialSlaterGaussian + laplacianNN
 
-        localEnergy += laplacian + grad[1]^2 + grad[2]^2
-    end 
+        localEnergy += laplacian + sum(grad.^2)#grad[1]^2 + grad[2]^2
+    end
+    
+    interactionTerm = 0
 
-    return -0.5*localEnergy + 0.5*harmonicTerm
+    if interacting
+        interactionTerm += computeParticleInteraction(system)
+    end
+
+    return -0.5*localEnergy + 0.5*harmonicTerm + interactionTerm
 end
 
-function particleInteraction(system)
+function computeParticleInteraction(system)
     interaction = 0
     numParticles = system.numParticles
     particles = system.particles
