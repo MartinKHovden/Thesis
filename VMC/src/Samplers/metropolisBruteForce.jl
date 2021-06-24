@@ -55,7 +55,7 @@ function computeRatio(system::slater, particleToUpdate, coordinateToUpdate, oldP
     ratioSlaterDeterminant = R^2
     ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
     return ratioSlaterDeterminant*ratioSlaterGaussian, R
-end 
+end
 
 """ 
     computeRatio(system::slaterJastrow, particleToUpdate, coordinateToUpdate, oldPosition)
@@ -68,7 +68,7 @@ function computeRatio(system::slaterJastrow, particleToUpdate, coordinateToUpdat
     ratioSlaterDeterminant = R^2
     ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
     ratioJastrow = jastrowComputeRatio(system, oldPosition, particleToUpdate)
-    return ratioSlaterDeterminant*ratioSlaterGaussian, R
+    return ratioSlaterDeterminant*ratioSlaterGaussian*ratioJastrow, R
 end 
 
 """ 
@@ -213,7 +213,11 @@ function runMetropolisBruteForce(system::slaterNN, num_mc_iterations, step_lengt
         psi_param_derivative = nnComputeParameterGradient(system)
         psi_weights_derivative = params(system.nn.model).*0
 
-        slater_psi = slaterGaussianWaveFunction(system)*slaterWaveFunction(system)
+        # slater_psi = slaterGaussianWaveFunction(system)*slaterWaveFunction(system)
+
+        x = reshape(system.particles', 1,:)'
+
+        slater_psi = 1.0#/system.nn.model(x)[1]
 
         for grad=1:numGradients
             psi_weights_derivative[grad] = slater_psi*psi_param_derivative[params(system.nn.model)[grad]]
@@ -280,7 +284,7 @@ Uses the Metropolis Brute force algorithm to produce num_mc_iterations samples f
 Only the samples after the burn-in are used to calculate the local energy and gradient estimate that is returned.
 Calculates the estimate for the local energy as well as the gradients.
 """
-function runMetorpolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, step_length::Float64; burn_in = 0.01)
+function runMetropolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, step_length::Float64; burn_in = 0.01)
 
     nqs = system.nqs
 
@@ -369,8 +373,84 @@ end
 function runVMC(system::slaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
     for k = 1:numVMCIterations
-        local_energy,_grad_a,  _grad_b, _grad_w = runMetorpolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+        local_energy,_grad_a,  _grad_b, _grad_w = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
         optimizationStep(system, _grad_a, _grad_b, _grad_w, learning_rate)
+        local_energies[k] = local_energy
+        println("Iteration = ", k, "    E = ", local_energy)
+    end
+    return local_energies
+end 
+
+################################################################################
+
+        ##
+        ##
+        ##
+        ##
+        ##
+        ##
+       ##
+#     ##
+ #####
+
+################################################################################
+
+function runMetropolisBruteForce(system::slaterJastrow, num_mc_iterations, step_length; burn_in = 0.01)
+    local_energy_sum::Float64 = 0.0
+
+    local_energy_psi_parameter_derivative_sum = zeros(size(system.jastrowFactor.kappa))
+
+    # display(local_energy_psi_parameter_derivative_sum)
+
+    psi_parameter_derivative_sum = zeros(size(system.jastrowFactor.kappa))
+
+    local_energies::Array{Float64, 1} = zeros(Float64, Int(num_mc_iterations))
+
+    start = time()
+
+    for i = 1:num_mc_iterations
+        metropolisStepBruteForce(step_length, system)
+
+        jastrowUpdateDistanceMatrix(system)
+
+        local_energy = computeLocalEnergy(system)
+        local_energies[i] = local_energy
+
+        psi_parameter_derivative = jastrowComputeParameterGradient(system)
+
+        if i > burn_in*num_mc_iterations
+            local_energy_sum += local_energy
+            local_energy_psi_parameter_derivative_sum += local_energy*psi_parameter_derivative
+            psi_parameter_derivative_sum += psi_parameter_derivative
+        end
+    end
+
+    runtime = time() - start
+
+    samples = num_mc_iterations - burn_in*num_mc_iterations
+
+    mc_local_energy = local_energy_sum/samples
+    mc_local_energy_psi_derivative_parameters = local_energy_psi_parameter_derivative_sum/samples
+    mc_psi_derivative_parameters = psi_parameter_derivative_sum/samples
+
+    local_energy_derivative_parameters = 2*(mc_local_energy_psi_derivative_parameters - mc_local_energy*mc_psi_derivative_parameters)
+
+    println(mc_local_energy)
+
+    println(mc_local_energy, local_energy_derivative_parameters)
+
+    return mc_local_energy, local_energy_derivative_parameters
+end
+
+function optimizationStep(system::slaterJastrow, gradKappa, learning_rate::Float64)
+    system.jastrowFactor.kappa[:,:] = system.jastrowFactor.kappa[:,:] - learning_rate*gradKappa
+end
+
+function runVMC(system::slaterJastrow, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
+    local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
+    for k = 1:numVMCIterations
+        local_energy, _grad_kappa = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+        optimizationStep(system, _grad_kappa, learning_rate)
         local_energies[k] = local_energy
         println("Iteration = ", k, "    E = ", local_energy)
     end

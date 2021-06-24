@@ -25,7 +25,6 @@ function hermitePolynomial(x, n)
 end
 
 function hermitePolynomialDerivative(x, n)
-
     if n == 0
         return 0
     elseif n == 1
@@ -41,7 +40,6 @@ function hermitePolynomialDerivative(x, n)
 end
 
 function hermitePolynomialDoubleDerivative(x, n)
-
     if n == 0
         return 0
     elseif n == 1

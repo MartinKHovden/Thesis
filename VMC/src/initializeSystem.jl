@@ -11,6 +11,7 @@ using Random
 using .quantumNumbers
 using .singleParticle
 using Flux
+using LinearAlgebra
 # using ..neuralNetwork
 
 """ 
@@ -89,6 +90,11 @@ function initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, o
     return (slaterMatrixSpinUp, slaterMatrixSpinDown, invSlaterMatrixSpinUp, invSlaterMatrixSpinDown)
 end
 
+struct Jastrow 
+    kappa::Array{Float64, 2}
+    distanceMatrix::Array{Float64, 2}
+end
+
 mutable struct slaterJastrow
     particles::Array{Float64, 2}
     numParticles::Int64 
@@ -105,12 +111,31 @@ mutable struct slaterJastrow
 
     inverseSlaterMatrixSpinUp::Array{Float64, 2}
     inverseSlaterMatrixSpinDown::Array{Float64, 2}
+
+    jastrowFactor::Jastrow
 end 
 
 function initializeSystemSlaterJastrow(numParticles, numDimensions; alpha = 1.0, omega = 1.0, beta = 1.0, interacting = false)
     particles = initializeParticlesNormalDist(numParticles, numDimensions)
     sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega) 
-    system = slaterJastrow(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD)
+    distanceMatrix = zeros(numParticles, numParticles)
+    println(distanceMatrix)
+    for i=1:numParticles
+        for j=i:numParticles 
+            difference = particles[i, :] - particles[j, :]
+            distance = sqrt(dot(difference, difference))
+            distanceMatrix[i,j] = distance
+        end 
+    end 
+    display(distanceMatrix)
+    distanceMatrix = distanceMatrix + distanceMatrix'
+    display(distanceMatrix)
+    rng = MersenneTwister(123)
+    kappa = randn(rng, Float64, (numParticles, numParticles))
+    jastrowFactor = Jastrow(kappa, distanceMatrix)
+    display(particles)
+    system = slaterJastrow(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD, jastrowFactor)
+    return system
 end
 
 struct NQS

@@ -1,6 +1,7 @@
 module jastrow 
 
 export jastrowComputeRatio, jastrowComputeGradient, jastrowComputeLaplacian
+export jastrowComputeParameterGradient, jastrowUpdateDistanceMatrix
 
 using LinearAlgebra
 
@@ -12,20 +13,19 @@ Computes the ratio for the Jastrow part of the wavefunction.
 function jastrowComputeRatio(system, oldPosition, particleMoved)
     positionDifferenceSum = 0
     newPosition = system.particles
-    for i=1:system.numParticles
-        if i != particleMoved
-            newDifference = newPosition[i, :] - newPosition[particleMoved, :]
+    kappa = system.jastrowFactor.kappa
+    for j=1:system.numParticles
+        if j != particleMoved
+            newDifference = newPosition[j, :] - newPosition[particleMoved, :]
             newDistance = sqrt(dot(newDifference, newDifference))
 
-            oldDifference = oldPosition[i, :] - oldPosition[particleMoved, :]
+            oldDifference = oldPosition[j, :] - oldPosition[particleMoved, :]
             oldDistance = sqrt(dot(oldDifference, oldDifference))
 
-            positionDifferenceSum += system.beta*(newDistance - oldDistance)
+            positionDifferenceSum += kappa[particleMoved, j]*(newDistance - oldDistance)
         end 
     end
-
     ratio = exp(2*positionDifferenceSum)
-
     return ratio
 end 
 
@@ -38,15 +38,16 @@ function jastrowComputeGradient(system, particleNum)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
     particles = system.particles
-    beta = system.beta
-
+    kappa = system.jastrowFactor.kappa
     gradient = zeros(numDimensions)
 
-    for i=1:numParticles 
-        if i != particleNum
-            difference = particles[particleNum, :] - particles[i, :]
+    # display(kappa)
+
+    for j=1:numParticles 
+        if j != particleNum
+            difference = particles[particleNum, :] - particles[j, :]
             distance = sqrt(dot(difference, difference))
-            gradient += beta*difference./distance
+            gradient += kappa[particleNum, j]*difference./distance
         end
     end
 
@@ -62,7 +63,7 @@ function jastrowComputeLaplacian(system, i)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
     particles = system.particles
-    beta = system.beta
+    kappa = system.jastrowFactor.kappa
 
     laplacian = 0
 
@@ -71,7 +72,7 @@ function jastrowComputeLaplacian(system, i)
             difference = particles[i, :] - particles[j, :]
             distance = sqrt(dot(difference, difference))
             for k=1:numDimensions
-                laplacian += (beta/distance)*(1 - (difference[k]/distance)^2)
+                laplacian += (kappa[i,j]/distance)*(1 - (difference[k]/distance)^2)
             end
         end
     end 
@@ -79,7 +80,21 @@ function jastrowComputeLaplacian(system, i)
 end 
 
 function jastrowComputeParameterGradient(system)
-    return 
+    return system.jastrowFactor.distanceMatrix
 end 
+
+function jastrowUpdateDistanceMatrix(system)
+    numParticles = system.numParticles
+    distanceMatrix = zeros(numParticles, numParticles)
+    particles = system.particles
+    for i=1:numParticles
+        for j=i:numParticles 
+            difference = particles[i, :] - particles[j, :]
+            distance = sqrt(dot(difference, difference))
+            distanceMatrix[i,j] = distance
+        end 
+    end 
+    system.jastrowFactor.distanceMatrix[:,:] = distanceMatrix + distanceMatrix'
+end
 
 end
