@@ -88,6 +88,11 @@ function jastrowComputeLaplacian(system, i)
     return laplacian
 end 
 
+"""
+    jastrowComputeParameterGradient(system)
+
+Computes the gradient with respect to the variational parameters. 
+"""
 function jastrowComputeParameterGradient(system)
     return system.jastrowFactor.distanceMatrix
 end 
