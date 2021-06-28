@@ -132,6 +132,7 @@ function initializeSystemSlaterJastrow(numParticles, numDimensions; alpha = 1.0,
     display(distanceMatrix)
     rng = MersenneTwister(123)
     kappa = randn(rng, Float64, (numParticles, numParticles))
+    kappa = 0.5*(kappa + kappa')
     jastrowFactor = Jastrow(kappa, distanceMatrix)
     display(particles)
     system = slaterJastrow(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD, jastrowFactor)

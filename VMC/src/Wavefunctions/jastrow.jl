@@ -2,6 +2,7 @@ module jastrow
 
 export jastrowComputeRatio, jastrowComputeGradient, jastrowComputeLaplacian
 export jastrowComputeParameterGradient, jastrowUpdateDistanceMatrix
+export jastrowWavefunction
 
 using LinearAlgebra
 
@@ -43,6 +44,13 @@ function jastrowComputeGradient(system, particleNum)
 
     # display(kappa)
 
+    # for dim=1:numDimensions
+    #     for j=1:numParticles
+    #         if j!=particleNum
+    #             gradient[dim] += kappa[particleNum, j]*(particles[particleNum, dim] - particles[j, dim])/system.jastrowFactor.distanceMatrix[particleNum, j] 
+    #         end 
+    #     end 
+    # end
     for j=1:numParticles 
         if j != particleNum
             difference = particles[particleNum, :] - particles[j, :]
@@ -76,6 +84,7 @@ function jastrowComputeLaplacian(system, i)
             end
         end
     end 
+
     return laplacian
 end 
 
@@ -96,5 +105,15 @@ function jastrowUpdateDistanceMatrix(system)
     end 
     system.jastrowFactor.distanceMatrix[:,:] = distanceMatrix + distanceMatrix'
 end
+
+function jastrowWavefunction(system)
+    expArgument = 0
+    for i=1:system.numParticles
+        for j=i+1:system.numParticles
+            expArgument += system.jastrowFactor.kappa[i,j]*system.jastrowFactor.distanceMatrix[i,j]
+        end 
+    end 
+    return exp(expArgument)
+end 
 
 end

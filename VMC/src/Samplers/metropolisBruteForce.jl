@@ -69,7 +69,7 @@ function computeRatio(system::slaterJastrow, particleToUpdate, coordinateToUpdat
     ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
     ratioJastrow = jastrowComputeRatio(system, oldPosition, particleToUpdate)
     return ratioSlaterDeterminant*ratioSlaterGaussian*ratioJastrow, R
-end 
+end
 
 """ 
     computeRatio(system::slaterNN, particleToUpdate, coordinateToUpdate, oldPosition)
@@ -389,7 +389,7 @@ end
         ##
         ##
         ##
-       ##
+#      ##
 #     ##
  #####
 
@@ -449,6 +449,7 @@ end
 function runVMC(system::slaterJastrow, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
     for k = 1:numVMCIterations
+        display(system.jastrowFactor.kappa)
         local_energy, _grad_kappa = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
         optimizationStep(system, _grad_kappa, learning_rate)
         local_energies[k] = local_energy

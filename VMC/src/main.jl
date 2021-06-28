@@ -23,7 +23,7 @@ using .metropolisBruteForce
 # runVMC(system, 10, 1000000, 0.1, 0.1)
 
 system = initializeSystemSlaterJastrow(4, 2, alpha=1.0)
-runVMC(system, 100, 100000, 0.1, 0.1)
+runVMC(system, 100, 300000, 0.1, 0.1)
 
 # system = initializeSystemSlaterNN(4, 2, alpha = 1.0)
 # runVMC(system, 20, 100000, 0.1, 0.0001)

@@ -1,6 +1,6 @@
 module slaterDeterminant
 
-export slaterWaveFunction, slaterGaussianWaveFunction
+export slaterWavefunction, slaterGaussianWaveFunction
 export slaterMatrixComputeRatio, slaterGaussianComputeRatio
 export slaterMatrixUpdate
 export inverseSlaterMatrixUpdate
@@ -33,7 +33,7 @@ quantumNumbers = [0 0
 Manual computation of the wavefunction value for the slater determinant, with
 the gaussian part of the single particle wavefunction factored out. 
 """
-function slaterWaveFunction(system)
+function slaterWavefunction(system)
     N = system.numParticles
     val = det(copy(system.slaterMatrixSpinUp))*det(copy(system.slaterMatrixSpinDown))
     return val
