@@ -97,6 +97,11 @@ function jastrowComputeParameterGradient(system)
     return system.jastrowFactor.distanceMatrix
 end 
 
+"""
+    jastrowUpdateDistanceMatrix(system)
+
+Updates the distance matrix in the jastrow part of the wavefunction. 
+"""
 function jastrowUpdateDistanceMatrix(system)
     numParticles = system.numParticles
     distanceMatrix = zeros(numParticles, numParticles)
@@ -111,6 +116,11 @@ function jastrowUpdateDistanceMatrix(system)
     system.jastrowFactor.distanceMatrix[:,:] = distanceMatrix + distanceMatrix'
 end
 
+"""
+    jastrowWavefunction(system)
+
+Computes the wavefunction value of the Jastrow factor.
+"""
 function jastrowWavefunction(system)
     expArgument = 0
     for i=1:system.numParticles

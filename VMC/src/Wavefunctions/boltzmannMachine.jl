@@ -3,8 +3,12 @@ module boltzmannMachine
 export NQS, setUpSystemRandomUniform, computePsi, optimizationStep, computeRBMParameterDerivative
 export rbmComputeGradient, rbmComputeLaplacian, rbmComputeRatio, rbmComputeParameterGradient!
 
-struct NQS
+"""
+    NQS 
 
+Struct for storing the information about the Resticted Boltzmann machine.
+"""
+struct NQS
     num_particles::Int64
     num_dims::Int64
 
@@ -23,9 +27,13 @@ struct NQS
 
     sigma_squared::Float64
     interacting::Bool
-
 end
 
+"""
+    rbmComputeGradient(system)
+
+Computes the gradient of the RBM with respect to coordinates.
+"""
 function rbmComputeGradient(system)
     numDimensions = system.numDimensions
     numParticles = system.numParticles
@@ -57,6 +65,11 @@ function rbmComputeGradient(system)
     return grads
 end 
 
+"""
+    rbmComputeLaplacian(system)
+
+Computes the laplacian of the RBM with respect to coordinates.
+"""
 function rbmComputeLaplacian(system)
     numDimensions = system.numDimensions
     numParticles = system.numParticles
@@ -88,6 +101,12 @@ function rbmComputeLaplacian(system)
     return doubleGrads
 end 
 
+"""
+    rbmComputeParameterGradient!(system, psi_derivative_a, psi_derivative_b, psi_derivative_w, precalc::Array{Float64, 2})
+
+Computes the gradient of the RBM with respect to the variational parameters. Updates
+the matrices in-place to save space and time. 
+"""
 function rbmComputeParameterGradient!(system, psi_derivative_a, psi_derivative_b, psi_derivative_w, precalc::Array{Float64, 2})
     nqs = system.nqs
     x = reshape(system.particles', 1,:)'
@@ -109,30 +128,11 @@ function rbmComputeParameterGradient!(system, psi_derivative_a, psi_derivative_b
 
 end
 
-function computePsi(nqs::NQS)
-    num_visible = nqs.num_particles*nqs.num_dims
-    num_hidden = size(nqs.h)[1]
+"""
+    rbmComputePsi(system, x)
 
-    precalc::Array{Float64, 2} = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(nqs.x)* nqs.w))
-
-
-    exp_argument = 0
-
-    for i=1:num_visible
-        exp_argument += (nqs.x[i] - nqs.a[i])^2
-    end
-
-    exp_argument /= (2*nqs.sigma_squared)
-
-    prod_term = 1.0
-
-    for j=1:num_hidden
-        prod_term *= (1.0 + exp(precalc[j]))
-    end
-
-    return exp(-exp_argument)*prod_term
-end
-
+Computes the value of the RBM wavefunction given the coordinates x of the particles.
+"""
 function rbmComputePsi(system, x)
     nqs = system.nqs
     x = reshape(x', 1,:)'
@@ -159,12 +159,41 @@ function rbmComputePsi(system, x)
     return exp(-exp_argument)*prod_term
 end
 
+""" 
+    rbmComputeRatio(system, oldPosition)
+
+Computes the ratio given the old position.
+"""
 function rbmComputeRatio(system, oldPosition)
     oldWavefunctionValue = rbmComputePsi(system, oldPosition)
     newWavefunctionValue = rbmComputePsi(system, system.particles)
     ratio = (newWavefunctionValue^2)/(oldWavefunctionValue^2)
     return ratio
 end 
+
+function computePsi(nqs::NQS)
+    num_visible = nqs.num_particles*nqs.num_dims
+    num_hidden = size(nqs.h)[1]
+
+    precalc::Array{Float64, 2} = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(nqs.x)* nqs.w))
+
+
+    exp_argument = 0
+
+    for i=1:num_visible
+        exp_argument += (nqs.x[i] - nqs.a[i])^2
+    end
+
+    exp_argument /= (2*nqs.sigma_squared)
+
+    prod_term = 1.0
+
+    for j=1:num_hidden
+        prod_term *= (1.0 + exp(precalc[j]))
+    end
+
+    return exp(-exp_argument)*prod_term
+end
 
 # function computeInteractionTerm(nqs::NQS)
     #     interaction_term = 0

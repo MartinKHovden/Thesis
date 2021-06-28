@@ -34,7 +34,7 @@ function hermitePolynomialDerivative(x, n)
     elseif n==3
         return (24*x^2 - 12)
     else 
-        println("The hermite polynomial is not implemented for n > 3")
+        println("The hermite polynomial drivative is not implemented for n > 3")
         return 0
     end 
 end
@@ -49,7 +49,7 @@ function hermitePolynomialDoubleDerivative(x, n)
     elseif n==3
         return 48*x 
     else 
-        println("The hermite polynomial is not implemented for n > 3")
+        println("The hermite polynomial double derivative is not implemented for n > 3")
         return 0
     end 
 end
