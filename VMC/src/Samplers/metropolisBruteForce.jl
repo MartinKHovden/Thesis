@@ -100,6 +100,17 @@ function computeRatio(system::slaterRBM, particleToUpdate, coordinateToUpdate, o
     return ratioSlaterDeterminant*ratioSlaterGaussian*ratioRBM, R
 end
 
+################################################################################
+
+########  #                #        #########  #########  ########
+#         #               # #           #      #          #      #
+#         #              #   #          #      #          #      #
+########  #             #######         #      #########  #######
+       #  #            #       #        #      #          #    #
+       #  #           #         #       #      #          #     #
+########  #########  #           #      #      #########  #      #
+
+################################################################################
 """
     runMetropolisBruteForce()
 
@@ -118,7 +129,7 @@ function runMetropolisBruteForce(system::slater, num_mc_iterations, step_length;
     for i = 1:num_mc_iterations
         metropolisStepBruteForce(step_length, system)
 
-        local_energy = computeLocalEnergy(system)
+        local_energy = computeLocalEnergy(system, system.interacting)
         local_energies[i] = local_energy
 
         psi_parameter_derivative = slaterGaussianComputeParameterGradient(system)
@@ -207,7 +218,7 @@ function runMetropolisBruteForce(system::slaterNN, num_mc_iterations, step_lengt
     for i = 1:num_mc_iterations
         metropolisStepBruteForce(step_length, system)
 
-        local_energy = computeLocalEnergy(system)
+        local_energy = computeLocalEnergy(system, system.interacting)
         local_energies[i] = local_energy
 
         psi_param_derivative = nnComputeParameterGradient(system)
@@ -322,7 +333,7 @@ function runMetropolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, st
         precalc = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(x)* nqs.w))
 
         # Computes the contribution to Monte carlo estimate of the local energy given the new system configuration.
-        local_energy = computeLocalEnergy(system)
+        local_energy = computeLocalEnergy(system, system.nqs.interacting)
 
         local_energies[i] = local_energy
 
@@ -413,7 +424,7 @@ function runMetropolisBruteForce(system::slaterJastrow, num_mc_iterations, step_
 
         jastrowUpdateDistanceMatrix(system)
 
-        local_energy = computeLocalEnergy(system)
+        local_energy = computeLocalEnergy(system, system.interacting)
         local_energies[i] = local_energy
 
         psi_parameter_derivative = jastrowComputeParameterGradient(system)

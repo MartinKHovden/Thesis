@@ -68,9 +68,12 @@ function initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, o
 
     for row=1:size(slaterMatrixSpinUp)[1]
         for col=1:size(slaterMatrixSpinUp)[2]
-            nx = quantumNumbers2D[col,1]
-            ny = quantumNumbers2D[col, 2]
-            slaterMatrixSpinUp[row, col] = singleParticleHermitian(particles[row, :], nx, ny, alpha, omega)
+            # nx = quantumNumbers2D[col,1]
+            # ny = quantumNumbers2D[col, 2]
+            # slaterMatrixSpinUp[row, col] = singleParticleHermitian(particles[row, :], nx, ny, alpha, omega)
+            qN = getQuantumNumbers(col, numDimensions)
+            slaterMatrixSpinUp[row, col] = singleParticleHermitian(particles[row, :], qN, alpha, omega)
+
         end 
     end
 
@@ -78,9 +81,11 @@ function initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, o
 
     for row=1:size(slaterMatrixSpinDown)[1]
         for col=1:size(slaterMatrixSpinDown)[2]
-            nx = quantumNumbers2D[col,1]
-            ny = quantumNumbers2D[col, 2]
-            slaterMatrixSpinDown[row, col] = singleParticleHermitian(particles[Int(row + numParticles/2),:], nx, ny, alpha, omega)
+            # nx = quantumNumbers2D[col,1]
+            # ny = quantumNumbers2D[col, 2]
+            # slaterMatrixSpinDown[row, col] = singleParticleHermitian(particles[Int(row + numParticles/2),:], nx, ny, alpha, omega)
+            qN = getQuantumNumbers(col, numDimensions)
+            slaterMatrixSpinDown[row, col] = singleParticleHermitian(particles[Int(row + numParticles/2),:], qN, alpha, omega)
         end 
     end
 

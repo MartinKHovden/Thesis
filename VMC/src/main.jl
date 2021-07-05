@@ -19,19 +19,19 @@ using .neuralNetwork
 using .harmonicOscillator
 using .metropolisBruteForce
 
-system = initializeSystemSlater(4, 2, alpha=1.05)
-runVMC(system, 10, 200000, 0.1, 0.1)
+system = initializeSystemSlater(4, 2, alpha=1.0, omega=1.0, interacting=false)
+@time runVMC(system, 3, 100000, 0.1, 0.1)
 
-# system = initializeSystemSlaterJastrow(4, 2, alpha=1.0)
-# runVMC(system, 100, 300000, 0.1, 0.1)
+# system = initializeSystemSlaterJastrow(2, 2, alpha=1.0, interacting=true)
+# runVMC(system, 40, 300000, 0.1, 0.1)
 
-# system = initializeSystemSlaterNN(4, 2, alpha = 1.0)
-# runVMC(system, 20, 100000, 0.1, 0.0001)
+system = initializeSystemSlaterNN(4, 2, alpha = 1.0, interacting=false, numHiddenNeurons=3)
+@time runVMC(system, 3, 100000, 0.1, 0.1)
+
 # println("Grads: ", nnComputeParameterGradient(system))
 
-
-# system = initializeSystemSlaterRBM(4, 2, 2, alpha=1)
-# runVMC(system, 30, 1000000, 0.1, 0.1)
+# system = initializeSystemSlaterRBM(2, 2, 3, alpha=1, interacting=true)
+# runVMC(system, 100, 1000000, 0.5, 0.5)
 
 
 

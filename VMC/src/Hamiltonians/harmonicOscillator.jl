@@ -4,6 +4,7 @@ export computeLocalEnergy
 
 # include("../initializeSystem.jl")
 # include("../Wavefunctions/slaterDeterminant.jl")
+using LinearAlgebra
 
 using ..initializeSystem
 using ..slaterDeterminant
@@ -36,7 +37,8 @@ function computeLocalEnergy(system::slater, interacting = false)
     interactionTerm = 0
 
     if interacting
-        interactionTerm += computeParticleInteraction(system)
+        # println("Here")
+        interactionTerm = computeParticleInteraction(system)
     end
 
     return -0.5*localEnergy + 0.5*harmonicTerm + interactionTerm
@@ -164,9 +166,9 @@ function computeParticleInteraction(system)
     particles = system.particles
     for i=1:numParticles
         for j=i+1:numParticles
-            difference = particles[i] - particles[j]
+            difference = particles[i,:] - particles[j,:]
             distance = sqrt(dot(difference, difference))
-            interaction += 1/distance 
+            interaction += 1.0/distance 
         end 
     end
     return interaction 

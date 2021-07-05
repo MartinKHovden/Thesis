@@ -15,8 +15,7 @@ end
 function nnComputeRatio(system, oldPosition)
     oldWavefunctionValue = computePsi(system, oldPosition)
     newWavefunctionValue = computePsi(system, system.particles)
-    # ratio = (newWavefunctionValue^2)/(oldWavefunctionValue^2)
-    ratio = exp(newWavefunctionValue^2 - oldWavefunctionValue^2)
+    ratio = exp(newWavefunctionValue*2 - oldWavefunctionValue*2)
     return ratio
 end
 
