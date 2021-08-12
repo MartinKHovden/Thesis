@@ -3,33 +3,35 @@ module quantumNumbers
 export quantumNumbers2D
 export getQuantumNumbers
 
-quantumNumbers2D = [0 0
-                    1 0 
-                    0 1 
-                    2 0 
-                    1 1 
-                    0 2 
-                    3 0 
-                    2 1 
-                    1 2 
-                    0 3]
+const quantumNumbers2D = [0 0
+1 0 
+0 1 
+2 0 
+1 1 
+0 2 
+3 0 
+2 1 
+1 2 
+0 3]
 
-quantumNumbers3D = [0 0 0
-                    1 0 0
-                    0 1 0
-                    0 0 1
-                    2 0 0
-                    0 2 0
-                    0 0 2
-                    1 1 0
-                    1 0 1
-                    0 1 1]
+const quantumNumbers3D = [0 0 0
+1 0 0
+0 1 0
+0 0 1
+2 0 0
+0 2 0
+0 0 2
+1 1 0
+1 0 1
+0 1 1]
 
-function getQuantumNumbers(col, numDimensions)
+function getQuantumNumbers(col::Int64, numDimensions::Int64)
     if numDimensions == 2
         return quantumNumbers2D[col,:]
-    else
+    elseif numDimensions == 3
         return quantumNumbers3D[col,:]
+    else 
+        println("Use dim = 2 or dim = 3")
     end
 end 
 

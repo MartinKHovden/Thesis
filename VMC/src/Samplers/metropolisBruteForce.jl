@@ -1,6 +1,6 @@
 module metropolisBruteForce
 
-export metropolisStepBruteForce, runVMC
+export metropolisStepBruteForce, runVMC, runMetropolisBruteForce, runMetropolis
 
 # include("../Wavefunctions/slaterDeterminant.jl")
 
@@ -10,7 +10,7 @@ using ..jastrow
 using ..neuralNetwork
 using ..harmonicOscillator
 using ..boltzmannMachine
-using Flux:params
+using Flux:params, ADAM, update!, Params
 
 """ 
     metropolisBruteForce(stepLength, system)
@@ -42,6 +42,125 @@ function metropolisStepBruteForce(stepLength, system)
         system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
         slaterMatrixUpdate(system, particleToUpdate)
     end
+end
+
+""" 
+    metropolisStepImportanceSampling(stepLength, system)
+
+Function for updating the position doing one step with the Importance Sampling Metropolis algorithm. 
+"""
+function metropolisStepImportanceSampling(stepLength, system)
+    numParticles = system.numParticles 
+    numDimensions = system.numDimensions
+
+    coordinateToUpdate::Int64 = rand(1:numDimensions)
+    particleToUpdate::Int64 = rand(1:numParticles)
+
+    oldPosition = copy(system.particles)
+
+    D = 0.5
+
+    currentDriftForce = computeDriftForce(system, particleToUpdate, coordinateToUpdate)
+
+    system.particles[particleToUpdate, coordinateToUpdate] += 
+                    D*currentDriftForce*stepLength + randn(Float64)*sqrt(stepLength)
+
+    newDriftForce = computeDriftForce(system, particleToUpdate, coordinateToUpdate)
+    # Update the slater matrix:
+    slaterMatrixUpdate(system, particleToUpdate)
+
+    U = rand(Float64)
+
+    greens_function = computeGreensFunction(oldPosition, system.particles, particleToUpdate,
+                                            coordinateToUpdate, currentDriftForce, 
+                                            newDriftForce, D, stepLength)
+
+    ratio, R = computeRatio(system, particleToUpdate, coordinateToUpdate, oldPosition)
+
+    if U < greens_function*ratio
+        inverseSlaterMatrixUpdate(system, particleToUpdate, (R))
+    else 
+        system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
+        slaterMatrixUpdate(system, particleToUpdate)
+    end
+end
+
+"""
+    computeDriftForce(system::slater, particleNumber::Int64, dimension::Int64)
+
+Computes the driftforce used in importance sampling when chaniging the 
+position for the particle. 
+"""
+function computeDriftForce(system::slater, particleNumber::Int64, dimension::Int64)
+    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension)
+            + slaterGaussianComputeDriftForce(system, particleNumber, dimension)
+end 
+
+"""
+    computeDriftForce(system::slater, particleNumber::Int64, dimension::Int64)
+
+Computes the driftforce used in importance sampling when chaniging the 
+position for the particle. 
+"""
+function computeDriftForce(system::slaterJastrow, particleNumber::Int64, dimension::Int64)
+    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension) 
+            + slaterGaussianComputeDriftForce(system, particleNumber, dimension)
+            + jastrowComputeDriftForce(system, particleNumber, dimension)
+end
+
+"""
+    computeDriftForce(system::slater, particleNumber::Int64, dimension::Int64)
+
+Computes the driftforce used in importance sampling when chaniging the 
+position for the particle. 
+"""
+function computeDriftForce(system::slaterRBM, particleNumber::Int64, dimension::Int64)
+    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension)
+            + rbmComputeDriftForce(system, particleNumber, dimension)
+end
+
+"""
+    computeDriftForce(system::slater, particleNumber::Int64, dimension::Int64)
+
+Computes the driftforce used in importance sampling when chaniging the 
+position for the particle. 
+"""
+function computeDriftForce(system::slaterNN, particleNumber::Int64, dimension::Int64)
+    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension)
+            + slaterGaussianComputeDriftForce(system, particleNumber, dimension) 
+            + nnComputeDriftForce(system, particleNumber, dimension)
+end 
+
+
+""" 
+    computeGreensFunction(oldPosition, newPosition, 
+                                        particleToUpdate,        
+                                        coordinateToUpdate, 
+                                        oldDriftForce, 
+                                        newDriftForce, 
+                                        D,
+                                        stepLength)
+
+Function for computing the greens function used in importance sampling. 
+"""
+function computeGreensFunction(oldPosition, newPosition, 
+                                            particleToUpdate,        
+                                            coordinateToUpdate, 
+                                            oldDriftForce, 
+                                            newDriftForce, 
+                                            D,
+                                            stepLength)
+
+    greens_function_argument = (oldPosition[particleToUpdate, coordinateToUpdate] 
+                                - newPosition[particleToUpdate, coordinateToUpdate] 
+                                - D*stepLength*newDriftForce)^2 
+                                - (newPosition[particleToUpdate, coordinateToUpdate] 
+                                - oldPosition[particleToUpdate, coordinateToUpdate] 
+                                - D*stepLength*oldDriftForce)^2
+
+    greens_function_argument /= (4.0*D*stepLength)
+    greens_function = exp(-greens_function_argument)
+    return greens_function
 end
 
 """ 
@@ -94,10 +213,8 @@ given the particle moved, the dimension, and the old position.
 function computeRatio(system::slaterRBM, particleToUpdate, coordinateToUpdate, oldPosition)
     R = slaterMatrixComputeRatio(system, particleToUpdate)
     ratioSlaterDeterminant = R^2
-    ratioSlaterGaussian = 1 # slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
     ratioRBM = rbmComputeRatio(system, oldPosition)
-    # println(ratioSlaterDeterminant,"   ", ratioSlaterGaussian,"    ",  ratioRBM)
-    return ratioSlaterDeterminant*ratioSlaterGaussian*ratioRBM, R
+    return ratioSlaterDeterminant*ratioRBM, R 
 end
 
 ################################################################################
@@ -116,7 +233,7 @@ end
 
 Runs the full metropolis sampling for a set of parameters. 
 """
-function runMetropolisBruteForce(system::slater, num_mc_iterations, step_length; burn_in = 0.01)
+function runMetropolisBruteForce(system::slater, num_mc_iterations, step_length; burn_in = 0.01, writeToFile=false)
     local_energy_sum::Float64 = 0.0
 
     local_energy_psi_parameter_derivative_sum = 0
@@ -141,6 +258,15 @@ function runMetropolisBruteForce(system::slater, num_mc_iterations, step_length;
         end
     end
 
+    if writeToFile
+        filename = "../Data/slater_bf_step_length_" * string(step_length) * ".txt" 
+        open(filename, "w") do file
+            for e in local_energies
+                println(file, e)
+            end
+        end
+    end
+
     runtime = time() - start
 
     samples = num_mc_iterations - burn_in*num_mc_iterations
@@ -148,7 +274,8 @@ function runMetropolisBruteForce(system::slater, num_mc_iterations, step_length;
     mc_local_energy = local_energy_sum/samples
     mc_local_energy_psi_derivative_a = local_energy_psi_parameter_derivative_sum/samples
     mc_psi_derivative_a = psi_parameter_derivative_sum/samples
-    local_energy_derivative_a = 2*(mc_local_energy_psi_derivative_a - mc_local_energy*mc_psi_derivative_a)
+    local_energy_derivative_a = 2*(mc_local_energy_psi_derivative_a - 
+                                        mc_local_energy*mc_psi_derivative_a)
 
     println(mc_local_energy)
 
@@ -166,30 +293,24 @@ function optimizationStep(system::slater, grad_a::Float64, learning_rate::Float6
 end
 
 """
-    runVMC()
+    runVMC(system::slater, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
 
 Runs the full vmc calculation by calling the runMetropolisBruteForce step multiple 
 times and updating the variational parameters accordingly. 
 """
-function runVMC(system::slater, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
+function runVMC(system::slater, numVMCIterations::Int64, numMonteCarloIterations, 
+                                                        mc_step_length, 
+                                                        learning_rate)
+
     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
     for k = 1:numVMCIterations
-        local_energy, _grad_a = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
-        optimizationStep(system, _grad_a, learning_rate)
+        local_energy, grad = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+        optimizationStep(system, grad, learning_rate)
         local_energies[k] = local_energy
         println("Iteration = ", k, "    E = ", local_energy, "   alpha =  ", system.alpha)
     end
     return local_energies
 end 
-
-""" 
-    runVMc()
-
-Function for running full VMC calculation for a Slater-Jastrow wavefunction.
-"""
-function runVMC(system::slaterJastrow, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
-    return 0
-end
 
 ################################################################################
 
@@ -216,7 +337,8 @@ function runMetropolisBruteForce(system::slaterNN, num_mc_iterations, step_lengt
     start = time()
 
     for i = 1:num_mc_iterations
-        metropolisStepBruteForce(step_length, system)
+        # metropolisStepBruteForce(step_length, system)
+        metropolisStepImportanceSampling(step_length, system)
 
         local_energy = computeLocalEnergy(system, system.interacting)
         local_energies[i] = local_energy
@@ -224,14 +346,10 @@ function runMetropolisBruteForce(system::slaterNN, num_mc_iterations, step_lengt
         psi_param_derivative = nnComputeParameterGradient(system)
         psi_weights_derivative = params(system.nn.model).*0
 
-        # slater_psi = slaterGaussianWaveFunction(system)*slaterWaveFunction(system)
-
         x = reshape(system.particles', 1,:)'
 
-        slater_psi = 1.0#/system.nn.model(x)[1]
-
         for grad=1:numGradients
-            psi_weights_derivative[grad] = slater_psi*psi_param_derivative[params(system.nn.model)[grad]]
+            psi_weights_derivative[grad] = psi_param_derivative[params(system.nn.model)[grad]]
         end 
 
         if i > burn_in*num_mc_iterations
@@ -250,21 +368,30 @@ function runMetropolisBruteForce(system::slaterNN, num_mc_iterations, step_lengt
 
     mc_psi_derivative_weights = psi_weights_derivative_sum/samples
 
-    local_energy_derivative_weights = 2*(mc_local_energy_psi_derivative_weights - mc_local_energy*mc_psi_derivative_weights)
-
-    println(mc_local_energy)
+    local_energy_derivative_weights = 2*(mc_local_energy_psi_derivative_weights - 
+                                        mc_local_energy*mc_psi_derivative_weights)
 
     return mc_local_energy, local_energy_derivative_weights
 end
 
-function runVMC(system::slaterNN, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
+function runVMC(system::slaterNN, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate; writeToFile=false)
     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
     for k = 1:numVMCIterations
         local_energy, _grad_w = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
         optimizationStep(system, _grad_w, learning_rate)
         local_energies[k] = local_energy
-        println("Iteration = ", k, "    E = ", local_energy, "   alpha =  ", system.alpha)
+        println("Iteration = ", k, "    E = ", local_energy, "   Error =  ", abs(local_energy - 2.0))
     end
+
+    if writeToFile
+        filename = "vmc_nn_bf_step_length_" * string(mc_step_length) * ".txt"  
+        open(filename, "w") do file
+            for e in local_energies
+                println(file, e)
+            end
+        end
+    end
+
     return local_energies
 end 
 
@@ -289,13 +416,13 @@ end
 ################################################################################
 
 """
-    runMetorpolisBruteForce(nqs::NQS, num_mc_iterations::Int64, burn_in::Float64, step_length::Float64, write_to_file::Bool)
+    runMetorpolisBruteForce(system:slaterRBM, num_mc_iterations::Int64, burn_in::Float64, step_length::Float64, write_to_file::Bool)
 
 Uses the Metropolis Brute force algorithm to produce num_mc_iterations samples from the distribution and writes the samples to file if wanted.
 Only the samples after the burn-in are used to calculate the local energy and gradient estimate that is returned.
 Calculates the estimate for the local energy as well as the gradients.
 """
-function runMetropolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, step_length::Float64; burn_in = 0.01)
+function runMetropolis(system::slaterRBM, num_mc_iterations::Int64, step_length::Float64; sampler = "bf", burn_in = 0.01, writeToFile = false)
 
     nqs = system.nqs
 
@@ -323,10 +450,20 @@ function runMetropolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, st
 
     start = time()
 
+    if sampler == "bf"
+        step = metropolisStepBruteForce 
+    elseif  sampler == "is"
+        step = metropolisStepImportanceSampling
+    else
+        println("This sampler is not implemented")
+    end
+
     for i = 1:num_mc_iterations
 
         # Does one step with the brute force method.
-        metropolisStepBruteForce(step_length, system)
+        # metropolisStepBruteForce(step_length, system)
+        # metropolisStepImportanceSampling(step_length, system)
+        step(step_length, system)
 
         x = reshape(system.particles', 1,:)'
 
@@ -354,6 +491,20 @@ function runMetropolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, st
         end
     end
 
+    if writeToFile
+        if system.nqs.interacting == true
+            folder = "Interacting"
+        elseif system.nqs.interacting == false
+            folder = "Non-interacting"
+        end
+        filename = "../Data/"*folder*"/metropolis/rbm_"*sampler*"_step_length_" * string(step_length) *"_num_hidden_"* string(length(system.nqs.h)) * ".txt"  
+        open(filename, "w") do file
+            for e in local_energies
+                println(file, e)
+            end
+        end
+    end
+
     # Updates the final estimates of local energy and gradients.
     samples = num_mc_iterations - burn_in*num_mc_iterations
 
@@ -371,26 +522,95 @@ function runMetropolisBruteForce(system::slaterRBM, num_mc_iterations::Int64, st
     local_energy_derivative_b = 2*(mc_local_energy_psi_derivative_b - mc_local_energy*mc_psi_derivative_b)
     local_energy_derivative_w = 2*(mc_local_energy_psi_derivative_w - mc_local_energy*mc_psi_derivative_w)
 
-    return mc_local_energy, local_energy_derivative_a, local_energy_derivative_b, local_energy_derivative_w
+    return mc_local_energy,  [local_energy_derivative_a, local_energy_derivative_b, local_energy_derivative_w]
+    
 end
 
-function optimizationStep(system::slaterRBM, grad_a::Array{Float64, 2}, grad_b::Array{Float64, 2}, grad_w::Array{Float64, 2}, learning_rate::Float64)
+function optimizationStep(system::slaterRBM, grad, learning_rate::Float64)
     nqs = system.nqs
-    nqs.a[:] = nqs.a - learning_rate*grad_a
-    nqs.b[:] = nqs.b - learning_rate*grad_b
-    nqs.w[:,:] = nqs.w - learning_rate*grad_w
+    nqs.a[:] = nqs.a - learning_rate*grad[1][:]
+    nqs.b[:] = nqs.b - learning_rate*grad[2][:]
+    nqs.w[:,:] = nqs.w - learning_rate*grad[3][:,:]
 end
 
-function runVMC(system::slaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
+function runVMC(system::slaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate; sampler = "bf", optimization = "gd", writeToFile = false)
     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
     for k = 1:numVMCIterations
-        local_energy,_grad_a,  _grad_b, _grad_w = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
-        optimizationStep(system, _grad_a, _grad_b, _grad_w, learning_rate)
+        local_energy, grad = runMetropolis(system, numMonteCarloIterations, mc_step_length, sampler = sampler)
+        optimizationStep(system, grad, learning_rate)
         local_energies[k] = local_energy
-        println("Iteration = ", k, "    E = ", local_energy)
+        println("Iteration = ", k, "    E = ", local_energy, "  Error = ", abs(local_energy - 2.0))
     end
+
+    if writeToFile
+        if system.nqs.interacting == true
+            folder = "Interacting"
+        elseif system.nqs.interacting == false
+            folder = "Non-interacting"
+        end
+        filename = "../Data/"*folder*"/VMC/vmc_rbm_bf_step_length_" * string(mc_step_length) *"_num_hidden_"* string(length(system.nqs.h)) * ".txt"  
+        open(filename, "w") do file
+            for e in local_energies
+                println(file, e)
+            end
+        end
+    end
+
     return local_energies
 end 
+
+# function optimizationStepADAM(system::slaterRBM, grad_a::Array{Float64, 2}, 
+#                                                 grad_b::Array{Float64, 2}, 
+#                                                 grad_w::Array{Float64, 2},
+#                                                 m_a::Array{Float64, 2},
+#                                                 m_b::Array{Float64, 2},
+#                                                 m_w::Array{Float64, 2},
+#                                                 v_a::Array{Float64, 2},
+#                                                 v_b::Array{Float64, 2},
+#                                                 v_w::Array{Float64, 2},
+#                                                 beta1::Float64,
+#                                                 beta2::Float64,
+#                                                 epsilon::Float64,  
+#                                                 learning_rate::Float64,
+#                                                 iteration)
+#     nqs = system.nqs
+
+#     m_a = (beta1*m_a + (1-beta1)*grad_a)/(1-beta1^iteration)
+#     m_b = (beta1*m_b + (1-beta1)*grad_b)/(1-beta1^iteration)
+#     m_w = (beta1*m_w + (1-beta1)*grad_w)/(1-beta1^iteration)
+
+#     v_a = (beta2*v_a + (1-beta2)*grad_a.^2)/(1-beta2^iteration)
+#     v_b = (beta2*v_b + (1-beta2)*grad_b.^2)/(1-beta2^iteration)
+#     v_w = (beta2*v_w + (1-beta2)*grad_w.^2)/(1-beta2^iteration)
+
+#     nqs.a[:] = nqs.a - learning_rate*m_a./(sqrt.(v_a) .+ epsilon)
+#     nqs.b[:] = nqs.b - learning_rate*m_b./(sqrt.(v_b) .+ epsilon)
+#     nqs.w[:,:] = nqs.w - learning_rate*m_w./(sqrt.(v_w) .+ epsilon)
+# end
+
+# function runVMC(system::slaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
+#     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
+#     beta1 = 0.9
+#     beta2 = 0.999
+#     epsilon = 10^(-8)
+
+#     m_a = zeros(size(system.nqs.a))
+#     m_b = zeros(size(system.nqs.b))
+#     m_w = zeros(size(system.nqs.w))
+
+#     v_a = zeros(size(system.nqs.a))
+#     v_b = zeros(size(system.nqs.b))
+#     v_w = zeros(size(system.nqs.w))
+
+#     for k = 1:numVMCIterations
+#         local_energy, _grad_a,  _grad_b, _grad_w = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+#         optimizationStepADAM(system, _grad_a, _grad_b, _grad_w, m_a, m_b, m_w, v_a, v_b, v_w, beta1, beta2, epsilon, learning_rate, k)
+#         local_energies[k] = local_energy
+#         println("Iteration = ", k, "    E = ", local_energy)
+#         println(system.nqs.a, system.nqs.b, system.nqs.w)
+#     end
+#     return local_energies
+# end 
 
 ################################################################################
 
@@ -406,12 +626,10 @@ end
 
 ################################################################################
 
-function runMetropolisBruteForce(system::slaterJastrow, num_mc_iterations, step_length; burn_in = 0.01)
+function runMetropolisBruteForce(system::slaterJastrow, num_mc_iterations, step_length; burn_in = 0.01, writeToFile= false)
     local_energy_sum::Float64 = 0.0
 
     local_energy_psi_parameter_derivative_sum = zeros(size(system.jastrowFactor.kappa))
-
-    # display(local_energy_psi_parameter_derivative_sum)
 
     psi_parameter_derivative_sum = zeros(size(system.jastrowFactor.kappa))
 
@@ -420,7 +638,8 @@ function runMetropolisBruteForce(system::slaterJastrow, num_mc_iterations, step_
     start = time()
 
     for i = 1:num_mc_iterations
-        metropolisStepBruteForce(step_length, system)
+        # metropolisStepBruteForce(step_length, system)
+        metropolisStepImportanceSampling(step_length, system)
 
         jastrowUpdateDistanceMatrix(system)
 
@@ -436,6 +655,14 @@ function runMetropolisBruteForce(system::slaterJastrow, num_mc_iterations, step_
         end
     end
 
+    if writeToFile
+        open("output.txt", "w") do file
+            for e in local_energies
+                println(file, e)
+            end
+        end
+    end
+
     runtime = time() - start
 
     samples = num_mc_iterations - burn_in*num_mc_iterations
@@ -446,10 +673,6 @@ function runMetropolisBruteForce(system::slaterJastrow, num_mc_iterations, step_
 
     local_energy_derivative_parameters = 2*(mc_local_energy_psi_derivative_parameters - mc_local_energy*mc_psi_derivative_parameters)
 
-    println(mc_local_energy)
-
-    println(mc_local_energy, local_energy_derivative_parameters)
-
     return mc_local_energy, local_energy_derivative_parameters
 end
 
@@ -457,14 +680,32 @@ function optimizationStep(system::slaterJastrow, gradKappa, learning_rate::Float
     system.jastrowFactor.kappa[:,:] = system.jastrowFactor.kappa[:,:] - learning_rate*gradKappa
 end
 
+""" 
+    runVMC(system::slaterJastrow, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
+
+Function for running the full simulation for a Slater-Jastrow wavefunction. 
+"""
 function runVMC(system::slaterJastrow, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate)
     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
     for k = 1:numVMCIterations
-        display(system.jastrowFactor.kappa)
-        local_energy, _grad_kappa = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
-        optimizationStep(system, _grad_kappa, learning_rate)
+        local_energy, grads = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+        optimizationStep(system, grads, learning_rate)
         local_energies[k] = local_energy
         println("Iteration = ", k, "    E = ", local_energy)
+    end
+    return local_energies
+end 
+
+function runVMC(system, numVMCIterations::Int64, numMonteCarloIterations, 
+    mc_step_length, 
+    learning_rate)
+
+    local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
+    for k = 1:numVMCIterations
+        local_energy, grad = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+        optimizationStep(system, grad, learning_rate)
+        local_energies[k] = local_energy
+        println("Iteration = ", k, "    E = ", local_energy, "   Error =  ", abs(2.0 - local_energy))
     end
     return local_energies
 end 

@@ -19,6 +19,10 @@ function nnComputeRatio(system, oldPosition)
     return ratio
 end
 
+function nnComputeDriftForce(system)
+    return 2*nnComputeGradient(system)[(particleToUpdate - 1)*numDimensions + coordinateToUpdate]
+end
+
 function nnComputeGradient(system)
     numDimensions = system.numDimensions
     nn = system.nn
@@ -47,52 +51,46 @@ function nnComputeParameterGradient(system)
     return grads
 end 
 
+# function nnTestComputeGradient()
+#     numDims = 2
+#     numParticles = 1
+#     numHidden = 2
+#     x = randn(numDims*numParticles)
+#     nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
+#     loss(x) = sum(nn.model(x))
+#     println("testComputeGradient ", nnComputeGradient(nn, loss, x)[x])
+# end
 
+# function nnTestComputeLaplacian()
+#     numDims = 2
+#     numParticles = 3
+#     numHidden = 2
+#     x = randn(numDims*numParticles)
+#     nn = NN(Chain(Dense(numParticles*numDims, numHidden, sigmoid), Dense(numHidden, 1)))
+#     loss(x) = sum(nn.model(x))
+#     println("Laplcian = ", nnComputeLaplacian(loss, x))
+# end
 
+# function testComputeParameterGradient()
+#     numDims = 3
+#     numParticles = 2
+#     numHidden = 100
+#     x = randn(numDims*numParticles)
+#     nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
+#     loss(x) = sum(nn.model(x))
+#     println(nnComputeParameterGradient(nn, loss, x))
+#     return 0
 
+# end
 
-
-
-function nnTestComputeGradient()
-    numDims = 2
-    numParticles = 1
-    numHidden = 2
-    x = randn(numDims*numParticles)
-    nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
-    loss(x) = sum(nn.model(x))
-    println("testComputeGradient ", nnComputeGradient(nn, loss, x)[x])
-end
-
-function nnTestComputeLaplacian()
-    numDims = 2
-    numParticles = 3
-    numHidden = 2
-    x = randn(numDims*numParticles)
-    nn = NN(Chain(Dense(numParticles*numDims, numHidden, sigmoid), Dense(numHidden, 1)))
-    loss(x) = sum(nn.model(x))
-    println("Laplcian = ", nnComputeLaplacian(loss, x))
-end
-
-function testComputeParameterGradient()
-    numDims = 3
-    numParticles = 2
-    numHidden = 100
-    x = randn(numDims*numParticles)
-    nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
-    loss(x) = sum(nn.model(x))
-    println(nnComputeParameterGradient(nn, loss, x))
-    return 0
-
-end
-
-function testComputePsi()
-    numDims = 3
-    numParticles = 2
-    numHidden = 10
-    x = randn(numDims*numParticles)
-    nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
-    println(computePsi(nn, x))
-end
+# function testComputePsi()
+#     numDims = 3
+#     numParticles = 2
+#     numHidden = 10
+#     x = randn(numDims*numParticles)
+#     nn = NN(Chain(Dense(numParticles*numDims, numHidden), Dense(numHidden, 1)))
+#     println(computePsi(nn, x))
+# end
 
 # @time testComputePsi()
 # @time testComputeParameterGradient()

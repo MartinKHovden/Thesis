@@ -1,14 +1,14 @@
 module main
 
 include("initializeSystem.jl")
+
 include("Wavefunctions/slaterDeterminant.jl")
 include("Wavefunctions/jastrow.jl")
-
 include("Wavefunctions/boltzmannMachine.jl")
-
 include("Wavefunctions/neuralNetwork.jl")
 
 include("Hamiltonians/harmonicOscillator.jl")
+
 include("Samplers/metropolisBruteForce.jl")
 
 
@@ -19,95 +19,25 @@ using .neuralNetwork
 using .harmonicOscillator
 using .metropolisBruteForce
 
-system = initializeSystemSlater(4, 2, alpha=1.0, omega=1.0, interacting=false)
-@time runVMC(system, 3, 100000, 0.1, 0.1)
+# system = initializeSystemSlater(2, 2, alpha=1.1, omega=1.0, interacting=false)
+# @time runVMC(system, 100, 10^5, 0.1, 0.1)
+# runMetropolisBruteForce(system, 10^7, 5.0, writeToFile=true)
 
-# system = initializeSystemSlaterJastrow(2, 2, alpha=1.0, interacting=true)
-# runVMC(system, 40, 300000, 0.1, 0.1)
+# alpha = getVariationalParameters(system)["alpha"]
 
-system = initializeSystemSlaterNN(4, 2, alpha = 1.0, interacting=false, numHiddenNeurons=3)
-@time runVMC(system, 3, 100000, 0.1, 0.1)
+# system = initializeSystemSlaterJastrow(2, 2, alpha=1.0, interacting=false)
+# @time runVMC(system, 40, 100000, 0.5, 0.5)
+# runMetropolisBruteForce(system, 1000000, 0.5; writeToFile = true)
 
-# println("Grads: ", nnComputeParameterGradient(system))
+# system = initializeSystemSlaterNN(2, 2, alpha = 1.0, interacting=false, numHiddenNeurons=2)
+# @time runVMC(system, 40, 10^4, 5.0, 0.01) #(5.0, 0.01)
+# @time runVMC(system, 100, 10^4, 0.01, 0.01) 
 
-# system = initializeSystemSlaterRBM(2, 2, 3, alpha=1, interacting=true)
-# runVMC(system, 100, 1000000, 0.5, 0.5)
+#@time runVMC(system, 100, 10^4, 0.5, 0.5)
 
-
-
-
-
-
-
-
-# function runSlater()
-#     alphaValues = [0.9, 1.0, 1.1]
-#     for alphaValue in alphaValues
-#         system = initializeSystemSlater(4, 2, alpha=alphaValue)
-#         numSamples = 1000000
-#         localEnergy = 0
-#         for i=0:numSamples
-#             if i>5000
-#                 metropolisStepBruteForce(0.1, system)
-#                 temp = harmonicOscillator.computeLocalEnergy(system)
-#                 localEnergy += temp
-#             end
-#         end
-#         println("Local Energy = ", localEnergy/(numSamples-5000))
-#         localEnergy = 0
-#     end
-# end
-
-# function runSlaterJastrow()
-#     alphaValues = [0.9, 1.0, 1.1]
-#     for alphaValue in alphaValues
-#         system = initializeSystemSlaterJastrow(4, 2, alpha=alphaValue)
-#         numSamples = 1000000
-#         localEnergy = 0
-#         for i=0:numSamples
-#             if i>5000
-#                 metropolisStepBruteForce(0.1, system)
-#                 temp = harmonicOscillator.computeLocalEnergy(system)
-#                 localEnergy += temp
-#             end
-#         end
-#         println("Local Energy = ", localEnergy/(numSamples-5000))
-#         localEnergy = 0
-#     end
-# end
-
-# runSlaterJastrow()
-
-# function runSlaterNN()
-#     system = initializeSystemSlaterNN(4, 2)
-#     numSamples = 1000000
-#     localEnergy = 0
-#     for i=0:numSamples
-#         if i>5000
-#             metropolisStepBruteForce(0.1, system)
-#             temp = harmonicOscillator.computeLocalEnergy(system)
-#             localEnergy += temp
-#         end
-#     end
-#     println("Local Energy = ", localEnergy/(numSamples-5000))
-# end 
-
-# println("Here1")
-
-# runSlaterNN()
-# system = initializeSystemSlater(4, 2, alpha=1.0)
-# runVMC(system, 10, 1000000, 0.1, 0.1)
-
-# system = initializeSystemSlaterJastrow(4, 2, alpha=1.0)
-# runVMC(system, 20, 100000, 0.1, 0.1)
-
-
-# system = initializeSystemSlaterNN(4, 2, alpha = 1.0)
-# runVMC(system, 20, 100000, 0.1, 0.0001)
-# println("Grads: ", nnComputeParameterGradient(system))
-
-
-# system = initializeSystemSlaterRBM(4, 2, 2, alpha=1)
-# runVMC(system, 30, 1000000, 0.1, 0.1)
+system = initializeSystemSlaterRBM(2, 2, 3, alpha=1.0, interacting=false)
+@time runVMC(system, 40, 10^5, 0.05, 0.5, writeToFile=true, sampler="is")
+runMetropolis(system, 2^20, 0.05; writeToFile = true, sampler="is")
+# runVMC(system, 1, 10^6, 0.5, 0.5)
 
 end # MODULE

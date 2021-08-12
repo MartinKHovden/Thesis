@@ -1,11 +1,8 @@
-module harmonicOscillator 
+module harmonicOscillator
 
 export computeLocalEnergy
 
-# include("../initializeSystem.jl")
-# include("../Wavefunctions/slaterDeterminant.jl")
 using LinearAlgebra
-
 using ..initializeSystem
 using ..slaterDeterminant
 using ..jastrow
@@ -19,11 +16,11 @@ function computeLocalEnergy(system::slater, interacting = false)
     omega = system.omega
     particleCoordinates = system.particles
     for i=1:N 
-        laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
+        laplacianSlaterDeterminant = slaterDeterminantComputeLaplacian(system, i) 
         gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
 
         gradientSlaterGaussian = slaterGaussianComputeGradient(system, i)
-        laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
+        laplacialSlaterGaussian = slaterGaussianComputeLaplacian(system)
         
         coordinates = particleCoordinates[i,:]
         r_i_squared = sum(coordinates.^2)#coordinates[1]^2 + coordinates[2]^2
@@ -93,21 +90,24 @@ function computeLocalEnergy(system::slaterRBM, interacting = false)
     fullLaplacianRBM = rbmComputeLaplacian(system)
 
     for i=1:N 
-        laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
+        laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i)
         gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
+
+        # gradientSlaterGaussian =  slaterGaussianComputeGradient(system, i)
+        # laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
 
         gradientRBM = fullGradientRBM[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions]
         laplacianRBM = sum(fullLaplacianRBM[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions])
         
         coordinates = particleCoordinates[i,:]
-        r_i_squared = sum(coordinates.^2)#coordinates[1]^2 + coordinates[2]^2
+        r_i_squared = sum(coordinates.^2)
         harmonicTerm += omega*omega*r_i_squared
 
-        grad =  gradientSlaterDeterminant + gradientRBM 
+        grad =  gradientSlaterDeterminant + gradientRBM  # + gradientSlaterGaussian
 
-        laplacian = laplacianSlaterDeterminant + laplacianRBM
+        laplacian = laplacianSlaterDeterminant + laplacianRBM  #+ laplacialSlaterGaussian
 
-        localEnergy += laplacian + sum(grad.^2)# grad[1]^2 + grad[2]^2
+        localEnergy += laplacian + sum(grad.^2)
     end 
 
     interactionTerm = 0
@@ -141,14 +141,14 @@ function computeLocalEnergy(system::slaterNN, interacting = false)
         laplacianNN = sum(fullLaplacianNN[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions])
         
         coordinates = particleCoordinates[i,:]
-        r_i_squared = sum(coordinates.^2)#coordinates[1]^2 + coordinates[2]^2
+        r_i_squared = sum(coordinates.^2)
         harmonicTerm += omega*omega*r_i_squared
 
-        grad =  gradientSlaterGaussian + gradientSlaterDeterminant + gradientNN
+        grad =   gradientSlaterDeterminant + gradientNN + gradientSlaterGaussian 
 
-        laplacian = laplacianSlaterDeterminant + laplacialSlaterGaussian + laplacianNN
+        laplacian = laplacianSlaterDeterminant  + laplacianNN  + laplacialSlaterGaussian
 
-        localEnergy += laplacian + sum(grad.^2)#grad[1]^2 + grad[2]^2
+        localEnergy += laplacian + sum(grad.^2)
     end
     
     interactionTerm = 0

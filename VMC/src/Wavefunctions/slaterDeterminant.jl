@@ -9,6 +9,8 @@ export slaterDeterminantComputeLaplacian
 export slaterGaussianComputeGradient
 export slaterGaussianComputeLaplacian
 export slaterGaussianComputeParameterGradient
+export slaterDeterminantComputeDriftForce 
+export slaterGaussianComputeDriftForce
 
 include("singleParticle.jl")
 include("../Various/quantumNumbers.jl")
@@ -17,17 +19,6 @@ using Random
 using LinearAlgebra
 using .singleParticle
 using .quantumNumbers
-
-# quantumNumbers = [0 0
-#                 1 0 
-#                 0 1 
-#                 2 0 
-#                 1 1 
-#                 0 2 
-#                 3 0 
-#                 2 1 
-#                 1 2 
-#                 0 3]
 
 """
     slaterWaveFunction(system)
@@ -110,12 +101,8 @@ function slaterMatrixSpinUpUpdateRow(system, row)
     alpha = system.alpha
 
     for col=1:size(system.slaterMatrixSpinUp)[2]
-        # nx = quantumNumbers[col,1]
-        # ny = quantumNumbers[col, 2]
-        # system.slaterMatrixSpinUp[row, col] = singleParticleHermitian(coordinates, nx, ny, alpha, omega)
-        # qN = quantumNumbers[col,:]
-        qN = getQuantumNumbers(col, system.numDimensions)
-        system.slaterMatrixSpinUp[row, col] = singleParticleHermitian(coordinates, qN, alpha, omega)
+        # qN = getQuantumNumbers(col, system.numDimensions)
+        system.slaterMatrixSpinUp[row, col] = singleParticleHermitian(coordinates, getQuantumNumbers(col, system.numDimensions), alpha, omega)
     end
 end 
 
@@ -126,12 +113,8 @@ function slaterMatrixSpinDownUpdateRow(system, row)
     alpha = system.alpha
 
     for col=1:size(system.slaterMatrixSpinDown)[2]
-        # nx = quantumNumbers[col,1]
-        # ny = quantumNumbers[col, 2]
-        # system.slaterMatrixSpinDown[row, col] = singleParticleHermitian(coordinates, nx, ny, alpha, omega)
-        # qN = quantumNumbers[col,:]
-        qN = getQuantumNumbers(col, system.numDimensions)
-        system.slaterMatrixSpinDown[row, col] = singleParticleHermitian(coordinates, qN, alpha, omega)
+        # qN = getQuantumNumbers(col, system.numDimensions)
+        system.slaterMatrixSpinDown[row, col] = singleParticleHermitian(coordinates, getQuantumNumbers(col, system.numDimensions), alpha, omega)
     end
 end 
 
@@ -199,45 +182,42 @@ function slaterDeterminantComputeGradient(system, particle_num)
     end 
 end
 
-function slaterDeterminantSpinUpComputeGradient(system, particle_num)
+function slaterDeterminantSpinUpComputeGradient(system, particle_num::Int64)
     d = system.numDimensions
     N = Int64(system.numParticles/2)
     omega = system.omega
     alpha = system.alpha
     grad = zeros(d)
-    particles = system.particles
+    # particles = system.particles
     for j=1:N
-        # nx = quantumNumbers[j,1]
-        # ny = quantumNumbers[j,2]
-        # grad[:] += singleParticleHermitianGradient(particles[particle_num,:], nx, ny, alpha, omega)*system.inverseSlaterMatrixSpinUp[j, particle_num]
-        
-        qN = getQuantumNumbers(j, d)#quantumNumbers[j,:]
-        grad[:] += singleParticleHermitianGradient(particles[particle_num,:], qN, alpha, omega)*system.inverseSlaterMatrixSpinUp[j, particle_num]
+        # qN = getQuantumNumbers(j, d)
+        grad[:] += singleParticleHermitianGradient(system.particles[particle_num,:], getQuantumNumbers(j, d), alpha, omega)*system.inverseSlaterMatrixSpinUp[j, particle_num]
     end
     return grad
 end 
 
-function slaterDeterminantSpinDownComputeGradient(system, particle_num)
+function slaterDeterminantSpinDownComputeGradient(system, particle_num::Int64)
     d = system.numDimensions
     row = Int(particle_num - system.numParticles/2)
     N = Int64(system.numParticles/2)
     omega = system.omega
     alpha = system.alpha
     grad = zeros(d)
-    particles = system.particles
     for j=1:N
-        # nx = quantumNumbers[j, 1] 
-        # ny = quantumNumbers[j, 2]
-        # temp = singleParticleHermitianGradient(particles[particle_num,:], nx, ny, alpha, omega)*system.inverseSlaterMatrixSpinDown[j, row]
-        # grad += temp
-
-        qN = getQuantumNumbers(j, d)#quantumNumbers[j,:]
-        grad[:] += singleParticleHermitianGradient(particles[particle_num,:], qN, alpha, omega)*system.inverseSlaterMatrixSpinDown[j, row]
+        grad[:] += singleParticleHermitianGradient(system.particles[particle_num,:], getQuantumNumbers(j, d), alpha, omega)*system.inverseSlaterMatrixSpinDown[j, row]
     end
     return grad
 end
 
-function slaterDeterminantComputeLaplacian(system, particle_num)
+function slaterDeterminantComputeDriftForce(system, particleToUpdate, coordinateToUpdate)
+    return 2*slaterDeterminantComputeGradient(system, particleToUpdate)[coordinateToUpdate]
+end
+
+function slaterGaussianComputeDriftForce(system, particleToUpdate, coordinateToUpdate)
+    return 2*slaterGaussianComputeGradient(system, particleToUpdate)[coordinateToUpdate]
+end
+
+function slaterDeterminantComputeLaplacian(system, particle_num::Int64)
     if particle_num <= system.numParticles/2
         return slaterDeterminantSpinUpComputeLaplacian(system, particle_num)
     else 
@@ -245,54 +225,43 @@ function slaterDeterminantComputeLaplacian(system, particle_num)
     end 
 end
 
-function slaterDeterminantSpinUpComputeLaplacian(system, particle_num)
+function slaterDeterminantSpinUpComputeLaplacian(system, particle_num::Int64)
     d = system.numDimensions
     N = Int64(system.numParticles/2)
     omega = system.omega
     alpha = system.alpha
     laplacian = 0
-    particles = system.particles
+    # particles = system.particles
     for j=1:N
-        # nx = quantumNumbers[j,1]
-        # ny = quantumNumbers[j,2]
-        qN = getQuantumNumbers(j, system.numDimensions)#quantumNumbers[j,:]
-        laplacian += (singleParticleHermitianLaplacian(particles[particle_num,:], qN, alpha, omega)*system.inverseSlaterMatrixSpinUp[j, particle_num])
+        # qN = getQuantumNumbers(j, system.numDimensions)
+        laplacian += (singleParticleHermitianLaplacian(system.particles[particle_num,:], getQuantumNumbers(j, system.numDimensions), alpha, omega)*system.inverseSlaterMatrixSpinUp[j, particle_num])
     end
 
     temp = zeros(d)
     for j=1:N 
-        # nx = quantumNumbers[j,1]
-        # ny = quantumNumbers[j,2]
-        qN = getQuantumNumbers(j, system.numDimensions)#quantumNumbers[j,:]
-        temp += singleParticleHermitianGradient(particles[particle_num,:], qN, alpha, omega)*system.inverseSlaterMatrixSpinUp[j, particle_num]
+        # qN = getQuantumNumbers(j, system.numDimensions)
+        temp += singleParticleHermitianGradient(system.particles[particle_num,:], getQuantumNumbers(j, system.numDimensions), alpha, omega)*system.inverseSlaterMatrixSpinUp[j, particle_num]
     end
     return laplacian - dot(temp, temp)
 end
 
-function slaterDeterminantSpinDownComputeLaplacian(system, particle_num)
+function slaterDeterminantSpinDownComputeLaplacian(system, particle_num::Int64)
     d = system.numDimensions
     row = Int(particle_num - system.numParticles/2)
     N = Int64(system.numParticles/2)
     omega = system.omega
     alpha = system.alpha
     laplacian = 0
-    particles = system.particles
+    # particles = system.particles
     for j=1:N
-        # nx = quantumNumbers[j, 1] 
-        # ny = quantumNumbers[j, 2]
-        # laplacian += (singleParticleHermitianLaplacian(particles[particle_num,:], nx, ny, alpha, omega)*system.inverseSlaterMatrixSpinDown[j, row])
-        qN = getQuantumNumbers(j, d) #quantumNumbers[j,:]
-        laplacian += (singleParticleHermitianLaplacian(particles[particle_num,:], qN, alpha, omega)*system.inverseSlaterMatrixSpinDown[j, row])
+        # qN = getQuantumNumbers(j, d)
+        laplacian += (singleParticleHermitianLaplacian(system.particles[particle_num,:], getQuantumNumbers(j, d), alpha, omega)*system.inverseSlaterMatrixSpinDown[j, row])
 
     end
-
     temp = zeros(d)
     for j=1:N 
-        # nx = quantumNumbers[j,1]
-        # ny = quantumNumbers[j,2]
-        # temp+= (singleParticleHermitianGradient(particles[particle_num,:], nx, ny, alpha, omega)*system.inverseSlaterMatrixSpinDown[j, row])
-        qN = getQuantumNumbers(j, d)#quantumNumbers[j,:]
-        temp+= (singleParticleHermitianGradient(particles[particle_num,:], qN, alpha, omega)*system.inverseSlaterMatrixSpinDown[j, row])
+        # qN = getQuantumNumbers(j, d)
+        temp += (singleParticleHermitianGradient(system.particles[particle_num,:], getQuantumNumbers(j, d), alpha, omega)*system.inverseSlaterMatrixSpinDown[j, row])
     end
     return laplacian - dot(temp, temp)
 end

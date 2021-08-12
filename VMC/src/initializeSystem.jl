@@ -3,6 +3,7 @@ module initializeSystem
 export slater, slaterJastrow, slaterRBM, slaterNN
 export initializeSystemSlater, initializeSystemSlaterJastrow
 export initializeSystemSlaterRBM, initializeSystemSlaterNN
+export getVariationalParameters, setVariationalParameters!
 
 include("Various/quantumNumbers.jl")
 include("Wavefunctions/singleParticle.jl")
@@ -13,6 +14,18 @@ using .singleParticle
 using Flux
 using LinearAlgebra
 # using ..neuralNetwork
+
+"""
+    preAllocations
+
+Struct for storing matrices that can be pre allocated to save time and space. 
+"""
+struct preallocations 
+    H
+    H_gradient#::Array{Float64, 1}
+    H_doubleDerivative
+end
+
 
 """ 
     initializeParticlesNormalDist(numParticles::Int64, numDimensions::Int64)
@@ -49,6 +62,8 @@ mutable struct slater
 
     inverseSlaterMatrixSpinUp::Array{Float64, 2}
     inverseSlaterMatrixSpinDown::Array{Float64, 2}
+
+    prealloc::preallocations
 end 
 
 """
@@ -59,8 +74,9 @@ Initializes the slater system struct with given constants and slater matrices.
 """
 function initializeSystemSlater(numParticles, numDimensions; alpha = 1.0, omega = 1.0, beta = 1.0, interacting = false)
     particles = initializeParticlesNormalDist(numParticles, numDimensions)
-    sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega) 
-    system = slater(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD)
+    sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega)
+    pA = preallocations(zeros(numDimensions), zeros(numDimensions), zeros(numDimensions) )
+    system = slater(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD, pA)
 end
 
 function initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega)
@@ -68,12 +84,8 @@ function initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, o
 
     for row=1:size(slaterMatrixSpinUp)[1]
         for col=1:size(slaterMatrixSpinUp)[2]
-            # nx = quantumNumbers2D[col,1]
-            # ny = quantumNumbers2D[col, 2]
-            # slaterMatrixSpinUp[row, col] = singleParticleHermitian(particles[row, :], nx, ny, alpha, omega)
             qN = getQuantumNumbers(col, numDimensions)
             slaterMatrixSpinUp[row, col] = singleParticleHermitian(particles[row, :], qN, alpha, omega)
-
         end 
     end
 
@@ -81,9 +93,6 @@ function initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, o
 
     for row=1:size(slaterMatrixSpinDown)[1]
         for col=1:size(slaterMatrixSpinDown)[2]
-            # nx = quantumNumbers2D[col,1]
-            # ny = quantumNumbers2D[col, 2]
-            # slaterMatrixSpinDown[row, col] = singleParticleHermitian(particles[Int(row + numParticles/2),:], nx, ny, alpha, omega)
             qN = getQuantumNumbers(col, numDimensions)
             slaterMatrixSpinDown[row, col] = singleParticleHermitian(particles[Int(row + numParticles/2),:], qN, alpha, omega)
         end 
@@ -183,13 +192,13 @@ end
 
 function initializeRBM(position, num_particles::Int64, num_dims::Int64, M::Int64, N::Int64, sig_sq::Float64 = 0.5, inter::Bool = false)
     # Initializes the biases
-    b = rand(Float64, N, 1) .-0.5
-    a = rand(Float64, M, 1) .-0.5
+    b = randn(Float64, N, 1)*0.05 
+    a = randn(Float64, M, 1)*0.05
 
     # Initializes the weights.
-    w = rand(Float64, M, N) .-0.5
+    w = randn(Float64, M, N)*0.05 
 
-    # Initializes the visble and the hidden layer.
+    # Initializes the hidden layer.
     h = rand(0:1, N, 1)
 
     interacting = inter
@@ -229,7 +238,7 @@ struct slaterNN
 end 
 
 function initializeNN(numParticles, numDimensions, numHiddenNeurons)
-    nn = NN(Chain(Dense(numParticles*numDimensions, numHiddenNeurons, sigmoid), Dense(numHiddenNeurons, 1)))
+    nn = NN(Chain(Dense(numParticles*numDimensions, numHiddenNeurons, sigmoid), Dense(numHiddenNeurons,Int64(numHiddenNeurons/2), sigmoid), Dense(Int64(numHiddenNeurons/2), 1, sigmoid)))
 end 
 
 function initializeSystemSlaterNN(numParticles, numDimensions; alpha = 1.0, omega = 1.0, beta = 1.0, interacting = false, numHiddenNeurons = 10)
@@ -239,6 +248,36 @@ function initializeSystemSlaterNN(numParticles, numDimensions; alpha = 1.0, omeg
     system = slaterNN(particles, numParticles, numDimensions, alpha, omega, beta, interacting, sSU, sSD, iSSU, iSSD, nn)
 end
 
+function setVariationalParameters!(system::slater, parameters)
+    if haskey(parameters, "alpha") 
+        system.alpha = parameters["alpha"]
+    end 
+end
 
+function setVariationalParameters!(system::slaterJastrow, parameters)
+    if haskey(parameters, "alpha") 
+        system.alpha = parameters["alpha"]
+    end 
+    if haskey(parameters, "kappa")
+        try 
+            system.jastrowFactor.kappa = parameters["kappa"]
+        catch 
+            println("Kappa has to be a matrix of dimensions N x N")
+        end 
+    end
+end
+
+function getVariationalParameters(system::slater)
+    parameters = Dict()
+    parameters["alpha"] = system.alpha
+    return parameters
+end 
+
+function getVariationalParameters(system::slaterJastrow)
+    parameters = Dict()
+    parameters["alpha"] = system.alpha
+    parameters["kappa"] = system.jastrowFactor.kappa
+    return parameters
+end
 
 end #MODULE
