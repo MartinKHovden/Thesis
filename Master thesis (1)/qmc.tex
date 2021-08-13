@@ -1,0 +1,185 @@
+\section{Variational Monte Carlo Methods}
+
+Variational Monte Carlo (VMC) methods are methods that can be used for calculating the ground state energy of a system in quantum mechanics. The main idea is to minimize the total energy of a system characterized by a wavefuntion depending on a variational parameter $\alpha$, and a Hamiltonian. More formally, the optimal $\alpha$ can be found by minimizing 
+\begin{equation}
+    E[H] = \langle H \rangle = \frac{\int d\boldsymbol{R}\uppsi_T^*(\boldsymbol{R}, \alpha)H(\boldsymbol{R})\uppsi_T(\boldsymbol{R}, \alpha)}{\int d\boldsymbol{R}\uppsi_T^*(\boldsymbol{R}, \alpha)\uppsi_T(\boldsymbol{R}, \alpha)}
+    \label{eq:energy}
+\end{equation}
+with respect to $\alpha$ where $\uppsi_T$ is the trial wave function and H is the Hamiltonian of the system. The variational principle states that the expectation value of H is an upper bound for the ground state energy, 
+\begin{equation}
+    E_0 \leq \langle H \rangle. \cite{mhj}
+\end{equation}
+This can be shown that first noting that the trial wave function can be rewritten as a linear combination
+\begin{equation}
+    \uppsi_T(\boldsymbol{r}) = \sum_i a_i \uppsi_i(\boldsymbol{R}). 
+\end{equation}
+where the coefficients $a_i$ are assumed to be normalized. Then 
+\begin{equation}
+    \frac{\sum_{nm}a^*_m a_n \int d\boldsymbol{R}\uppsi^*_m(\boldsymbol{R})H(\boldsymbol{R})\boldsymbol{R}\uppsi_n(\boldsymbol{R})}{\sum_{nm}a^*_ma_n\int d\boldsymbol{R}\uppsi^*_m(\boldsymbol{R})\uppsi_n(\boldsymbol{R})} = \frac{\sum_n a_n^2 E_n}{\sum_n a_n^2} \geq E_0. \cite{mhj}
+\end{equation}
+The only difference between Variational Monte Carlo method and the more traditional variational methods is that the integrals involved are estimated using Monte Carlo methods. When the number of dimensions and particles increase and complicated trial wave functions are used, the expression for the expectation value of the Hamiltonian becomes very complicated and the integral becomes high dimensional when the number of dimensions and particles increase. Analytical methods for integration then becomes hard to use. In addition, quadrature methods scale poorly when we work in a high dimensional space \cite{compstat}. Therefore, it is typically needed to use Monte Carlo methods for calculating $E[H]$.  This is often done with the help of the so-called local energy. 
+
+\subsection{Local Energy}
+The local energy of the system is defined by 
+\begin{equation}
+    E_L = \frac{1}{\uppsi_T}H\uppsi_T.
+    \label{eq:localEnergy} \cite{mhj}
+\end{equation}
+By also noting that the probability distribution function can be written as 
+\begin{equation}
+    P(\boldsymbol{R}) = \frac{|\uppsi_T(\boldsymbol{R})|^2}{\int |\uppsi_T(\boldsymbol{R})|^2 d\boldsymbol{R} },
+\end{equation}
+where the denominator is the normalization factor,
+equation \ref{eq:energy} can be rewritten to a more convenient form 
+\begin{equation}
+    E[H] = \int P(\boldsymbol{R}, \alpha)E_L(\boldsymbol{R },\alpha)d\boldsymbol{R}
+\end{equation}
+The local energy will be used to calculate the expectation value of the Hamiltonian. Calculating this integral analytically becomes impossible for most wave functions and using quadrature methods scales badly to high dimensions and for complicated systems \cite{compstat}. Using Monte Carlo integration lets us solve more complicated problems quite easily. The main problem is that the computational time can be high to get good estimates. In addition, finding good analytical expression for the quantities involved in the local energy can be hard.  
+\\
+% \subsection{Monte Carlo Integration}
+% Monte Carlo integration is a non-deterministic numerical method for solving definite integrals \cite{compstat}. The main idea is to use a random number generator to draw random numbers where the function value is evaluated. An approximation of the integral value is then found by finding the mean of all the random function values. In general, the more random samples we use, the better the approximation becomes. There also exist more advanced methods that converges to the exact solution more rapidly by drawing the random numbers from a more appropriate distribution. One of those methods are presented later, and is called importance sampling. 
+% \\
+% \\
+% More formally the expected value of a function can be approximated by 
+% \begin{equation}
+%     E[f(\boldsymbol{x})] = \int f(x)p(x)dx \approx \frac{1}{N}\sum_{i=1}^N f(X_i) = \hat{\mu}, 
+%     \label{eq:MonteCarloIntegration}
+% \end{equation}
+% where $X_i$ is drawn from the probability distribution p \cite{compstat}. By adjusting N it is possible to increase the accuracy of the Monte Carlo integration, and it can be shown that 
+% \begin{equation}
+%     \lim_{n\to \infty} \frac{1}{N}\sum_{i=1}^N f(x_i) = E[f(\boldsymbol{x})]
+% \end{equation}
+% by the law of large numbers \cite{compstat}.
+% \\
+% \\
+% When working with random numbers and Monte Carlo methods it is interesting to see how good the estimate of a parameter is. This can be done by calculating the variance of the estimator. The sampling variance of $\hat{\mu}$ can then be calculated using
+% \begin{equation}
+%     \hat{\text{Var}}(\hat{\mu}) =  \frac{1}{N-1}\sum_{i=1}^N (f(X_i) - \hat{\mu})^2.
+%     \label{eq:MonteCarloIntegrationVariance}
+% \end{equation}
+% where we assume that the samples are uncorrelated \cite{compstat}. 
+% Using equations \ref{eq:MonteCarloIntegration} and \ref{eq:MonteCarloIntegrationVariance} and adapting them to the quantum system, the energy estimate and the variance of the energy estimate can be calculated using
+% \begin{equation}
+%     E[H(\alpha)] = \frac{1}{N}\sum_{i=1}^N E_L(\boldsymbol{r_i})
+% \end{equation}
+% and 
+% \begin{equation}
+%     \text{Var}(E[H(\alpha)]) = \frac{1}{N-1}\sum_{i=1}^N (E_L(\boldsymbol{r_i}) - E[H(\alpha)]^2) = \frac{1}{N-1}\text{Var}(E_L)
+% \end{equation}
+% where $\boldsymbol{r_i}$ is the coordinates of the i'th particle and N is the number of samples. The problem is that the samples of the local energy is not uncorrelated. This is because the current position is dependent on the previous position. A better method for estimating the variance is called blocking and will be presented in a later section. 
+
+\subsection{Summary of Variational Monte Carlo Methods}
+In VMC the goal is to adjust the variational parameter until the minimum energy of the system is reached \cite{mhj}. VMC methods can be summarized as follows: 
+\begin{itemize}
+    \item Contruct a trial wavefuntion $\uppsi_T$ that is dependent on the variational parameter $\alpha$ (1 parameter in this case) and the position of the particles $\boldsymbol{R} = (\boldsymbol{R_1}, ..., \boldsymbol{R_N})$. 
+    \item Calculate the expected value of the hamiltionian, $\langle H \rangle$.
+    \item Then use a numerical optimization algorithm, like the gradient descent algorithm, to adjust the parameter $\alpha$ until a minimum is reached. 
+\end{itemize}
+Two methods for calculating the integral will be discussed. Since the shape of the wave function varies over the domain, using a clever method called importance sampling can often lead to better results compared to a brute force method. 
+
+
+
+\subsection{Markov Chain Monte Carlo}
+The main problem with the Monte Carlo integration method is that the probability density function can be hard to sample from. Also, the normalization factor can be very tedious to calculate. One way to draw positions from such a distribution is to use the Markov Chain Monte Carlo Methods \cite{compstat}. Two variations of Markov Chain Monte Carlo methods will be used; the brute-force Metropolis algorithm and the importance sampling Metropolis algorithm. The brute-force method does not take into consideration the shape of the distribution, and the samples are drawn from a uniform distribution. The importance sampling method on the other hand accounts for the shape of the function, and will typically lead to better results. Importance sampling is a method used to reduce the variance of the estimates. For a theoretical background on the methods, see \cite{mhj}, \cite{compstat} or my articles for project 3 and 4 from FYS4150: Computational Physics 1. The latter can be found at the GitHub-address.
+\subsubsection{Metropolis Algorithm}
+The Metropolis algorithm is a Markov chain Monte Carlo method.
+It can be used to sample from a normalized probability distribution with the help of a stochastic process. It is often used to obtain samples from complicated distributions that normally would be hard to sample from \cite{compstat}. In this article it will be used to sample particle configurations from the trial wave function. This is something that would be hard doing without a Markov chain Monte Carlo method. 
+\\
+\\
+The main idea behind using Markov chain Monte Carlo methods for sampling is to construct a Markov Chain where the sequence of states converge towards the actual distribution we want to sample from \cite{compstat}. We can then use the samples to calculate different properties of the system. We typically use a so-called burn-in period before we start recording the properties. This is so that the system is close to the limiting sequence when the samples are recorded \cite{compstat}. We will then typically get more accurate results. Markov Chain Monte Carlo method works especially well in high-dimensional problems where more traditional methods will suffer from the curse of dimensionality \cite{compstat}. 
+\\
+\\
+The Brute-force Metropolis algorithm generates the samples as follows \cite{mhj}:
+\begin{itemize}
+    \item Initialize the system with number of Monte Carlo cycles, choose an initial system configuration $\boldsymbol{R}$ and variational parameter $\alpha$, and then calculate the initial value $|\uppsi_T^\alpha(\boldsymbol{R})|^2$. $\uppsi_T^\alpha(\boldsymbol{R})$ is the trial wave function dependent on the variational parameter $\alpha$ and the position of the particles. Initialize the energy and other properties of interest. 
+    \item For each metropolis step:
+    \begin{itemize}
+        \item Sample a new trial position, $\boldsymbol{R_p} = \boldsymbol{R} + r\cdot step$ where r is random vector from a uniform distribution. 
+        \item Calculate the acceptance ratio $w = \frac{P(\boldsymbol{R_p})}{P(\boldsymbol{R})}$.
+        \item Sample a new random number u from an uniform distribution, $u \in [0,1]$. 
+        \begin{itemize}
+            \item If $w \geq u$, the new trial position is accepted.
+            \item Else we reject the new trial position and continue the iterations with the old position. 
+        \end{itemize}
+        \item Sample the quantities of interest. For this case the local energy.
+    \end{itemize}
+    \item When the sampling is done, the statistics of interest can be calculated. 
+\end{itemize}
+We note that when the new position has a higher probability we always accept the new step. By doing so we will in theory stay in the areas with a high probability value. However, we can sometimes accept a less favorable step.  
+To calculate the acceptance ratio, it is not necessary to calculate the complicated normalization factor of the probability, since they cancel out in the division. 
+
+
+\subsection{Scaling of the Hamiltonian}
+In order to make the Hamiltonian easier to implement and to avoid all the constants, the Hamiltonian can be scaled. Introducing the scaled variable
+\begin{equation}
+    r^* = \frac{r}{a_{ho}} \rightarrow r = r^* a_{ho}
+\end{equation}
+the Nabla operator (in 3D) can be rewritten as
+\begin{equation}
+    \nabla = \frac{1}{a_{ho}}\bigg[\frac{\partial}{\partial x^* }, \frac{\partial }{\partial y^*}, \frac{\partial }{\partial z^*}\bigg].
+\end{equation}
+where the dot product of the Nabla operator with itself can be found to be 
+\begin{equation}
+    \nabla^2 = \frac{1}{a_{ho}^2}\bigg(\frac{\partial}{\partial x^*}+ \frac{\partial }{\partial y^*}+ \frac{\partial }{\partial z^*}\bigg)
+\end{equation}
+Inserting this into the original Hamiltonian gives
+\begin{equation}
+    H = \sum_i^N \bigg(-\frac{\hbar^2}{2m}\frac{m\omega}{\hbar}(\nabla^*)^2  + \frac{1}{2}m\omega^2_{ho}\frac{\hbar}{m\omega_{ho}}\big((x_i^*)^2 + (y_i^*)^2 + \omega_z^2/\omega_{ho}^2 (z^*)^2\big)\bigg) + \sum_{i<j}V_\text{int}
+\end{equation}
+where $a_{ho} = \big( \frac{\hbar}{m \omega_{ho}}\big)^{0.5}$ and $\nabla^*  = [\partial/\partial x^*, \partial/\partial y^*, \partial/\partial z^*]$. By simplifying the expression it becomes
+\begin{equation}
+    H = \hbar \omega_{ho}\sum_i^N \bigg(-\frac{1}{2}(\nabla^*)^2  + \frac{1}{2}\big((x_i^*)^2 + (y_i^*)^2 + \omega_z^2/\omega_{ho}^2 (z^*)^2\big)\bigg) + \sum_{i<j}V_\text{int}
+\end{equation}
+By letting the energy be in units of $\hbar \omega_{ho}$ and set $\gamma^2 = \frac{w_z^2}{w_{ho}^2} = 2.82843$, the final expression is
+\begin{equation}
+        H = \sum_i^N \bigg(-\frac{1}{2}\nabla^2  + \frac{1}{2}\big(x_i^2 + y_i^2 + \gamma^2 z^2\big)\bigg) + \sum_{i<j}V_\text{int}
+\end{equation}
+where the markings are removed.
+
+% \subsection{Optimization Methods}
+% Finding the optimal variational parameters analytically can be a challenge when the number of particles and dimensions increase or when using complicated Hamiltonians and wave functions. Numerical optimization methods can in these cases be a good choice. 
+% \\
+% \\
+% \subsubsection{Gradient Descent}
+% A popular method that often work well is the gradient descent method. The idea behind the gradient descent method is that we move in the opposite direction of the gradient. The gradient is the direction where a function increases fastest, so moving in the opposite direction will lead to the fastest decrease in function value. More formally, this can be written as
+% \begin{equation}
+%     x_{t+1} = x_t - \gamma \frac{df(x)}{dx},
+% \end{equation}
+% where $\gamma$ is the step-length and $x_{t+1}$ is the updated estimate of the minimum \cite{numopt}. 
+% \\
+% \\
+% The gradient descent algorithm runs until some stopping criteria is reached. This can for example be that the norm of the gradient is smaller than some tolerance, or that the number of iterations have exceeded some predetermined number of iterations. In this article the predetermined number of iterations is used since the size of the gradient depends heavily on the number of particle in the system. In addition, the efficiency of the algorithm is very dependent on the choice of step-length \cite{numopt}. By choosing it to small, the algorithm will take very long to converge. If the step-length is to large, the algorithm might not converge at all, and it can bounce around the solution or in some cases diverge away from the solution \cite{numopt}. Therefore, it is often useful to test for different values of $\gamma$. 
+% \\
+% \\
+% For the problem of finding the optimal alpha, we want to minimize the expected local energy with respect to alpha. The derivative of the local energy with respect to $\alpha$ is given by
+% \begin{equation}
+%     \frac{\partial \langle E_L \rangle}{\partial \alpha} = 2\bigg(\bigg\langle E_L \frac{1}{\uppsi_T}\frac{\partial \uppsi_T}{\partial \alpha} \bigg\rangle - \langle E_L \rangle \bigg\langle \frac{1}{\uppsi_T}\frac{\partial \uppsi_T}{\partial \alpha}\bigg\rangle \bigg)
+%     \label{eq:local_E_alpha_derivative}
+% \end{equation} \cite{mhj}. 
+% By showing that
+% \begin{equation}
+%     \frac{1}{\uppsi_T}\frac{\partial \uppsi_T}{\partial \alpha} = \sum_{i=1}^N \frac{1}{\uppsi_T}\frac{\partial}{\partial \alpha}\bigg[-\alpha \sum_{d=1}^\text{nDims}(x_i)_d^2\bigg] = -\sum_{i=1}^N \sum_{d=1}^\text{nDims}(x_i)_d^2.
+% \end{equation}
+% the expression for the local energy derivative with respect to $\alpha$ can be calculated using Monte Carlo methods. For each step in the Metropolis algorithm we sample $ E_L \frac{1}{\uppsi_T}\frac{\partial \uppsi_T}{\partial \alpha} $, $ E_L $ and $ \frac{1}{\uppsi_T}\frac{\partial \uppsi_T}{\partial \alpha}$, and at the end we use Monte Carlo methods for calculating the mean of the samples. Then the derivative of the local energy with respect to alpha can easily be calculated from equation \ref{eq:local_E_alpha_derivative}. 
+% \\
+% \\
+% This results in that the for each iterations of the gradient descent method, we have to run the Metropolis algorithm for a number of iterations to calculate the gradient. This can become quite expensive, since the Metropolis algorithm is time consuming. One idea is to use fewer Metropolis steps each time, and instead calculate a proper estimate of the energy with more Metropolis steps when the optimal alpha is found. It is important to reset the system between each iteration in the gradient descent algorithm. 
+% The gradient descent method updates the estimate as follows
+% \begin{equation}
+%     \alpha_{t+1} = \alpha_t - \gamma \frac{\partial \langle E_L \rangle}{\partial \alpha}
+%     \label{eq:e_alpha_derivative}
+% \end{equation}
+% where $\gamma$ is the step-length. 
+
+% \subsubsection{Adam}
+% The Adam algorithm is another stochastic optimzation method. It was presented by D. P. Kingma and J. L. Ba in a paper in 2014, \url{https://arxiv.org/pdf/1412.6980.pdf}.  
+
+\subsection{One-body densities}
+The one-body density of a system is defined as
+\begin{equation}
+    \rho(x_i) = \int |\uppsi(x_1, x_2, ..,x_N)|^2dx_2dx_3...dx_N
+\end{equation}
+which means that we are interested in the marginal density of particle i. In this article I will focus on how to estimate this numerically. The method for doing this is described in the implementation part. 
+
+\newpage
+

@@ -1,0 +1,215 @@
+\section{Quantum mechanics}
+Quantum mechanics studies the behavior of atoms and subatomic particles and can be used to describe the behaviour of microscopic particles. It is regarded as one of the most accurate theories in physics, and can describe systems with great accuracy. One of the main differences between quantum mechanics and classical mehcanics, is that we in general cannot know with cenrtainty what will happen when we are looking at quantum mechanical systems. We usually deal with probalilities. This is where the main equation of quantum mechanics comes in, the schoridinger equation. 
+The main equation in quantum mechanics is the Schrodinger equation given by
+\begin{equation}
+    i\hbar \frac{\partial}{\partial t}|\psi (t)\rangle = \hat{H}|\psi(t)\rangle.
+\end{equation}
+When studying quantum mechanics, there is some mathematics that simplifies the representation of states and the mathematical operations that can be conducted on the states. 
+\subsection{Mathematics}
+This is taken from \url{https://plato.stanford.edu/entries/qm/}.
+\subsubsection{Vectors and vector spaces}
+In quantum mechanics, we use the so called bra-ket notation for representing vectors. A column-vector is in mathematics often written as
+\begin{equation}
+    \boldsymbol{A} = 
+    \begin{pmatrix}
+    A_1 \\
+    A_2 \\
+    ... \\
+    A_n
+    \end{pmatrix}
+\end{equation}
+This same vector can be represented by a $|A\rangle$. 
+
+\subsubsection{Operators}
+Operators are an important part of quantum mechanics. 
+An operator is a mapping that takes a state in a vector space into a new state in the same vector space. 
+
+\subsubsection{Quantum numbers}
+In quantum mechanics, all the values we can observe takes discrete values. 
+A quantum number describes a value of a conserved quantity. 
+\\
+\\
+The principal quantum number states which shell the electron is in. The value are discrete. \\
+\\
+The angular quantum nuber states which sub-shell the electron is in. 
+\\
+\\
+Then we have
+\\
+\\
+The last one is the spin of the particle.
+\subsubsection{Quantum mechanical wavefunction}
+The wave function of a quantum mechanical system contains the information about a system, and describes the quantum state of an quantum system. The wave function is complex. We are often more interested in the square of the wave function. This gives the probability of a system being in the current state, and is real-valued. This is an important property that we will utilize heavily in the work done in this thesis. The wave function will be denoted by $\psi(x,t)$, where x is the position, and t is time. Then, the probaiblity of a particle being at position x at time t, is given by
+\begin{equation}
+    p(x,t) = |\psi(x,t)|^2 = \psi^*(x,t)\psi(x,t)
+\end{equation}
+where $\psi^*$ is the complex conjugate of the wave function. 
+\\
+\\
+In a later chapter we will go more thoroughly through the details of the wavefunction for a system containing multiple particles. 
+
+\subsubsection{Schrodinger equation}
+The Schrodinger equation is the governing equation in quantum mechanics. It is a linear partial differential equation, where the solution describes the wave function of a quantum mechanical system. It was discovered by Erwin Schrodinger in 1925 \cite{}. 
+\\
+\\
+The Schrodinger equation is given by
+\begin{equation}
+    i\hbar \frac{\partial }{\partial t}|\psi(t)\rangle = H|\psi(t)\rangle
+\end{equation}
+where $\psi(x,t)$ is the wave function, H is the Hamiltonian of the system, and m is the mass of the particle, and $i$ is the imaginary number defined by $i^2 = -1$. The Hamiltonians comes in many different forms, and it is an operator that is used to describe the energy of the system. 
+\\
+\\
+We will generally look at the time-independent version, given by
+\begin{equation}
+    \hat{H}|\psi\rangle = E|\psi\rangle
+\end{equation}
+Solving this will provide stationary states for the system. It is easier to solve than the original equation, but will be very useful in our studies of ground-state energies. 
+We note that this is an eigenvalue problem, where E is the energy of the system. This means that the energy is the eigenvalue of the eigenfunciton of the Hamiltonian, where the eigenfunction is the wavefunction. 
+
+\subsubsection{The variational problem}
+In the variational problem, the goal is to solve the eigenvalue problem
+\begin{equation}
+    O\phi(x) = \omega \phi(x)
+\end{equation}
+by using numerical methods. The result is an approximation of the actual system. (Diffusion Monte Carlo can find exact??) This is interesting, because it can be used to solve the time-independent Schrodinger's equation for the ground state energy of the system. Analytical solutions of the Schrodinger's equation can only be found in simple cases, so for more complicated system we need to find approximations. 
+\\
+\\
+In variational Monte Carlo we start with a trial wave function. This is a guess, but using intuition about the system can give better guesses. We let the wavefunction be dependend on some parameters, called variational parameters. The goal is to find the parameters that gives the wavefunction that minimizes the energy of the system. The energy is given by the Hamiltonian of the system, and is an upper bound of the ground state energy of the system. This can be shown.  
+\section{Many-body theory}
+When looking at fermions in a system, we can use the following formula
+\begin{equation}
+    H = -\sum_{i=1}^N \frac{1}{2}\nabla_i^2 - \sum_{i=1}^N \sum_{A=1}^M \frac{Z_A}{r_{iA}} + \sum_{i=1}^N \sum_{j>i}^N\frac{1}{r_{ij}}
+\end{equation}
+This can be derived using the born oppenheimer approxiation, and the equation describes many-body systems, where N is the number of particles, $r_{ij}$ is the distance between particle i and j and ...
+
+\subsection{Pauli exclusion principle}
+"Pauli exclusion principle states that two or more identical fermions cannot occupy the same quantum state within a quantum system simultaneously. " <- Fra wiki. 
+
+\subsection{Antisymmetric principle}
+Fermoins have antisymmetric wave functions. This means that they have half spin-values. 
+The antisymmetric principle states that the wavefunction must be anitsymmetric when we change the position of two particles. A standard way of setting up the wave function is by using the Hartree-product given by the product of the single particle wave functions. However, we note that
+\begin{equation}
+    \psi(x,y) = \psi_1(x)\psi_2(y)
+\end{equation}
+would not lead to antisymmetry because 
+\begin{equation}
+    \psi(y,x) = \psi_1(y)\psi_2(x) \neq \psi_1(x)\psi_2(y) = \psi(x,y).
+\end{equation}
+We then have to use another method of setting up the wave function for the system. One way to do this (And the only one???), is to introduce the slater determinant. 
+\subsection{Slater determinant}
+When working with fermions, like electrons, the position is not enough to describe the system. We also need the spin of the particles. we have to use an antisymmetric wavefunction. This means that 
+\begin{equation}
+    \psi(r_1,...,r_i,...,r_j, ..., r_N) = -\psi(r_1, ..., r_j, ..., r_i, ..., r_N)
+\end{equation}
+This says that the wavefunction value changes sign when to particles' positions are changed. 
+In the system, each particles has its own wavefunction. We will start by looking at the two dimensional case, and note that by rewriting the wavefunction as
+\begin{equation}
+    \psi(x,y) = \psi_1(x)\psi_2(y) - \psi_2(x)\psi_1(y)
+\end{equation}
+we get that 
+\begin{equation}
+    \psi(x,y) = \psi_1(x)\psi_2(y) - \psi_2(x)\psi_1(y) = -\psi_1(y)\psi_2(x) + \psi_2(y)\psi_1(x) = -\psi(y,x).
+\end{equation}
+This new way of writing the wavefunction then gives us the desired antisymmetric property. Noting that the new wavefunction can be written as the determinant of the slater matrix, we see that the wavefunction can be rewritten as
+\begin{equation}
+    \psi(x,y) = 
+    \det\begin{bmatrix}
+    \psi_1(x) & \psi_2(x) \\
+    \psi_1(y) & \psi_2(y) \\
+    \end{bmatrix}
+    = \psi_1(x)\psi_2(y) - \psi_2(x)\psi_1(y)
+\end{equation}
+\\
+First, we can note that if we have $\psi_1 = \psi_2$, we get that two fermions occupies the same orbitral, and the wavefunction vanishes. Secondly, we also want the wavefunction to be normailized, so we get that
+\begin{equation}
+    \psi(x,y) = \frac{1}{\sqrt{2}}
+    \det\begin{bmatrix}
+    \psi_1(x) & \psi_2(x) \\
+    \psi_1(y) & \psi_2(y) \\
+    \end{bmatrix}
+\end{equation}
+\\
+The Slater determinant is used for creating anti-symmetric wave functions that fulfills the Pauli Principle. For a two-dimensional system, this means that we want 
+\begin{equation}
+    \psi(x,y) = -\psi(y,x).
+\end{equation}
+We see that the sign of the wave function changes when we change the position of the two particles. This can be generalized to larger systems as well. For example, for a system with 3 particles, 
+\begin{equation}
+    \psi(x,y,z) = -\psi(x,z,y) = \psi(z,x,y) = -\psi(z,y,x) = \psi(y,z,x) = -\psi(y,x,z) 
+\end{equation}
+\subsection{Updating the Slater determinant for efficient VMC}
+One of the problems when using the Slater determinant in VMC calculations is that it is very time consuming to evaluate the gradients and laplacians. It is therefore necessary to find efficient ways of doing this to be able to simulate larger systems in reasonable time. As we usually do, we only move one particle at the time. This will help us going forward with the efficient updates. We will find a method where the inverse of the Slater matrix is used to do the calculations. 
+\\
+\\
+ 
+\\
+\\
+Each element in the slater determinant matrix D are the single particle wavefunctions, given by
+\begin{equation}
+    d_{ij} = \phi_j(r_i).
+\end{equation}
+The slater determinant matrix can then be written as 
+\begin{equation}
+    D = 
+    \begin{bmatrix}
+    \phi_1(r_1) & \phi_1(r_2) & ... & \phi_1(r_N) \\
+    ... & ... & ... & ... \\
+    ... & ... & ... & ... \\
+    \phi_N(r_1) & \phi_N(r_2) & ... & \phi_N(r_N) \\ 
+    \end{bmatrix}
+\end{equation}
+The slater determinant is then given by 
+\begin{equation}
+    \psi(r_1, r_2, ..., r_N, ...) = \frac{1}{\sqrt{N!}}|D|
+\end{equation}
+\\
+\\
+We will work with a splitted verision of the slater determinant. 
+\begin{equation}
+    |D| = |D|_{\uparrow}|D|_{\downarrow}
+\end{equation}
+and do calculations on each part separately. Here it is splitted up so that the particles with spin up are handled in $|D|_\downarrow$ and vice versa. 
+
+\subsubsection{LU decomposition}
+
+\section{Systems}
+So far, the focus has been on introducing general quantum mechanical principles. Now, it is time to move towards the problem we actually want to solve. We will start by describing the system we will study, before we go into the methods used to solve the problem. 
+\subsection{Quantum dots}
+The goal of the thesis is to study systems of fermions in a harmonic oscillator potential. These systems are often called a quantum dots. The systems is studied in 2 and 3 dimensions, for N = 2, 6, and 12 particles. This is closed shell systems, which means that all shells are full. 
+\\
+\\
+The Hamiltonian we will use is the harmonic oscillator potential:
+\begin{equation}
+    H = \sum_i^N \left(-\frac{1}{2}\nabla^2_i + \frac{1}{2} \omega^2 r_i^2 \right) + \sum_{i<j}\frac{1}{r_{ij}}
+\end{equation}
+This is an operator which act upon a function. It consists of two different parts, the first part is the harmonic oscillator part
+\begin{equation}
+    \sum_i^N \left(-\frac{1}{2}\nabla^2_i + \frac{1}{2} \omega^2 r_i^2 \right)
+\end{equation}
+and the last part describes the repulsive interactions between the electrons,
+\begin{equation}
+    \sum_{i<j}\frac{1}{r_{ij}}
+\end{equation}
+A system that only contains the harmonic oscillator part is called an unperturbed system and will be used extensively to test the methods. If we include the repulsive interactions, we have a perturbed system. 
+\\
+\\
+We let the single particle wave function be given by
+\begin{equation}
+    \phi_{\boldsymbol{n}}(\boldsymbol{x}) =  A\left[\prod_{i=1}^D H_{n_{x_i}}(\sqrt{\omega}x_i)\right]\exp\left(\sum_{i=1}^D x_i^2\right)
+\end{equation}
+where $H_n(x)$ is the Hermite polynomials. D is the number of dimensions. In 3 dimensions, we have $\boldsymbol{n} = (n_{x_1}, n_{x_2}, n_{x_3})$ and $\boldsymbol{x} = (x_1, x_2, x_3)$. n is the quantum numbers. 
+$r_{ij}$ is the distance between particle i and j. 
+\\
+\\
+For quantum dots in 2 and 3 dimensions, without interactions, we know the analytical solutions. The energy of a particle in the system is given by:
+\begin{equation}
+    \epsilon_{n_x, n_y, n_z} = \omega(n_x + n_y + n_z + 1)
+\end{equation}
+\\
+\\
+This means that the energy for a simple 3 particle system is $3\omega$. 
+\\
+\\
+This will be useful comparing the accuracy of the methods. From \ref{}, we also know the analytical values for an interacting system of particles in 3 dimensions.
+
+\newpage

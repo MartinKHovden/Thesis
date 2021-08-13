@@ -1,0 +1,56 @@
+\documentclass[english]{article}
+\input{preamble.tex}
+\begin{document}	
+    \input{frontpage.tex}
+    \part{Introduction}
+    \input{introduction.tex}
+    
+    \part{Quantum Theory} \label{part:quantumtheory}
+    The main focus of the first part is to make the reader familiar with the basics of quantum mechanics, and the theory that will be needed to follow the rest of the work. We will not go into detail on all parts of quantum mechanics. We will mainly focus on the parts that are especially relevant for the work done in the rest of the thesis. For a thourough introduction to quantum mechanics, see \cite{}. For more advanced many-body theory, see \cite{}. 
+    \\
+    \\
+    It is often advised to study classical mechanics before quantum mechanics. In classical mechanics we approximate systems by looking at them from a macroscopic perpspective (???). In quantum mechanics ... Write somthing more about the difference between classical mechanics and quantum mechanics. 
+    \\
+    \\
+    Quantum theory is the theory used to describe the smallest parts of the universe. It has gradually been developed over the last hundred years, starting with the discovery of the photoelectric effect in 1905 (double check this). 
+    \input{preliminaryquantum.tex}
+    % \input{manybodytheory.tex}
+    % \input{systems.tex}
+    
+    \part{Machine Learning} 
+    \label{part:machinelearningtheory}
+    \input{supervisedlearning.tex}
+    % \input{boltzmann.tex}
+    
+    \part{Monte Carlo Methods} \label{part:methods}
+    \input{montecarlomethods}
+    \input{qmc.tex}
+    
+    \part{Implementation} \label{part:implementation}
+    In this chapter we will look at how the framework has been implemented in Julia. First, some important aspects of the Julia programming language will be presented, before we go into details on how the VMC simulations can be implemented efficiently. This is important, since VMC calculations can be quite costly, so finding ways to speed up each calculation can be of great impact on the speed of the simulations. 
+    \input{implementation.tex}
+    % \input{scientificprogramming.tex}
+    % \input{implementationvmc.tex}
+    % \input{implementationrbm.tex}
+    
+    \part{Results and Discussion} \label{part:results}
+    \input{results.tex}
+    
+    \part{Conclusion} \label{part:conclusion}
+    % \input{retrospect.tex}
+    
+    % \printbibliography
+    
+    \appendix
+    %\input{diracformalism.tex}
+    % \input{naturalunits.tex}
+    % \input{derivationofrbm.tex}
+    % \input{collectionofresults.tex}
+    
+    \newpage
+    \nocite{*}
+    %\printbibliography
+    \printbibliography[type=article,title={Bibliography: Articles}]
+    \printbibliography[type=book,title={Bibliography: Books}]
+    \printbibliography[type=misc,title={Bibliography: Online}]
+\end{document}
