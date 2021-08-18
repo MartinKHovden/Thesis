@@ -25,10 +25,10 @@ function initializeModel(numLayerNodes)
     return model
 end
 
-inputSize = 10
-firstHidden = 100
-secondHidden = 50
-numIterations = 1000000
+inputSize = 8
+firstHidden = 10
+secondHidden = 10
+numIterations = 100000
 
 model = initializeModel([inputSize, firstHidden, secondHidden, 1])
 # println(model.weights)
@@ -54,7 +54,7 @@ function tanhDxDx(x)
     return -2*tanh.(x).*( - tanh.(x) .+1)
 end
 
-input = randn(10)
+input = randn(inputSize)
 # @time nnComputeWaveFunction(model, input)
 # @time nnComputeWaveFunction(model, input)
 # @time nnComputeWaveFunction(model, input)
@@ -75,10 +75,6 @@ function nnComputeGradient(model)
 end
 
 
-println("Analytical gradient: ")
-@time for i=1:numIterations
-    nnComputeGradient(model)
-end
 
 
 function nnComputeLaplacian1(model)
@@ -90,11 +86,17 @@ function nnComputeLaplacian1(model)
     return dadxdx
 end 
 
+
+println("Analytical gradient: ")
+@time for i=1:numIterations
+    nnComputeGradient(model)
+end
+
 println("Analytical laplacian: ")
 @time for i=1:numIterations
     nnComputeLaplacian1(model)
 end
-println("STOP")
+# println("STOP")
 
 # function forwardStep(W, x, b)
 #     z = W*x .+ b
@@ -131,7 +133,7 @@ input = randn(inputSize)
 
 # @time forward(input, mPW, mPB, 2)
 
-n = (Chain(Dense(inputSize, firstHidden, tanh), Dense(firstHidden, secondHidden, tanh), Dense(secondHidden, 1, tanh)))
+n = (Chain(Dense(inputSize, firstHidden, sigmoid), Dense(firstHidden, secondHidden, sigmoid), Dense(secondHidden, 1, sigmoid)))
 
 # @time n(input)
 # @time n(input)
@@ -158,8 +160,9 @@ end
 
 # function nnComputeLaplacian(model, x)
 println("Autograd gradient")
+
 # @time println("Grad2 = ", nnComputeGradient2(n, input))
-@time for i=1:numIterations
+@time for i=1:100000
     nnComputeGradient(n, input)
 end 
 

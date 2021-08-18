@@ -8,6 +8,7 @@ using ..slaterDeterminant
 using ..jastrow
 using ..boltzmannMachine
 using ..neuralNetwork
+using ..neuralNetworkAnalytical
 
 function computeLocalEnergy(system::slater, interacting = false)
     N = system.numParticles
@@ -129,6 +130,48 @@ function computeLocalEnergy(system::slaterNN, interacting = false)
 
     fullGradientNN = nnComputeGradient(system)
     fullLaplacianNN = nnComputeLaplacian(system)
+
+    for i=1:N 
+        laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 
+        gradientSlaterDeterminant = slaterDeterminantComputeGradient(system, i)
+
+        gradientSlaterGaussian = slaterGaussianComputeGradient(system, i)
+        laplacialSlaterGaussian =  slaterGaussianComputeLaplacian(system)
+
+        gradientNN = fullGradientNN[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions]
+        laplacianNN = sum(fullLaplacianNN[(i-1)*numDimensions + 1: (i-1)*numDimensions + numDimensions])
+        
+        coordinates = particleCoordinates[i,:]
+        r_i_squared = sum(coordinates.^2)
+        harmonicTerm += omega*omega*r_i_squared
+
+        grad =   gradientSlaterDeterminant + gradientNN + gradientSlaterGaussian 
+
+        laplacian = laplacianSlaterDeterminant  + laplacianNN  + laplacialSlaterGaussian
+
+        localEnergy += laplacian + sum(grad.^2)
+    end
+    
+    interactionTerm = 0
+
+    if interacting
+        interactionTerm += computeParticleInteraction(system)
+    end
+
+    return -0.5*localEnergy + 0.5*harmonicTerm + interactionTerm
+end
+
+
+function computeLocalEnergy(system::slaterNNAnalytical, interacting = false)
+    N = system.numParticles
+    numDimensions = system.numDimensions
+    localEnergy = 0
+    harmonicTerm = 0
+    omega = system.omega
+    particleCoordinates = system.particles
+
+    fullGradientNN = nnAnalyticalComputeGradient!(system)
+    fullLaplacianNN = nnAnalyticalComputeLaplacian!(system)
 
     for i=1:N 
         laplacianSlaterDeterminant =  slaterDeterminantComputeLaplacian(system, i) 

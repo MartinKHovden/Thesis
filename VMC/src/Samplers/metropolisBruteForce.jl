@@ -8,9 +8,10 @@ using ..initializeSystem
 using ..slaterDeterminant
 using ..jastrow
 using ..neuralNetwork
+using ..neuralNetworkAnalytical
 using ..harmonicOscillator
 using ..boltzmannMachine
-using Flux:params, ADAM, update!, Params
+using Flux:params, ADAM, Descent, update!, Params
 
 """ 
     metropolisBruteForce(stepLength, system)
@@ -43,7 +44,6 @@ function metropolisStepBruteForce(stepLength, system)
         slaterMatrixUpdate(system, particleToUpdate)
     end
 end
-
 """ 
     metropolisStepImportanceSampling(stepLength, system)
 
@@ -62,10 +62,12 @@ function metropolisStepImportanceSampling(stepLength, system)
 
     currentDriftForce = computeDriftForce(system, particleToUpdate, coordinateToUpdate)
 
-    system.particles[particleToUpdate, coordinateToUpdate] += 
-                    D*currentDriftForce*stepLength + randn(Float64)*sqrt(stepLength)
+    # println(currentDriftForce)
+
+    system.particles[particleToUpdate, coordinateToUpdate] += D*currentDriftForce*stepLength + randn(Float64)*sqrt(stepLength)
 
     newDriftForce = computeDriftForce(system, particleToUpdate, coordinateToUpdate)
+
     # Update the slater matrix:
     slaterMatrixUpdate(system, particleToUpdate)
 
@@ -92,7 +94,7 @@ Computes the driftforce used in importance sampling when chaniging the
 position for the particle. 
 """
 function computeDriftForce(system::slater, particleNumber::Int64, dimension::Int64)
-    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension)
+    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension) + 
             + slaterGaussianComputeDriftForce(system, particleNumber, dimension)
 end 
 
@@ -103,8 +105,8 @@ Computes the driftforce used in importance sampling when chaniging the
 position for the particle. 
 """
 function computeDriftForce(system::slaterJastrow, particleNumber::Int64, dimension::Int64)
-    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension) 
-            + slaterGaussianComputeDriftForce(system, particleNumber, dimension)
+    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension) +  
+            + slaterGaussianComputeDriftForce(system, particleNumber, dimension) +
             + jastrowComputeDriftForce(system, particleNumber, dimension)
 end
 
@@ -115,7 +117,8 @@ Computes the driftforce used in importance sampling when chaniging the
 position for the particle. 
 """
 function computeDriftForce(system::slaterRBM, particleNumber::Int64, dimension::Int64)
-    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension)
+    # println(slaterDeterminantComputeDriftForce(system, particleNumber, dimension), rbmComputeDriftForce(system, particleNumber, dimension))
+    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension) + 
             + rbmComputeDriftForce(system, particleNumber, dimension)
 end
 
@@ -126,8 +129,8 @@ Computes the driftforce used in importance sampling when chaniging the
 position for the particle. 
 """
 function computeDriftForce(system::slaterNN, particleNumber::Int64, dimension::Int64)
-    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension)
-            + slaterGaussianComputeDriftForce(system, particleNumber, dimension) 
+    return slaterDeterminantComputeDriftForce(system, particleNumber, dimension) +
+            + slaterGaussianComputeDriftForce(system, particleNumber, dimension) +
             + nnComputeDriftForce(system, particleNumber, dimension)
 end 
 
@@ -151,11 +154,11 @@ function computeGreensFunction(oldPosition, newPosition,
                                             D,
                                             stepLength)
 
-    greens_function_argument = (oldPosition[particleToUpdate, coordinateToUpdate] 
-                                - newPosition[particleToUpdate, coordinateToUpdate] 
-                                - D*stepLength*newDriftForce)^2 
-                                - (newPosition[particleToUpdate, coordinateToUpdate] 
-                                - oldPosition[particleToUpdate, coordinateToUpdate] 
+    greens_function_argument = (oldPosition[particleToUpdate, coordinateToUpdate] +
+                                - newPosition[particleToUpdate, coordinateToUpdate] +
+                                - D*stepLength*newDriftForce)^2 +
+                                - (newPosition[particleToUpdate, coordinateToUpdate] + 
+                                - oldPosition[particleToUpdate, coordinateToUpdate] +
                                 - D*stepLength*oldDriftForce)^2
 
     greens_function_argument /= (4.0*D*stepLength)
@@ -204,6 +207,14 @@ function computeRatio(system::slaterNN, particleToUpdate, coordinateToUpdate, ol
     return ratioSlaterDeterminant*ratioSlaterGaussian*ratioNN, R
 end
 
+function computeRatio(system::slaterNNAnalytical, particleToUpdate, coordinateToUpdate, oldPosition)
+    R = slaterMatrixComputeRatio(system, particleToUpdate)
+    ratioSlaterDeterminant = R^2
+    ratioSlaterGaussian = slaterGaussianComputeRatio(system, oldPosition, particleToUpdate, coordinateToUpdate)
+    ratioNNAnalytical = nnAnalyticalComputeRatio!(system, oldPosition)
+    return ratioSlaterDeterminant*ratioSlaterGaussian*ratioNNAnalytical, R
+end
+
 """ 
     computeRatio(system::slaterRBM, particleToUpdate, coordinateToUpdate, oldPosition)
 
@@ -245,6 +256,7 @@ function runMetropolisBruteForce(system::slater, num_mc_iterations, step_length;
 
     for i = 1:num_mc_iterations
         metropolisStepBruteForce(step_length, system)
+        # metropolisStepImportanceSampling(step_length, system)
 
         local_energy = computeLocalEnergy(system, system.interacting)
         local_energies[i] = local_energy
@@ -274,8 +286,7 @@ function runMetropolisBruteForce(system::slater, num_mc_iterations, step_length;
     mc_local_energy = local_energy_sum/samples
     mc_local_energy_psi_derivative_a = local_energy_psi_parameter_derivative_sum/samples
     mc_psi_derivative_a = psi_parameter_derivative_sum/samples
-    local_energy_derivative_a = 2*(mc_local_energy_psi_derivative_a - 
-                                        mc_local_energy*mc_psi_derivative_a)
+    local_energy_derivative_a = 2*(mc_local_energy_psi_derivative_a - mc_local_energy*mc_psi_derivative_a)
 
     println(mc_local_energy)
 
@@ -337,8 +348,8 @@ function runMetropolisBruteForce(system::slaterNN, num_mc_iterations, step_lengt
     start = time()
 
     for i = 1:num_mc_iterations
-        # metropolisStepBruteForce(step_length, system)
-        metropolisStepImportanceSampling(step_length, system)
+        metropolisStepBruteForce(step_length, system)
+        # metropolisStepImportanceSampling(step_length, system)
 
         local_energy = computeLocalEnergy(system, system.interacting)
         local_energies[i] = local_energy
@@ -368,8 +379,7 @@ function runMetropolisBruteForce(system::slaterNN, num_mc_iterations, step_lengt
 
     mc_psi_derivative_weights = psi_weights_derivative_sum/samples
 
-    local_energy_derivative_weights = 2*(mc_local_energy_psi_derivative_weights - 
-                                        mc_local_energy*mc_psi_derivative_weights)
+    local_energy_derivative_weights = 2*(mc_local_energy_psi_derivative_weights - mc_local_energy*mc_psi_derivative_weights)
 
     return mc_local_energy, local_energy_derivative_weights
 end
@@ -402,6 +412,159 @@ function optimizationStep(system::slaterNN, grad_W, learning_rate::Float64)
     end
 end
 
+################################################################################
+################################################################################
+################################################################################
+
+function runMetropolisBruteForce(system::slaterNNAnalytical, num_mc_iterations, step_length; burn_in = 0.01)
+    local_energy_sum::Float64 = 0.0
+
+    local_energy_psi_w1_derivative_sum = zeros(size(system.nn.w1))
+    local_energy_psi_w2_derivative_sum = zeros(size(system.nn.w2))
+    local_energy_psi_w3_derivative_sum = zeros(size(system.nn.w3))
+
+    local_energy_psi_b1_derivative_sum = zeros(size(system.nn.b1))
+    local_energy_psi_b2_derivative_sum = zeros(size(system.nn.b2))
+    local_energy_psi_b3_derivative_sum = zeros(size(system.nn.b3))
+
+    psi_w1_derivative_sum = zeros(size(system.nn.w1))
+    psi_w2_derivative_sum = zeros(size(system.nn.w2))
+    psi_w3_derivative_sum = zeros(size(system.nn.w3))
+
+    psi_b1_derivative_sum = zeros(size(system.nn.b1))
+    psi_b2_derivative_sum = zeros(size(system.nn.b2))
+    psi_b3_derivative_sum = zeros(size(system.nn.b3))
+
+    local_energies::Array{Float64, 1} = zeros(Float64, Int(num_mc_iterations))
+
+    start = time()
+
+    for i = 1:num_mc_iterations
+        metropolisStepBruteForce(step_length, system)
+        # metropolisStepImportanceSampling(step_length, system)
+
+        nnAnalyticalComputePsi!(system, system.particles)
+
+        local_energy = computeLocalEnergy(system, system.interacting)
+        local_energies[i] = local_energy
+
+        psi_param_derivative = nnAnalyticalComputeParameterGradient!(system)
+
+        if i > burn_in*num_mc_iterations
+            local_energy_sum += local_energy
+
+            local_energy_psi_w1_derivative_sum += local_energy*psi_param_derivative[1]
+            local_energy_psi_w2_derivative_sum += local_energy*psi_param_derivative[2]
+            local_energy_psi_w3_derivative_sum += local_energy*psi_param_derivative[3]
+
+            local_energy_psi_b1_derivative_sum += local_energy*psi_param_derivative[4]
+            local_energy_psi_b2_derivative_sum += local_energy*psi_param_derivative[5]
+            local_energy_psi_b3_derivative_sum += local_energy*psi_param_derivative[6]
+
+            psi_w1_derivative_sum += psi_param_derivative[1]
+            psi_w2_derivative_sum += psi_param_derivative[2]
+            psi_w3_derivative_sum += psi_param_derivative[3]
+
+            psi_b1_derivative_sum += psi_param_derivative[4]
+            psi_b2_derivative_sum += psi_param_derivative[5]
+            psi_b3_derivative_sum += psi_param_derivative[6]
+        end
+    end
+
+    # println("w1 = ", local_energy_psi_w1_derivative_sum)
+    # println("\n")
+
+    runtime = time() - start
+
+    samples = num_mc_iterations - burn_in*num_mc_iterations
+
+    mc_local_energy = local_energy_sum/samples
+
+    # mc_local_energy_psi_derivative_weights = local_energy_psi_weights_derivative_sum/samples
+    mc_local_energy_psi_derivative_w1 = local_energy_psi_w1_derivative_sum/samples
+    mc_local_energy_psi_derivative_w2 = local_energy_psi_w2_derivative_sum/samples
+    mc_local_energy_psi_derivative_w3 = local_energy_psi_w3_derivative_sum/samples
+
+    mc_local_energy_psi_derivative_b1 = local_energy_psi_b1_derivative_sum/samples
+    mc_local_energy_psi_derivative_b2 = local_energy_psi_b2_derivative_sum/samples
+    mc_local_energy_psi_derivative_b3 = local_energy_psi_b3_derivative_sum/samples
+
+
+    # mc_psi_derivative_weights = psi_weights_derivative_sum/samples
+    mc_psi_derivative_w1 = psi_w1_derivative_sum/samples
+    mc_psi_derivative_w2 = psi_w2_derivative_sum/samples
+    mc_psi_derivative_w3 = psi_w3_derivative_sum/samples
+
+    mc_psi_derivative_b1 = psi_b1_derivative_sum/samples
+    mc_psi_derivative_b2 = psi_b2_derivative_sum/samples
+    mc_psi_derivative_b3 = psi_b3_derivative_sum/samples
+
+
+    # local_energy_derivative_weights = 2*(mc_local_energy_psi_derivative_weights - mc_local_energy*mc_psi_derivative_weights)
+    local_energy_derivative_w1 = 2*(mc_local_energy_psi_derivative_w1 - mc_local_energy*mc_psi_derivative_w1)
+    local_energy_derivative_w2 = 2*(mc_local_energy_psi_derivative_w2 - mc_local_energy*mc_psi_derivative_w2)
+    local_energy_derivative_w3 = 2*(mc_local_energy_psi_derivative_w3 - mc_local_energy*mc_psi_derivative_w3)
+
+    local_energy_derivative_b1 = 2*(mc_local_energy_psi_derivative_b1 - mc_local_energy*mc_psi_derivative_b1)
+    local_energy_derivative_b2 = 2*(mc_local_energy_psi_derivative_b2 - mc_local_energy*mc_psi_derivative_b2)
+    local_energy_derivative_b3 = 2*(mc_local_energy_psi_derivative_b3 - mc_local_energy*mc_psi_derivative_b3)
+
+    return mc_local_energy, [Array(local_energy_derivative_w1), Array(local_energy_derivative_w2), Array(local_energy_derivative_w3), Array(local_energy_derivative_b1), Array(local_energy_derivative_b2), Array(local_energy_derivative_b3)]
+end
+
+# function runVMC(system::slaterNNAnalytical, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate; writeToFile=false)
+#     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
+#     for k = 1:numVMCIterations
+#         local_energy, grads = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+#         # println(grads)
+#         optimizationStep(system, grads, learning_rate)
+#         local_energies[k] = local_energy
+#         println("Iteration = ", k, "    E = ", local_energy, "   Error =  ", abs(local_energy - 2.0))
+#     end
+
+#     return local_energies
+# end 
+
+function runVMC(system, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, optimizer; writeToFile=false)
+    local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
+    for k = 1:numVMCIterations
+        local_energy, grads = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+        # println(grads)
+        optimizationStep(system, optimizer, grads)
+        local_energies[k] = local_energy
+        println("Iteration = ", k, "    E = ", local_energy, "   Error =  ", abs(local_energy - 2.0))
+    end
+
+    return local_energies
+end
+
+# function optimizationStep(system::slaterNNAnalytical, grads, learning_rate::Float64)
+#     model = system.nn
+#     model.w1[:,:] -= grads[1]*learning_rate
+#     model.w2[:,:] -= grads[2]*learning_rate
+#     model.w3[:,:] -= grads[3]*learning_rate
+
+#     model.b1[:] -= grads[4]*learning_rate
+#     model.b2[:] -= grads[5]*learning_rate
+#     model.b3[:] -= grads[6]*learning_rate
+# end
+
+function optimizationStep(system::slaterNNAnalytical, optimizer, grads)
+    model = system.nn
+
+    update!(optimizer, model.w1, grads[1])
+    update!(optimizer, model.w2, grads[2])
+    update!(optimizer, model.w3, grads[3])
+
+    update!(optimizer, model.b1, grads[4])
+    update!(optimizer, model.b2, grads[5])
+    update!(optimizer, model.b3, grads[6])
+end   
+
+
+
+################################################################################
+################################################################################
 ################################################################################
 
 #######       ########     ###      ###
@@ -523,7 +686,7 @@ function runMetropolis(system::slaterRBM, num_mc_iterations::Int64, step_length:
     local_energy_derivative_w = 2*(mc_local_energy_psi_derivative_w - mc_local_energy*mc_psi_derivative_w)
 
     return mc_local_energy,  [local_energy_derivative_a, local_energy_derivative_b, local_energy_derivative_w]
-    
+
 end
 
 function optimizationStep(system::slaterRBM, grad, learning_rate::Float64)
@@ -533,27 +696,46 @@ function optimizationStep(system::slaterRBM, grad, learning_rate::Float64)
     nqs.w[:,:] = nqs.w - learning_rate*grad[3][:,:]
 end
 
-function runVMC(system::slaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate; sampler = "bf", optimization = "gd", writeToFile = false)
+function optimizationStep(system::slaterRBM, optimizer, grad)
+    nqs = system.nqs 
+    update!(optimizer, nqs.a, grad[1])
+    update!(optimizer, nqs.b, grad[2])
+    update!(optimizer, nqs.w, grad[3])
+end
+# function runVMC(system::slaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, learning_rate; sampler = "bf", optimization = "gd", writeToFile = false)
+#     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
+#     for k = 1:numVMCIterations
+#         local_energy, grad = runMetropolis(system, numMonteCarloIterations, mc_step_length, sampler = sampler)
+#         optimizationStep(system, grad, learning_rate)
+#         local_energies[k] = local_energy
+#         println("Iteration = ", k, "    E = ", local_energy, "  Error = ", abs(local_energy - 2.0))
+#     end
+
+#     if writeToFile
+#         if system.nqs.interacting == true
+#             folder = "Interacting"
+#         elseif system.nqs.interacting == false
+#             folder = "Non-interacting"
+#         end
+#         filename = "../Data/"*folder*"/VMC/vmc_rbm_bf_step_length_" * string(mc_step_length) *"_num_hidden_"* string(length(system.nqs.h)) * ".txt"  
+#         open(filename, "w") do file
+#             for e in local_energies
+#                 println(file, e)
+#             end
+#         end
+#     end
+
+#     return local_energies
+# end 
+
+function runVMC(system::slaterRBM, numVMCIterations::Int64, numMonteCarloIterations, mc_step_length, optimizer; sampler = "bf", writeToFile = false)
     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
+    opt = optimizer
     for k = 1:numVMCIterations
         local_energy, grad = runMetropolis(system, numMonteCarloIterations, mc_step_length, sampler = sampler)
-        optimizationStep(system, grad, learning_rate)
+        optimizationStep(system, opt, grad)
         local_energies[k] = local_energy
         println("Iteration = ", k, "    E = ", local_energy, "  Error = ", abs(local_energy - 2.0))
-    end
-
-    if writeToFile
-        if system.nqs.interacting == true
-            folder = "Interacting"
-        elseif system.nqs.interacting == false
-            folder = "Non-interacting"
-        end
-        filename = "../Data/"*folder*"/VMC/vmc_rbm_bf_step_length_" * string(mc_step_length) *"_num_hidden_"* string(length(system.nqs.h)) * ".txt"  
-        open(filename, "w") do file
-            for e in local_energies
-                println(file, e)
-            end
-        end
     end
 
     return local_energies
@@ -696,18 +878,18 @@ function runVMC(system::slaterJastrow, numVMCIterations::Int64, numMonteCarloIte
     return local_energies
 end 
 
-function runVMC(system, numVMCIterations::Int64, numMonteCarloIterations, 
-    mc_step_length, 
-    learning_rate)
+# function runVMC(system, numVMCIterations::Int64, numMonteCarloIterations, 
+#     mc_step_length, 
+#     learning_rate)
 
-    local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
-    for k = 1:numVMCIterations
-        local_energy, grad = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
-        optimizationStep(system, grad, learning_rate)
-        local_energies[k] = local_energy
-        println("Iteration = ", k, "    E = ", local_energy, "   Error =  ", abs(2.0 - local_energy))
-    end
-    return local_energies
-end 
+#     local_energies::Array{Float64, 2} = zeros(Float64, (numVMCIterations, 1))
+#     for k = 1:numVMCIterations
+#         local_energy, grad = runMetropolisBruteForce(system, numMonteCarloIterations, mc_step_length)
+#         optimizationStep(system, grad, learning_rate)
+#         local_energies[k] = local_energy
+#         println("Iteration = ", k, "    E = ", local_energy, "   Error =  ", abs(2.0 - local_energy))
+#     end
+#     return local_energies
+# end 
 
 end #MODULE

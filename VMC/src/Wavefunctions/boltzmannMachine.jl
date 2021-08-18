@@ -72,29 +72,30 @@ end
 Computes the drift force used in importance sampling. 
 """
 function rbmComputeDriftForce(system, particleToUpdate, coordinateToUpdate)
-    m = particleToUpdate
-    nqs = system.nqs
+    # m = particleToUpdate
+    # nqs = system.nqs
 
-    x = reshape(system.particles', 1,:)'
+    # x = reshape(system.particles', 1,:)'
 
-    precalc = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(x)* nqs.w))
+    # precalc = nqs.b + transpose((1.0/nqs.sigma_squared)*(transpose(x)* nqs.w))
 
-    #Extracts the number of hidden and visible units.
-    num_visible = size(system.nqs.x)[1]
-    num_hidden = size(system.nqs.h)[1]
+    # #Extracts the number of hidden and visible units.
+    # num_visible = size(system.nqs.x)[1]
+    # num_hidden = size(system.nqs.h)[1]
 
-    #Calculates the first term in the drift force.
-    drift_force = -(1.0/nqs.sigma_squared)*(nqs.x[m]- nqs.a[m])
+    # #Calculates the first term in the drift force.
+    # drift_force = -(1.0/nqs.sigma_squared)*(nqs.x[m]- nqs.a[m])
 
-    #Calculates the second term in the drift force.
-    for n=1:num_hidden
-        drift_force += (1.0/nqs.sigma_squared)*nqs.w[m,n]/(exp(-precalc[n]) + 1.0)
-    end
+    # #Calculates the second term in the drift force.
+    # for n=1:num_hidden
+    #     drift_force += (1.0/nqs.sigma_squared)*nqs.w[m,n]/(exp(-precalc[n]) + 1.0)
+    # end
 
-    drift_force*=2.0
+    # drift_force*=2.0
 
-    return drift_force
-    # return 2*rbmComputeGradient(system)[(particleToUpdate - 1)*numDimensions + coordinateToUpdate]
+    # return drift_force
+    numDimensions = system.numDimensions
+    return 2*rbmComputeGradient(system)[(particleToUpdate - 1)*numDimensions + coordinateToUpdate]
 end
 
 """
