@@ -128,7 +128,7 @@ function rbmComputeLaplacian(system)
         for n=1:numHidden 
             secondTerm += ((w[m,n]^2)/(sigmaSquared^2))*(exp(precalc[n])/((exp(precalc[n])+1)^2))
         end 
-        doubleGrads[m] = firstTerm + secondTerm#(1/(sigmaSquared^2))*secondTerm
+        doubleGrads[m] = firstTerm + secondTerm
     end 
 
 
