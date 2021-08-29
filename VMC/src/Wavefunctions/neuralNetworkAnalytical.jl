@@ -126,7 +126,7 @@ function nnAnalyticalComputeParameterGradient!(system)
     # map!(sigmoid_derivative, model.delta3, model.z3)
     map!(x -> 1, model.delta3, model.z3)
 
-    println(model.delta3)
+    # println(model.delta3)
 
     model.w3_grad[:,:] = model.delta3'.*model.a2
 
@@ -136,13 +136,16 @@ function nnAnalyticalComputeParameterGradient!(system)
     # model.delta2[:] = (model.w3'*model.delta3).*sigmoid_derivative.(model.z2)
     mul!(model.delta2, model.w3', model.delta3)
     broadcast!(*, model.delta2, sigmoid_derivative.(model.z2), model.delta2)
-    model.w2_grad[:,:] = model.delta2'.*model.a1
+    # println(model.delta2, model.a1)
+    # model.w2_grad[:,:] = (model.delta2'.*model.a1)'
+    model.w2_grad[:,:] = model.delta2.*(model.a1')
     model.b2_grad[:] = copy(model.delta2)
 
     # model.delta1[:] = (model.w2'*model.delta2).*sigmoid_derivative.(model.z1)
     mul!(model.delta1, model.w2', model.delta2)
     broadcast!(*, model.delta1, sigmoid_derivative.(model.z1), model.delta1)
-    model.w1_grad[:,:] = model.delta1'.*x
+    # model.w1_grad[:,:] = (model.delta1'.*x)'
+    model.w1_grad[:,:] = model.delta1.*(x')
     model.b1_grad[:] = copy(model.delta1)
 
     return_values = copy(model.w1_grad), copy(model.w2_grad), copy(model.w3_grad), copy(model.b1_grad), copy(model.b2_grad), copy(model.b3_grad)

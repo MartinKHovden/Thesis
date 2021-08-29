@@ -567,4 +567,6 @@ function sigmoid_double_derivative(z)
     return sig*(1-sig)*(1-2*sig)
 end
 
+    
+
 end #MODULE

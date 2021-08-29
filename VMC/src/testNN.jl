@@ -27,7 +27,7 @@ using .metropolisBruteForce
 
 using Flux:sigmoid, Dense,Chain, params
 
-numParticles = 4
+numParticles = 6
 numDimensions = 2
 numHiddenNeurons = 5
 
@@ -35,6 +35,7 @@ systemNN = initializeSystemSlaterNN(numParticles, numDimensions, numHiddenNeuron
 systemNNAnalytical = initializeSystemSlaterNNAnalytical(numParticles, numDimensions, numNodesLayer1 = numHiddenNeurons, numNodesLayer2 = numHiddenNeurons)
 
 systemNNAnalytical.nn.w1[:,:] = copy(systemNN.nn.model[1].W)
+
 systemNNAnalytical.nn.b1[:] = copy(systemNN.nn.model[1].b)
 
 systemNNAnalytical.nn.w2[:,:] = copy(systemNN.nn.model[2].W)
@@ -52,6 +53,9 @@ oldPosition = randn(numParticles, numDimensions)
 println("Ratio NN =           ", nnComputeRatio(systemNN, oldPosition))
 println("Rtio NN Analytical = ", nnAnalyticalComputeRatio!(systemNNAnalytical, oldPosition))
 println("")
+println("Ratio NN =           ", nnComputeRatio(systemNN, oldPosition))
+println("Rtio NN Analytical = ", nnAnalyticalComputeRatio!(systemNNAnalytical, oldPosition))
+println("")
 println("Gradient NN = ", nnComputeGradient(systemNN))
 println("Gradient NN Analytical = ", nnAnalyticalComputeGradient!(systemNNAnalytical))
 println("")
@@ -60,8 +64,8 @@ println("Laplacian NN Analytical = ", nnAnalyticalComputeLaplacian!(systemNNAnal
 println("")
 
 nnAnalyticalComputePsi!(systemNNAnalytical, systemNN.particles)
-println("Params grad NN = ", nnComputeParameterGradient(systemNN)[params(systemNN.nn.model)[5]])
-println("Params grad NN Analytical = ", nnAnalyticalComputeParameterGradient!(systemNNAnalytical)[3])
+println("Params grad NN = ", nnComputeParameterGradient(systemNN)[params(systemNN.nn.model)[1]])
+println("Params grad NN Analytical = ", nnAnalyticalComputeParameterGradient!(systemNNAnalytical)[1])
 println("")
 # println("Drift froce NN = ", nnComputeDriftForce(systemNN, 2, 2))
 # println("Drift force NN Analytical = ", nnAnalyticalComputeDriftForce!(systemNNAnalytical, 2, 2))

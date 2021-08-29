@@ -27,7 +27,7 @@ using .metropolisBruteForce
 
 using Flux
 
-# system = initializeSystemSlater(6, 2, alpha=1.0, omega=1.0, interacting=true)
+# system = initializeSystemSlater(6, 2, alpha=1.0, omega=1.0, interacting=false)
 # @time runVMC(system, 50, 10^5, 5.0, 0.05)
 # runMetropolisBruteForce(system, 10^7, 0.1, writeToFile=true)
 
@@ -53,9 +53,9 @@ using Flux
 # runMetropolis(system, 2^21, 5.0; writeToFile = true, sampler="is")
 
 opt = ADAM(0.05)
-system = initializeSystemSlaterNNAnalytical(2, 2, alpha = 0.75, interacting = true, numNodesLayer1 = 10, numNodesLayer2 = 10)
-runVMC(system, 100, 10^5, 5.0, opt, writeToFile = true, sampler = "is")#, writeToFile=false, sampler="is")# (0.05, 5.0)
-@time runMetropolisBruteForce(system, 2^21, 5.0, sampler = "is", writeToFile = true)
+system = initializeSystemSlaterNNAnalytical(6, 2, alpha = 0.6, interacting = true, numNodesLayer1 = 20, numNodesLayer2 = 10)
+runVMC(system, 50, 10^4, 0.0001, opt, writeToFile = true, sampler = "is")#, writeToFile=false, sampler="is")# (0.05, 5.0)
+@time runMetropolisBruteForce(system, 2^20, 0.0001, sampler = "is", writeToFile = true)
 
 
 # kappa = system.jastrowFactor.kappa

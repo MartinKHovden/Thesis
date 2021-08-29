@@ -277,7 +277,7 @@ def block(x):
             break
     if (k >= d-1):
         print("Warning: Use more data")
-    return mu, s[k]/2**(d-k)
+    return [mu, s[k]/2**(d-k)]
 
 
 def acceptance_ratio(e):

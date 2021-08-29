@@ -651,7 +651,7 @@ function runMetropolisBruteForce(system::slaterNNAnalytical, num_mc_iterations, 
     local_energy_derivative_b2 = 2*(mc_local_energy_psi_derivative_b2 - mc_local_energy*mc_psi_derivative_b2)
     local_energy_derivative_b3 = 2*(mc_local_energy_psi_derivative_b3 - mc_local_energy*mc_psi_derivative_b3)
 
-    println(mc_local_energy)
+    # println(mc_local_energy)
 
     return mc_local_energy, [Array(local_energy_derivative_w1), Array(local_energy_derivative_w2), Array(local_energy_derivative_w3), Array(local_energy_derivative_b1), Array(local_energy_derivative_b2), Array(local_energy_derivative_b3)]
 end
@@ -675,7 +675,7 @@ function runVMC(system::slaterNNAnalytical, numVMCIterations::Int64, numMonteCar
         # println(grads)
         optimizationStep(system, optimizer, grads)
         local_energies[k] = local_energy
-        println("Iteration = ", k, "    E = ", local_energy, "   Error =  ", abs(local_energy - 2.0))
+        println("Iteration = ", k, "    E = ", local_energy, "   Error =  ", abs(local_energy - 3.0), "   Relative Error = ", abs(local_energy - 3.0)/3.0)
     end
     if writeToFile
         if system.interacting == true
@@ -683,7 +683,7 @@ function runVMC(system::slaterNNAnalytical, numVMCIterations::Int64, numMonteCar
         elseif system.interacting == false
             folder = "Non-interacting"
         end
-        filename = "../Data/Optimization/"*folder*"/nnAnalytical_"*sampler* "_mc_step_length" * string(mc_step_length) * "_learning_rate_"* string(optimizer.eta)   *"_nodes_layer1_"* string(size(system.nn.w2)[2])* "_layer2_"*string(size(system.nn.w2[1]))  * "_num_p_" *string(system.numParticles)*"_num_d_" * string(system.numDimensions)* ".txt"  
+        filename = "../Data/Optimization/"*folder*"/nnAnalytical_"*sampler* "_mc_step_length" * string(mc_step_length) * "_learning_rate_"* string(optimizer.eta)   *"_nodes_layer1_"* string(size(system.nn.w2)[2])* "_nodes_layer2_"*string(size(system.nn.w2)[1])  * "_num_p_" *string(system.numParticles)*"_num_d_" * string(system.numDimensions)* ".txt"  
         saveDataToFile(local_energies, filename)
     end
 
