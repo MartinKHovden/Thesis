@@ -3,7 +3,7 @@ module neuralNetworkAnalytical
 using LinearAlgebra
 
 export computePsi, nnAnalyticalComputeRatio!, nnAnalyticalComputeGradient!, nnAnalyticalComputeLaplacian!, nnAnalyticalComputeParameterGradient!
-export sigmoid, sigmoid_derivative, sigmoid_double_derivative
+export sigmoid, sigmoid_derivative, sigmoid_double_derivative, nnAnalyticalComputeDriftForce!
 export nnAnalyticalComputePsi!
 
 function computePsi!(system, position)
@@ -19,7 +19,9 @@ function computePsi!(system, position)
 
     mul!(model.z3, model.w3, model.a2)
     model.z3[:] += model.b3
-    map!(model.activationFunction, model.a3, model.z3)
+    # map!(model.activationFunction, model.a3, model.z3)
+    map!(x->x, model.a3, model.z3)
+
 
     return model.a3[1]
 end
@@ -37,7 +39,9 @@ function nnAnalyticalComputePsi!(system, position)
 
     mul!(model.z3, model.w3, model.a2)
     model.z3[:] += model.b3
-    map!(model.activationFunction, model.a3, model.z3)
+    # map!(model.activationFunction, model.a3, model.z3)
+    map!(x -> x, model.a3, model.z3)
+
 
     return model.a3[1]
 end
@@ -49,8 +53,8 @@ function nnAnalyticalComputeRatio!(system, oldPosition)
     return ratio
 end
 
-function nnAnalyticalComputeDriftForce!(system)
-    return 2*nnAnalyticalComputeGradient(system)[(particleToUpdate - 1)*numDimensions + coordinateToUpdate]
+function nnAnalyticalComputeDriftForce!(system, particleToUpdate, coordinateToUpdate)
+    return 2*nnAnalyticalComputeGradient!(system)[(particleToUpdate - 1)*system.numDimensions + coordinateToUpdate]
 end
 
 function nnAnalyticalComputeGradient!(system)
@@ -66,7 +70,10 @@ function nnAnalyticalComputeGradient!(system)
     broadcast!(*, model.a2_grad,sigmoid_derivative.(model.z2), model.a2_grad)
 
     mul!(model.a3_grad, model.w3, model.a2_grad)
-    broadcast!(*, model.a3_grad, sigmoid_derivative.(model.z3),model.a3_grad)
+    # broadcast!(*, model.a3_grad, sigmoid_derivative.(model.z3),model.a3_grad)
+    broadcast!(*, model.a3_grad, 1.0, model.a3_grad)
+
+
 
     return model.a3_grad[:]
 end
@@ -90,11 +97,15 @@ function nnAnalyticalComputeLaplacian!(system)
     broadcast!(+, model.a2_double_grad, model.a2_double_grad, model.a2_double_grad_temp)
 
     mul!(model.a3_double_grad_temp, model.w3, model.a2_double_grad)
-    broadcast!(*, model.a3_double_grad_temp, sigmoid_derivative.(model.z3), model.a3_double_grad_temp)
+    # broadcast!(*, model.a3_double_grad_temp, sigmoid_derivative.(model.z3), model.a3_double_grad_temp)
+    broadcast!(*, model.a3_double_grad_temp, 1.0, model.a3_double_grad_temp)
+
 
     mul!(model.a3_double_grad, model.w3, model.a2_grad)
     map!(x->x^2, model.a3_double_grad, model.a3_double_grad)
-    broadcast!(*, model.a3_double_grad, sigmoid_double_derivative.(model.z3), model.a3_double_grad)
+    # broadcast!(*, model.a3_double_grad, sigmoid_double_derivative.(model.z3), model.a3_double_grad)
+    broadcast!(*, model.a3_double_grad, 0.0, model.a3_double_grad)
+
 
     broadcast!(+, model.a3_double_grad, model.a3_double_grad, model.a3_double_grad_temp)
 
@@ -111,8 +122,14 @@ function nnAnalyticalComputeParameterGradient!(system)
     x = reshape(system.particles', 1,:)'
 
     # model.delta3[:] = sigmoid_derivative.(model.z3)
-    map!(sigmoid_derivative, model.delta3, model.z3)
+
+    # map!(sigmoid_derivative, model.delta3, model.z3)
+    map!(x -> 1, model.delta3, model.z3)
+
+    println(model.delta3)
+
     model.w3_grad[:,:] = model.delta3'.*model.a2
+
     # broadcast!(*, model.w3_grad, model.delta3', model.a2)
     model.b3_grad[:] = copy(model.delta3)
 

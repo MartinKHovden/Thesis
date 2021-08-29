@@ -1,8 +1,8 @@
-module jastrow 
+module padeJstrow 
 
-export jastrowComputeRatio, jastrowComputeGradient, jastrowComputeLaplacian
-export jastrowComputeParameterGradient, jastrowUpdateDistanceMatrix
-export jastrowWavefunction, jastrowComputeDriftForce
+export padeJastrowComputeRatio, padeJastrowComputeGradient, padeJastrowComputeLaplacian
+export padeJastrowComputeParameterGradient, padeJastrowUpdateDistanceMatrix
+export padeJastrowWavefunction, padeJastrowComputeDriftForce
 
 using LinearAlgebra
 
@@ -11,10 +11,10 @@ using LinearAlgebra
 
 Computes the ratio for the Jastrow part of the wavefunction. 
 """
-function jastrowComputeRatio(system, oldPosition, particleMoved)
+function padeJastrowComputeRatio(system, oldPosition, particleMoved)
     positionDifferenceSum = 0
     newPosition = system.particles
-    kappa = system.jastrowFactor.kappa
+    a = system.jastrowFactor.kappa
     for j=1:system.numParticles
         if j != particleMoved
             newDifference = newPosition[j, :] - newPosition[particleMoved, :]
@@ -23,7 +23,7 @@ function jastrowComputeRatio(system, oldPosition, particleMoved)
             oldDifference = oldPosition[j, :] - oldPosition[particleMoved, :]
             oldDistance = sqrt(dot(oldDifference, oldDifference))
 
-            positionDifferenceSum += kappa[particleMoved, j]*(newDistance - oldDistance)
+            positionDifferenceSum += a[particleMoved, j]*(newDistance - oldDistance)
         end 
     end
     ratio = exp(2*positionDifferenceSum)
@@ -35,7 +35,7 @@ end
 
 Computes the gradient of the Jastrow part of the wavefunction. 
 """
-function jastrowComputeGradient(system, particleNum)
+function padeJastrowComputeGradient(system, particleNum)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
     particles = system.particles
@@ -53,8 +53,8 @@ function jastrowComputeGradient(system, particleNum)
     return gradient
 end 
 
-function jastrowComputeDriftForce(system, particleNum, dimension)
-    return 2*jastrowComputeGradient(system, particleNum)[dimension]
+function padeJastrowComputeDriftForce(system, particleNum, dimension)
+    return 2*padeJastrowComputeGradient(system, particleNum)[dimension]
 end
 
 """
@@ -62,7 +62,7 @@ end
 
 Computes the Laplacian of the Jastrow part of the wavefunction. 
 """
-function jastrowComputeLaplacian(system, i)
+function padeJastrowComputeLaplacian(system, i)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
     particles = system.particles
@@ -88,7 +88,7 @@ end
 
 Computes the gradient with respect to the variational parameters. 
 """
-function jastrowComputeParameterGradient(system)
+function padeJastrowComputeParameterGradient(system)
     return system.jastrowFactor.distanceMatrix
 end 
 
@@ -97,7 +97,7 @@ end
 
 Updates the distance matrix in the jastrow part of the wavefunction. 
 """
-function jastrowUpdateDistanceMatrix(system)
+function padeJastrowUpdateDistanceMatrix(system)
     numParticles = system.numParticles
     distanceMatrix = zeros(numParticles, numParticles)
     particles = system.particles
@@ -116,7 +116,7 @@ end
 
 Computes the wavefunction value of the Jastrow factor.
 """
-function jastrowWavefunction(system)
+function padeJastrowWavefunction(system)
     expArgument = 0
     for i=1:system.numParticles
         for j=i+1:system.numParticles

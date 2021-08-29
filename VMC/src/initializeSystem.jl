@@ -1,11 +1,12 @@
 module initializeSystem 
 
 export slater, slaterJastrow, slaterRBM, slaterNN, slaterNNAnalytical, gaussianJastrow, gaussianNNAnalytical
-export slaterJastrowNNAnalytical
+export slaterJastrowNNAnalytical, gaussianJastrowNNAnalytical
 export initializeSystemSlater, initializeSystemSlaterJastrow
 export initializeSystemSlaterRBM, initializeSystemSlaterNN
 export initializeSystemSlaterNNAnalytical, initializeSystemSlaterJastrowNNAnalytical
 export initializeSystemGaussianJastrow, initializeSystemGaussianNNAnalytical
+export initializeSystemGaussianJastrowNNAnalytical
 export getVariationalParameters, setVariationalParameters!
 
 include("Various/quantumNumbers.jl")
@@ -282,7 +283,7 @@ struct slaterNN
 end 
 
 function initializeNN(numParticles, numDimensions, numHiddenNeurons)
-    nn = NN(Chain(Dense(numParticles*numDimensions, numHiddenNeurons, sigmoid), Dense(numHiddenNeurons,numHiddenNeurons, sigmoid), Dense(numHiddenNeurons, 1, sigmoid)))
+    nn = NN(Chain(Dense(numParticles*numDimensions, numHiddenNeurons, sigmoid), Dense(numHiddenNeurons,numHiddenNeurons, sigmoid), Dense(numHiddenNeurons, 1)))
 end 
 
 function initializeSystemSlaterNN(numParticles, numDimensions; alpha = 1.0, omega = 1.0, beta = 1.0, interacting = false, numHiddenNeurons = 10)
@@ -340,8 +341,11 @@ end
 
 function initializeNNAnalytical(numParticles, numDimensions, numNodesLayer1, numNodesLayer2, activationFunction, activationFunctionDerivative, activationFunctionDoubleDerivative)
     w1 = @MMatrix randn(numNodesLayer1, numParticles*numDimensions)
+    w1 *= 0.01
     w2 = @MMatrix randn(numNodesLayer2, numNodesLayer1)
+    w2*= 0.01
     w3 = @MMatrix randn(1, numNodesLayer2)
+    w3*= 0.01
 
     b1 = @MVector randn(numNodesLayer1)
     b2 = @MVector randn(numNodesLayer2)
@@ -435,6 +439,42 @@ function initializeSystemGaussianNNAnalytical(numParticles, numDimensions; alpha
     return gaussianNNAnalytical(particles, numParticles, numDimensions, alpha, omega, interacting, nn)
 end
 
+struct gaussianJastrowNNAnalytical
+    particles::Array{Float64, 2}
+    numParticles::Int64 
+    numDimensions::Int64
+
+    alpha::Float64 
+    omega::Float64
+
+    interacting::Bool
+
+    jastrowFactor::simpleJastrow
+
+    nn::NNAnalytical
+end
+
+function initializeSystemGaussianJastrowNNAnalytical(numParticles, numDimensions; alpha = 1.0, omega = 1.0, beta = 1.0, interacting = false, numNodesLayer1 = 10, numNodesLayer2 = 10)
+    particles = initializeParticlesNormalDist(numParticles, numDimensions)
+    nn = initializeNNAnalytical(numParticles, numDimensions, numNodesLayer1, numNodesLayer2, sigmoid, sigmoid_derivative, sigmoid_double_derivative)
+    distanceMatrix = zeros(numParticles, numParticles)
+    println(distanceMatrix)
+    for i=1:numParticles
+        for j=i:numParticles 
+            difference = particles[i, :] - particles[j, :]
+            distance = sqrt(dot(difference, difference))
+            distanceMatrix[i,j] = distance
+        end 
+    end 
+    display(distanceMatrix)
+    distanceMatrix = distanceMatrix + distanceMatrix'
+    display(distanceMatrix)
+
+
+    jastrowFactor = simpleJastrow([beta], distanceMatrix)
+    return gaussianJastrowNNAnalytical(particles, numParticles, numDimensions, alpha, omega, interacting, jastrowFactor, nn)
+end
+
 
 struct slaterJastrowNNAnalytical  
     particles::Array{Float64, 2}
@@ -458,7 +498,7 @@ struct slaterJastrowNNAnalytical
     nn::NNAnalytical
 end
 
-function initializeSystemSlaterJastrowNNAnalytical()
+function initializeSystemSlaterJastrowNNAnalytical(numParticles, numDimensions; alpha = 1.0, omega = 1.0, beta = 1.0, interacting = false, numNodesLayer1 = 10, numNodesLayer2 = 10)
     particles = initializeParticlesNormalDist(numParticles, numDimensions)
     sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(particles, numParticles, numDimensions, alpha, omega) 
     distanceMatrix = zeros(numParticles, numParticles)
