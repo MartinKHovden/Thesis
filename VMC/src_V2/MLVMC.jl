@@ -15,6 +15,7 @@ include("Wavefunctions/slater.jl")
 include("Wavefunctions/gaussian.jl")
 include("Wavefunctions/jastrow.jl")
 include("Wavefunctions/rbm.jl")
+include("Wavefunctions/nn.jl")
 include("system.jl")
 include("Hamiltonians/harmonicOscillator.jl")
 include("Samplers/metropolis.jl")
@@ -28,13 +29,14 @@ using .slater
 using .gaussian
 using .jastrow
 using .rbm
+using .nn
 using .system
 using .harmonicOscillator
 using .metropolis
 using .vmc
 
 export System, addWaveFunctionElement
-export SlaterMatrix, Jastrow, Gaussian, RBM
+export SlaterMatrix, Jastrow, Gaussian, RBM, NN
 export Descent, ADAM, Momentum
 export runVMC!, runMetropolis!
 
