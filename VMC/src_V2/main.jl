@@ -14,9 +14,10 @@ s = System(numParticles, numDimensions, hamiltonian, omega=harmonicOscillatorFre
 addWaveFunctionElement(s, SlaterMatrix(s))
 addWaveFunctionElement(s, Gaussian(1.0))
 # addWaveFunctionElement(s, Jastrow(s))
-addWaveFunctionElement(s, NN(s, 2, 2, "sigmoid"))
+addWaveFunctionElement(s, NN(s, 4, 2, "sigmoid"))
+println(s.wavefunctionElements[3])
 # addWaveFunctionElement(s, RBM(s, 2, 1.0))
-# @time runMetropolis!(s, 100000, 0.5)
+@time runMetropolis!(s, 100000, 0.5)
 
 println(s)
 
