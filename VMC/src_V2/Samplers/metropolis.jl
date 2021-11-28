@@ -92,7 +92,7 @@ function metropolisStepBruteForce!(system, stepLength)
 end
 
 function metropolisStepImportanceSampling!(system, stepLength)
-    numParticles = system.numParticles 
+    numParticles = system.numParticles
     numDimensions = system.numDimensions
 
     # Chooses one coordinate randomly to update.
@@ -104,19 +104,21 @@ function metropolisStepImportanceSampling!(system, stepLength)
 
     D = 0.5
 
-    currentDriftForce = 1.0
+    currentDriftForce = 0.0
     for element in system.wavefunctionElements
-        currentDriftForce *= computeDriftForce()
+        currentDriftForce += computeDriftForce(system, element, particleToUpdate, coordinateToUpdate)
     end
 
     system.particles[particleToUpdate, coordinateToUpdate] += D*currentDriftForce*stepLength + randn(Float64)*sqrt(stepLength)
 
-    newDriftForce = 1.0
+    newDriftForce = 0.0
     for element in system.wavefunctionElements
-        newDriftForce *= computeDriftForce()
+        newDriftForce += computeDriftForce(system, element, particleToUpdate, coordinateToUpdate)
     end
 
-    greensFunction = computeGreensFunction()
+    greensFunction = computeGreensFunction(oldPosition, system.particles, particleToUpdate,
+                                            coordinateToUpdate, currentDriftForce, 
+                                            newDriftForce, D, stepLength)
 
     # Update the slater matrix:
     ratio = 1.0

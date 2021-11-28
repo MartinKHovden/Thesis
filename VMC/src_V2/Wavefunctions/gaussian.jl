@@ -11,7 +11,7 @@ The Gaussian part
 """
 module gaussian 
 
-export Gaussian, computeRatio, computeGradient, computeLaplacian, updateElement!, computeParameterGradient 
+export Gaussian, computeRatio, computeGradient, computeLaplacian, updateElement!, computeParameterGradient, computeDriftForce
 
 # using ..system
 using ..wavefunction
@@ -68,6 +68,10 @@ end
 function slaterGaussianComputeParameterGradient(system)
     return -0.5*system.omega*sum(system.particles.^2)
 end 
+
+function wavefunction.computeDriftForce(system, element::Gaussian, particleToUpdate, coordinateToUpdate)
+    return 2*slaterGaussianComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
+end
 
 function wavefunction.updateElement!(system, wavefunctionElement::Gaussian, particle::Int64)
 end

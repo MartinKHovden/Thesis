@@ -1,6 +1,6 @@
 module jastrow
 
-export Jastrow, computeRatio, computeGradient, computeLaplacian, updateElement!, computeParameterGradient 
+export Jastrow, computeRatio, computeGradient, computeLaplacian, updateElement!, computeParameterGradient, computeDriftForce
 
 using ..wavefunction
 using Random
@@ -118,6 +118,10 @@ end
 
 function wavefunction.computeParameterGradient(system, wavefunctionElement::Jastrow)
     return wavefunctionElement.distanceMatrix
+end
+
+function wavefunction.computeDriftForce(system, element::Jastrow)
+    return 2*jastrowComputeGradient(system, element, particleNum)[dimension]
 end
 
 function wavefunction.updateElement!(system, wavefunctionElement::Jastrow, particle::Int64)

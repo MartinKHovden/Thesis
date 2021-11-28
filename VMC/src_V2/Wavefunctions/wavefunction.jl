@@ -1,6 +1,6 @@
 module wavefunction
 
-export computeGradient, computeLaplacian, computeRatio, computeParameterGradient
+export computeGradient, computeLaplacian, computeRatio, computeParameterGradient, computeDriftForce
 export updateElement!
 
 
@@ -19,6 +19,10 @@ end
 
 function computeParameterGradient()
     return nothing
+end
+
+function computeDriftForce()
+    return nothing 
 end
 
 function updateElement!()

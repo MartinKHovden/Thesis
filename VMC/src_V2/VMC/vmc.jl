@@ -5,10 +5,10 @@ export runVMC!
 using ..metropolis
 using Flux:update!
 
-function runVMC!(system, numOptimizationIterations, numMCMCIterations, mcmcStepLength, optimizer)
+function runVMC!(system, numOptimizationIterations, numMCMCIterations, mcmcStepLength, optimizer, sampler = "bf")
     local_energies::Array{Float64, 2} = zeros(Float64, (numMCMCIterations, 1))
     for k = 1:numOptimizationIterations
-        local_energy, grads = runMetropolis!(system, numMCMCIterations, mcmcStepLength)
+        local_energy, grads = runMetropolis!(system, numMCMCIterations, mcmcStepLength, sampler = sampler)
         println("START:")
         update!(optimizer, last(system.wavefunctionElements).variationalParameter, grads)
         local_energies[k] = local_energy

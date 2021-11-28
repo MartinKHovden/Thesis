@@ -15,21 +15,21 @@ s = System(numParticles, numDimensions, hamiltonian, omega=harmonicOscillatorFre
 addWaveFunctionElement(s, SlaterMatrix(s))
 addWaveFunctionElement(s, Gaussian(1.0))
 # addWaveFunctionElement(s, Jastrow(s))
-addWaveFunctionElement(s, NN(s, 2, 2, "sigmoid"))
+# addWaveFunctionElement(s, NN(s, 2, 2, "sigmoid"))
 # addWaveFunctionElement(s, RBM(s, 2, 1.0))
-# @time runMetropolis!(s, 100000, 0.5)
+@time runMetropolis!(s, 100000,  sampler="is", 0.5)
 
 # println(s)
 
 # #Set up the optimiser from Flux: 
-learningrate = 0.5
-optim = Descent(learningrate)
+# learningrate = 0.5
+# optim = Descent(learningrate)
 
 # #Set up and run the VMC-calculation:
-numOptimizationSteps = 100
-numMCMCSteps = 100000
-mcmcStepLength = 0.5
-runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim)
+# numOptimizationSteps = 100
+# numMCMCSteps = 100000
+# mcmcStepLength = 0.5
+# runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim)
 
 end
 

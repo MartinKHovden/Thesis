@@ -1,6 +1,6 @@
 module slater
 
-export SlaterMatrix, computeRatio, computeGradient, computeLaplacian, updateElement!, inverseSlaterMatrixUpdate
+export SlaterMatrix, computeRatio, computeGradient, computeLaplacian, updateElement!, inverseSlaterMatrixUpdate, computeDriftForce
 
 include("hermite.jl")
 include("singleParticle.jl")
@@ -237,6 +237,10 @@ function inverseSlaterMatrixSpinDownUpdateCol(system, slater::SlaterMatrix, col,
     slater.inverseSlaterMatrixSpinDown[:, col] = copy(value)
 
     return nothing
+end
+
+function wavefunction.computeDriftForce(system, element::SlaterMatrix, particleToUpdate, coordinateToUpdate)
+    return 2*slaterDeterminantComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
 end
 
 const quantumNumbers1D = [0
