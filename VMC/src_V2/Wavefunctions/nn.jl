@@ -346,44 +346,41 @@ function nnAnalyticalComputeLaplacian!(model::NN)
 end
 
 function wavefunction.computeParameterGradient(system, wavefunctionElement::NN)
-    return nnAnalyticalComputeParameterGradient!(system, wavefunctionElement)
+    return_value = nnAnalyticalComputeParameterGradient!(system, wavefunctionElement)
+    return return_value
 end
 
 function nnAnalyticalComputeParameterGradient!(system, model::NN)
     x = reshape(system.particles', 1,:)'
 
-    # model.delta3[:] = sigmoid_derivative.(model.z3)
-
-    # map!(sigmoid_derivative, model.delta3, model.z3)
     map!(x -> 1, model.delta[3], model.z[3])
 
-    model.variationalParameterGradient[5][:,:] = model.delta[3]'.*model.a[2]
+    # model.variationalParameterGradient[5][:,:] = copy(model.delta[3]'.*model.a[2])
+    copyto!(model.variationalParameterGradient[5][:,:], model.delta[3]'.*model.a[2])
 
-    # broadcast!(*, model.w3_grad, model.delta3', model.a2)
-    model.variationalParameterGradient[6][:] = copy(model.delta[3])
+    # model.variationalParameterGradient[6][:] = copy(model.delta[3])
+    copyto!(model.variationalParameterGradient[6][:], model.delta[3])
 
-    # model.delta2[:] = (model.w3'*model.delta3).*sigmoid_derivative.(model.z2)
     mul!(model.delta[2], model.variationalParameter[5]', model.delta[3])
     broadcast!(*, model.delta[2], model.activationFunctionDerivative.(model.z[2]), model.delta[2])
-    # println(model.delta2, model.a1)
-    # model.w2_grad[:,:] = (model.delta2'.*model.a1)'
-    println("HERE", model.variationalParameterGradient[3][:,:])
-    println(model.delta[2], model.a[1]')
-    println(model.delta[2].* (model.a[1]'))
-    model.variationalParameterGradient[3][:,:] = model.delta[2].*(model.a[1]')
-    model.variationalParameterGradient[4][:] = copy(model.delta[2])
-    println("HERE2", model.variationalParameterGradient[3][:,:])
+
+    # model.variationalParameterGradient[3][:,:] = copy(model.delta[2].*(model.a[1]'))
+    copyto!(model.variationalParameterGradient[3][:,:], model.delta[2].*(model.a[1]'))
+    # model.variationalParameterGradient[4][:] = copy(model.delta[2])
+    copyto!(model.variationalParameterGradient[4][:], model.delta[2])
 
 
-    # model.delta1[:] = (model.w2'*model.delta2).*sigmoid_derivative.(model.z1)
     mul!(model.delta[1], model.variationalParameter[3]', model.delta[2])
-    broadcast!(*, model.delta[1], model.activationFunctionDerivative.(model.z[1]), model.delta[1])
-    # model.w1_grad[:,:] = (model.delta1'.*x)'
-    model.variationalParameterGradient[1][:,:] = model.delta[1].*(x')
-    model.variationalParameterGradient[2][:] = copy(model.delta[1])
 
-    returnValues = [copy(model.variationalParameterGradient[1]), copy(model.variationalParameterGradient[3]), copy(model.variationalParameterGradient[5]), copy(model.variationalParameterGradient[2]), copy(model.variationalParameterGradient[4]), copy(model.variationalParameterGradient[6])]
-    # println(size(model.w3_grad))
+    broadcast!(*, model.delta[1], model.activationFunctionDerivative.(model.z[1]), model.delta[1])
+
+    # model.variationalParameterGradient[1][:,:] = copy(model.delta[1].*(x'))
+    copyto!(model.variationalParameterGradient[1][:,:], model.delta[1].*(x'))
+    # model.variationalParameterGradient[2][:] = copy(model.delta[1])
+    copyto!(model.variationalParameterGradient[2][:], model.delta[1])
+
+    returnValues = [copy(model.variationalParameterGradient[1]), copy(model.variationalParameterGradient[2]), copy(model.variationalParameterGradient[3]), copy(model.variationalParameterGradient[4]), copy(model.variationalParameterGradient[5]), copy(model.variationalParameterGradient[6])]
+
     resetArrays!(model)
 
     return returnValues

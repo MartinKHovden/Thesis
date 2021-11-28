@@ -32,6 +32,7 @@ function runMetropolis!(system, num_mc_iterations::Int64, step_length::Float64; 
         local_energy = computeLocalEnergy(system)
         local_energies[i] = local_energy
 
+
         optimizerElement.variationalParameterGradient = computeParameterGradient(system, optimizerElement)
 
         if i > burn_in*num_mc_iterations
@@ -91,5 +92,75 @@ function metropolisStepBruteForce!(system, stepLength)
 end
 
 function metropolisStepImportanceSampling!(system, stepLength)
+    numParticles = system.numParticles 
+    numDimensions = system.numDimensions
+
+    # Chooses one coordinate randomly to update.
+    coordinateToUpdate::Int64 = rand(1:numDimensions)
+    particleToUpdate::Int64 = rand(1:numParticles)
+
+    # Update the coordinate:
+    oldPosition = copy(system.particles)
+
+    D = 0.5
+
+    currentDriftForce = 1.0
+    for element in system.wavefunctionElements
+        currentDriftForce *= computeDriftForce()
+    end
+
+    system.particles[particleToUpdate, coordinateToUpdate] += D*currentDriftForce*stepLength + randn(Float64)*sqrt(stepLength)
+
+    newDriftForce = 1.0
+    for element in system.wavefunctionElements
+        newDriftForce *= computeDriftForce()
+    end
+
+    greensFunction = computeGreensFunction()
+
+    # Update the slater matrix:
+    ratio = 1.0
+
+    for element in system.wavefunctionElements
+        updateElement!(system, element, particleToUpdate)
+        ratio *= computeRatio(system, element, particleToUpdate, coordinateToUpdate, oldPosition)
+    end
+
+    U = rand(Float64)
+
+    if U < greensFunction*ratio
+        # println(system)
+        if system.slaterInWF
+            inverseSlaterMatrixUpdate(system, system.wavefunctionElements[1], particleToUpdate, system.wavefunctionElements[1].R)
+        end
+    else 
+        # println("Here")
+        system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
+        # slaterMatrixUpdate(system, particleToUpdate)
+        for element in system.wavefunctionElements
+            updateElement!(system, element, particleToUpdate)
+        end
+    end
 end
+
+function computeGreensFunction(oldPosition, newPosition, 
+                                particleToUpdate,        
+                                coordinateToUpdate, 
+                                oldDriftForce, 
+                                newDriftForce, 
+                                D,
+                                stepLength)
+
+    greens_function_argument = (oldPosition[particleToUpdate, coordinateToUpdate] +
+                                - newPosition[particleToUpdate, coordinateToUpdate] +
+                                - D*stepLength*newDriftForce)^2 +
+                                - (newPosition[particleToUpdate, coordinateToUpdate] + 
+                                - oldPosition[particleToUpdate, coordinateToUpdate] +
+                                - D*stepLength*oldDriftForce)^2
+
+    greens_function_argument /= (4.0*D*stepLength)
+    greens_function = exp(-greens_function_argument)
+    return greens_function
+end
+
 end
