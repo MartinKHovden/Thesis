@@ -17,7 +17,7 @@ addWaveFunctionElement(s, Gaussian( 1.0 ))
 # addWaveFunctionElement(s, Jastrow(s))
 # addWaveFunctionElement(s, NN(s, 2, 2, "sigmoid"))
 # addWaveFunctionElement(s, RBM(s, 2, 1.0))
-@time runMetropolis!(s, 1000000,  sampler="bf", 0.5, write_to_file = true, calculate_onebody = true)
+@time runMetropolis!(s, 100000,  sampler="bf", 0.5, writeToFile = true, calculateOnebody = true)
 
 # println(s)
 

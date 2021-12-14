@@ -11,19 +11,19 @@ using ..nn
 
 function runMetropolis!(
     system, 
-    num_mc_iterations::Int64, 
-    step_length::Float64; 
+    numMcIterations::Int64, 
+    stepLength::Float64; 
     sampler = "bf", 
-    burn_in = 0.01, 
-    write_to_file = false, 
-    calculate_onebody = false
+    burnIn = 0.01, 
+    writeToFile = false, 
+    calculateOnebody = false
 )
     
-    local_energy_sum::Float64 = 0.0
+    localEnergySum::Float64 = 0.0
 
-    local_energies::Array{Float64, 1} = zeros(Float64, Int(num_mc_iterations))
-    local_energy_psi_parameter_derivative_sum = 0 .*last(system.wavefunctionElements).variationalParameterGradient
-    psi_parameter_derivative_sum = 0 .*last(system.wavefunctionElements).variationalParameterGradient
+    localEnergies::Array{Float64, 1} = zeros(Float64, Int(numMcIterations))
+    localEnergyPsiParameterDerivativeSum = 0 .*last(system.wavefunctionElements).variationalParameterGradient
+    psiParameterDerivativeSum = 0 .*last(system.wavefunctionElements).variationalParameterGradient
 
     start = time()
 
@@ -36,7 +36,7 @@ function runMetropolis!(
         exit(100)
     end
 
-    if calculate_onebody
+    if calculateOnebody
         numBins = 1000
         maxLength = 10
         dr = maxLength/numBins
@@ -45,48 +45,48 @@ function runMetropolis!(
 
     optimizerElement = last(system.wavefunctionElements)
 
-    for i = 1:num_mc_iterations
-        stepFunction(system, step_length)
+    for i = 1:numMcIterations
+        stepFunction(system, stepLength)
 
-        local_energy = computeLocalEnergy(system)
-        local_energies[i] = local_energy
+        localEnergy = computeLocalEnergy(system)
+        localEnergies[i] = localEnergy
 
         optimizerElement.variationalParameterGradient = computeParameterGradient(system, optimizerElement)
 
-        if i > burn_in*num_mc_iterations
-            local_energy_sum += local_energy
-            local_energy_psi_parameter_derivative_sum += local_energy*optimizerElement.variationalParameterGradient
-            psi_parameter_derivative_sum += optimizerElement.variationalParameterGradient
+        if i > burnIn*numMcIterations
+            localEnergySum += localEnergy
+            localEnergyPsiParameterDerivativeSum += localEnergy*optimizerElement.variationalParameterGradient
+            psiParameterDerivativeSum += optimizerElement.variationalParameterGradient
         end
 
-        if calculate_onebody
+        if calculateOnebody
             for particle=1:system.numParticles
                 r = sqrt(sum(system.particles[particle,:].^2))
                 onebody[floor(Int, r ÷ dr) + 1] += 1
             end
         end
     end
-    if calculate_onebody
+    if calculateOnebody
         saveDataToFile(onebody, "onebodytest.txt")
     end 
 
     runtime = time() - start
 
-    if write_to_file
-        filename = makeFilename(system,step_length, num_mc_iterations, sampler)
-        saveDataToFile(local_energies, filename)
+    if writeToFile
+        filename = makeFilename(system,stepLength, numMcIterations, sampler)
+        saveDataToFile(localEnergies, filename)
     end
 
-    samples = num_mc_iterations - burn_in*num_mc_iterations
+    samples = numMcIterations - burnIn*numMcIterations
 
-    mc_local_energy = local_energy_sum/samples
-    mc_local_energy_psi_derivative_a = local_energy_psi_parameter_derivative_sum/samples
-    mc_psi_derivative_a = psi_parameter_derivative_sum/samples
-    local_energy_derivative_a = 2*(mc_local_energy_psi_derivative_a - mc_local_energy*mc_psi_derivative_a)
+    mcLocalEnergy = localEnergySum/samples
+    mcLocalEnergyPsiParameterDerivative = localEnergyPsiParameterDerivativeSum/samples
+    mcPsiParameterDerivative = psiParameterDerivativeSum/samples
+    local_energy_derivative_a = 2*(mcLocalEnergyPsiParameterDerivative - mcLocalEnergy*mcPsiParameterDerivative)
 
-    println("Ground state energy: ", mc_local_energy)
+    println("Ground state energy: ", mcLocalEnergy)
 
-    return mc_local_energy, local_energy_derivative_a
+    return mcLocalEnergy, local_energy_derivative_a
 end 
 
 function metropolisStepBruteForce!(system, stepLength)
