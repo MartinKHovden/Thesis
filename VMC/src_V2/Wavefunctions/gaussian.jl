@@ -13,7 +13,6 @@ module gaussian
 
 export Gaussian, computeRatio, computeGradient, computeLaplacian, updateElement!, computeParameterGradient, computeDriftForce
 
-# using ..system
 using ..wavefunction
 
 mutable struct Gaussian

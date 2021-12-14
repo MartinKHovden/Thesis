@@ -4,20 +4,20 @@ include("MLVMC.jl")
 using .MLVMC
 
 #Set up the system:
-numParticles = 2
-numDimensions = 2
+num_particles = 2
+num_dimensions = 2
 hamiltonian = "quantumDot"
-harmonicOscillatorFrequency = 1.0
-interactingParticles = false
-s = System(numParticles, numDimensions, hamiltonian, omega=harmonicOscillatorFrequency, interacting = interactingParticles)
+harmonic_oscillator_frequency = 1.0
+interacting_particles = false
+s = System(num_particles, num_dimensions, hamiltonian, omega=harmonic_oscillator_frequency, interacting = interacting_particles)
 
 #Add the wavefunction elements:
-addWaveFunctionElement(s, SlaterMatrix(s))
-addWaveFunctionElement(s, Gaussian(1.0))
+addWaveFunctionElement(s, SlaterMatrix( s ))
+addWaveFunctionElement(s, Gaussian( 1.0 ))
 # addWaveFunctionElement(s, Jastrow(s))
 # addWaveFunctionElement(s, NN(s, 2, 2, "sigmoid"))
 # addWaveFunctionElement(s, RBM(s, 2, 1.0))
-@time runMetropolis!(s, 100000,  sampler="is", 0.5)
+@time runMetropolis!(s, 1000000,  sampler="bf", 0.5, write_to_file = true, calculate_onebody = true)
 
 # println(s)
 

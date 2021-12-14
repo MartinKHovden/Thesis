@@ -197,6 +197,10 @@ function rbmComputeParameterGradient!(system, rbm::RBM)
     end
 end
 
+function wavefunction.computeDriftForce(system, element::RBM, particleToUpdate, coordinateToUpdate)
+    return 2*rbmComputeGradient(system, element)[(particleToUpdate - 1)*numDimensions + coordinateToUpdate]
+end
+
 function wavefunction.updateElement!(system, wavefunctionElement::RBM, particle)
 end
 end
