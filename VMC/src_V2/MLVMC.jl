@@ -23,7 +23,7 @@ include("VMC/vmc.jl")
 
 using OrderedCollections
 using Random
-using Flux: Descent, ADAM, Momentum
+using Flux: Descent, ADAM, Momentum, RADAM
 using .wavefunction
 using .slater
 using .gaussian

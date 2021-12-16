@@ -6,9 +6,20 @@ using ..wavefunction
 using Random
 using LinearAlgebra
 
+"""
+    Jastrow
+
+Stores the variational parameter and its gradient for the Jastrow part of the 
+wave function.
+
+# Fields 
+- `variationalParameter`: Stores the variational parameter as an array of arrays. 
+- `variationalParameterGradient`: Stores the gradient of the variational parameters. 
+- `distanceMatrix`: Stores the distance between each particle in the system. 
+"""
 mutable struct Jastrow 
-    variationalParameter::Array{Float64, 2}
-    variationalParameterGradient::Array{Float64, 2}
+    variationalParameter::Array#{Float64, 2}
+    variationalParameterGradient::Array#{Float64, 2}
 
     distanceMatrix::Array{Float64, 2}
 
@@ -30,7 +41,7 @@ mutable struct Jastrow
         kappa = randn(rng, Float64, (numParticles, numParticles))
         kappa = 0.5*(kappa + kappa')
 
-        return new(kappa, zeros(size(kappa)), distanceMatrix)
+        return new([kappa], [zeros(size(kappa))], distanceMatrix)
     end
 end
 
@@ -41,7 +52,7 @@ end
 function jastrowComputeRatio(system, jastrow::Jastrow, oldPosition, particleMoved)
     positionDifferenceSum = 0
     newPosition = system.particles
-    kappa = jastrow.variationalParameter
+    kappa = jastrow.variationalParameter[1]
     for j=1:system.numParticles
         if j != particleMoved
             newDifference = newPosition[j, :] - newPosition[particleMoved, :]
@@ -72,7 +83,7 @@ function jastrowComputeGradient(system, jastrow::Jastrow, particleNum)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
     
-    kappa = jastrow.variationalParameter
+    kappa = jastrow.variationalParameter[1]
     gradient = zeros(numDimensions)
 
     for j=1:numParticles 
@@ -99,7 +110,7 @@ function jastrowComputeLaplacian(system, jastrow::Jastrow, i)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
     particles = system.particles
-    kappa = jastrow.variationalParameter
+    kappa = jastrow.variationalParameter[1]
 
     laplacian = 0
 
@@ -117,11 +128,11 @@ function jastrowComputeLaplacian(system, jastrow::Jastrow, i)
 end
 
 function wavefunction.computeParameterGradient(system, wavefunctionElement::Jastrow)
-    return wavefunctionElement.distanceMatrix
+    return [wavefunctionElement.distanceMatrix]
 end
 
-function wavefunction.computeDriftForce(system, element::Jastrow)
-    return 2*jastrowComputeGradient(system, element, particleNum)[dimension]
+function wavefunction.computeDriftForce(system, element::Jastrow, particleToUpdate, coordinateToUpdate)
+    return 2*jastrowComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
 end
 
 function wavefunction.updateElement!(system, wavefunctionElement::Jastrow, particle::Int64)

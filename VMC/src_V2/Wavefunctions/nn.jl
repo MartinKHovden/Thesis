@@ -7,7 +7,7 @@ using LinearAlgebra
 using ..wavefunction
 
 """ 
-    struct NN 
+    NN 
 
 Struct for storing the information about, and the state of, the neural network. 
 The network is restricted to two hidden layers, however, the number of nodes and 

@@ -48,7 +48,7 @@ function runMetropolis!(
     for i = 1:numMcIterations
         stepFunction(system, stepLength)
 
-        localEnergy = computeLocalEnergy(system)
+        localEnergy = computeLocalEnergy(system, i)
         localEnergies[i] = localEnergy
 
         optimizerElement.variationalParameterGradient = computeParameterGradient(system, optimizerElement)
@@ -66,6 +66,7 @@ function runMetropolis!(
             end
         end
     end
+
     if calculateOnebody
         saveDataToFile(onebody, "onebodytest.txt")
     end 
@@ -82,11 +83,11 @@ function runMetropolis!(
     mcLocalEnergy = localEnergySum/samples
     mcLocalEnergyPsiParameterDerivative = localEnergyPsiParameterDerivativeSum/samples
     mcPsiParameterDerivative = psiParameterDerivativeSum/samples
-    local_energy_derivative_a = 2*(mcLocalEnergyPsiParameterDerivative - mcLocalEnergy*mcPsiParameterDerivative)
+    localEnergyParameterDerivative = 2*(mcLocalEnergyPsiParameterDerivative - mcLocalEnergy*mcPsiParameterDerivative)
 
     println("Ground state energy: ", mcLocalEnergy)
 
-    return mcLocalEnergy, local_energy_derivative_a
+    return mcLocalEnergy, localEnergyParameterDerivative
 end 
 
 function metropolisStepBruteForce!(system, stepLength)
@@ -112,14 +113,11 @@ function metropolisStepBruteForce!(system, stepLength)
     U = rand(Float64)
 
     if U < ratio
-        # println(system)
         if system.slaterInWF
             inverseSlaterMatrixUpdate(system, system.wavefunctionElements[1], particleToUpdate, system.wavefunctionElements[1].R)
         end
     else 
-        # println("Here")
         system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
-        # slaterMatrixUpdate(system, particleToUpdate)
         for element in system.wavefunctionElements
             updateElement!(system, element, particleToUpdate)
         end
@@ -166,14 +164,11 @@ function metropolisStepImportanceSampling!(system, stepLength)
     U = rand(Float64)
 
     if U < greensFunction*ratio
-        # println(system)
         if system.slaterInWF
             inverseSlaterMatrixUpdate(system, system.wavefunctionElements[1], particleToUpdate, system.wavefunctionElements[1].R)
         end
     else 
-        # println("Here")
         system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
-        # slaterMatrixUpdate(system, particleToUpdate)
         for element in system.wavefunctionElements
             updateElement!(system, element, particleToUpdate)
         end
@@ -188,16 +183,16 @@ function computeGreensFunction(oldPosition, newPosition,
                                 D,
                                 stepLength)
 
-    greens_function_argument = (oldPosition[particleToUpdate, coordinateToUpdate] +
+    greensFunctionArgument = (oldPosition[particleToUpdate, coordinateToUpdate] +
                                 - newPosition[particleToUpdate, coordinateToUpdate] +
                                 - D*stepLength*newDriftForce)^2 +
                                 - (newPosition[particleToUpdate, coordinateToUpdate] + 
                                 - oldPosition[particleToUpdate, coordinateToUpdate] +
                                 - D*stepLength*oldDriftForce)^2
 
-    greens_function_argument /= (4.0*D*stepLength)
-    greens_function = exp(-greens_function_argument)
-    return greens_function
+    greensFunctionArgument /= (4.0*D*stepLength)
+    greensFunction = exp(-greensFunctionArgument)
+    return greensFunction
 end
 
 function saveDataToFile(data, filename::String)
@@ -222,7 +217,6 @@ function makeFilename(system, steplength, numsteps, sampler)
     elseif system.interacting == false
         folder = "Non_Interacting"
     end
-    println(wavefunctionCombination)
     filename = "Data/MC/" * folder *"/" * wavefunctionCombination * "sysInfo_" * sampler * "_stepLength_" * string(steplength)* "_numMCSteps_"* string(numsteps) * "_numDims_" * string(system.numDimensions) * "_numParticles_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
     return filename
 end

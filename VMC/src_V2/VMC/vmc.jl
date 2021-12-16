@@ -12,19 +12,22 @@ using ..rbm
 using ..nn
 
 function runVMC!(system, numOptimizationIterations, numMCMCIterations, mcmcStepLength, optimizer, sampler = "bf", write_to_file = false)
-    local_energies::Array{Float64, 2} = zeros(Float64, (numMCMCIterations, 1))
+    localEnergies::Array{Float64, 2} = zeros(Float64, (numMCMCIterations, 1))
     for k = 1:numOptimizationIterations
-        local_energy, grads = runMetropolis!(system, numMCMCIterations, mcmcStepLength, sampler = sampler)
-        update!(optimizer, last(system.wavefunctionElements).variationalParameter, grads)
-        local_energies[k] = local_energy
-        println("Iteration = ", k, "    E = ", local_energy, "variationalParameter = ", last(system.wavefunctionElements).variationalParameter)
+        localEnergy, grads = runMetropolis!(system, numMCMCIterations, mcmcStepLength, sampler = sampler)
+        numGrads = size(last(system.wavefunctionElements).variationalParameter)[1]
+        for i = 1:numGrads
+            update!(optimizer, last(system.wavefunctionElements).variationalParameter[i], grads[i])
+        end
+        localEnergies[k] = localEnergy
+        println("Iteration = ", k, "    E = ", localEnergy)#, "variationalParameter = ", last(system.wavefunctionElements).variationalParameter)
     end
 
     if write_to_file
         filename = makeFilename(system, mcmcStepLength, numMCMCIterations, numOptimizationIterations, sampler, optimizer)
-        saveDataToFile(local_energies, filename)
+        saveDataToFile(localEnergies, filename)
     end
-    return local_energies
+    return localEnergies
 end
 
 function saveDataToFile(data, filename::String)
