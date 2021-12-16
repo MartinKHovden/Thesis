@@ -1,14 +1,3 @@
-"""
-
-# Gaussian
-## Constructor
-```julia 
-    Gaussian(alpha)
-```
-
-## Description
-The Gaussian part 
-"""
 module gaussian 
 
 export Gaussian, computeRatio, computeGradient, computeLaplacian, updateElement!, computeParameterGradient, computeDriftForce
@@ -86,6 +75,19 @@ function slaterGaussianComputeGradient(system, gaussian::Gaussian, particle_num)
     return grad
 end
 
+"""
+    computeLaplacian(args...)
+
+Computes the laplacian of the wave function with respect to all particles coordinates.
+
+# Arguments
+- `system`: The system struct.
+- `wavefunctionElement::Gaussian`: The wave function element to compute the ratio for. 
+
+# Returns
+- `Array{Float}`: An array with the laplacian of the wave function with respect 
+    to each particle. 
+"""
 function wavefunction.computeLaplacian(system, wavefunctionElement::Gaussian)
     return slaterGaussianComputeLaplacian(system, wavefunctionElement)
 end
@@ -99,6 +101,20 @@ function slaterGaussianComputeLaplacian(system, gaussian::Gaussian)
     return -alpha*omega*numDimensions*numParticles
 end
 
+"""
+    computeParameterGradient(args...)
+
+Computes the gradient of the wave function with respect to the variational 
+parameter. 
+
+# Arguments
+- `system`: The system struct.
+- `wavefunctionElement::Gaussian`: The wave function element to compute the ratio for. 
+
+# Returns
+- `Array{Float}`: An array with the gradient of the wave function with respect 
+    to the variational parameter. 
+"""
 function wavefunction.computeParameterGradient(system, wavefunctionElement::Gaussian)
     return  [[slaterGaussianComputeParameterGradient(system)]]
 end
@@ -107,6 +123,22 @@ function slaterGaussianComputeParameterGradient(system)
     return -0.5*system.omega*sum(system.particles.^2)
 end 
 
+"""
+    computeDriftForce(args...)
+
+Computes the drift force of the wave function with respect to a given coordinate
+of a given particle. 
+
+# Arguments
+- `system`: The system struct.
+- `wavefunctionElement::Gaussian`: The wave function element to compute the ratio for. 
+- `particleToUpdate`: The particle moved.
+- `coordinateToUpdate`: The coordinate moved. 
+
+# Returns
+- `Array{Float}`: The drift force of the wave function with respect to a given 
+coordinate of a given particle.
+"""
 function wavefunction.computeDriftForce(system, element::Gaussian, particleToUpdate, coordinateToUpdate)
     return 2*slaterGaussianComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
 end
