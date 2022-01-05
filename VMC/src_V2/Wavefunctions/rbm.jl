@@ -40,12 +40,22 @@ mutable struct RBM
 
         variationalParameterGradient = 0. *variationalParameter
 
-        return new(numParticles, numDimensions, variationalParameter, variationalParameterGradient, system.particles, h, sigmaSquared)
+        return new(numParticles, 
+                numDimensions, 
+                variationalParameter, 
+                variationalParameterGradient, 
+                system.particles, 
+                h, 
+                sigmaSquared)
 
     end
 end
 
-function wavefunction.computeRatio(system, wavefunctionElement::RBM, particleToUpdate, coordinateToUpdate, oldPosition)
+function wavefunction.computeRatio(system, 
+                                wavefunctionElement::RBM, 
+                                particleToUpdate, 
+                                coordinateToUpdate, 
+                                oldPosition)
     ratio = rbmComputeRatio(system, wavefunctionElement, oldPosition)
     # println("RBM = ", ratio)
     return ratio

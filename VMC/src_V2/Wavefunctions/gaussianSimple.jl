@@ -1,7 +1,8 @@
-module gaussian 
+module gaussianSimple
 
-export Gaussian, computeRatio, computeGradient, computeLaplacian, updateElement!, computeParameterGradient, computeDriftForce
+export GaussianSimple, computeRatio, computeGradient, computeLaplacian, updateElement!, computeParameterGradient, computeDriftForce
 
+using LinearAlgebra
 using ..wavefunction
 
 """
@@ -14,11 +15,11 @@ wave function.
 - `variationalParameter`: Stores the variational parameter as an array of arrays. 
 - `variationalParameterGradient`: Stores the gradient of the variational parameters. 
 """
-mutable struct Gaussian
+mutable struct GaussianSimple
     variationalParameter::Array
     variationalParameterGradient::Array
 
-    function Gaussian(alpha)
+    function GaussianSimple(alpha)
         g = new([[alpha]], [[0.0]])
         return g
     end
@@ -39,8 +40,13 @@ Computes the ratio between the current and previous squared wave function value.
 # Returns
 - `Float`: The ratio between the current and previous squared wave function value. 
 """
-function wavefunction.computeRatio(system, wavefunctionElement::Gaussian, particleToUpdate, coordinateToUpdate, oldPosition)
-    return exp(system.omega*wavefunctionElement.variationalParameter[1][1]*(oldPosition[particleToUpdate,coordinateToUpdate]^2 - system.particles[particleToUpdate,coordinateToUpdate]^2))
+function wavefunction.computeRatio(system, wavefunctionElement::GaussianSimple, particleToUpdate, coordinateToUpdate, oldPosition)
+    distanceOld = sqrt(dot(oldPosition[particleToUpdate,:],oldPosition[particleToUpdate,:]))
+    distanceNew = sqrt(dot(system.particles[particleToUpdate,:],system.particles[particleToUpdate,:]))
+
+    ratio =  exp(-wavefunctionElement.variationalParameter[1][1]*(distanceNew - distanceOld))
+
+    return ratio
 end
 
 """
@@ -57,21 +63,21 @@ and coordinates.
 - `Array{Float}`: An array with the gradient of the wave function with respect 
     to each particle. 
 """
-function wavefunction.computeGradient(system, wavefunctionElement::Gaussian)
+function wavefunction.computeGradient(system, wavefunctionElement::GaussianSimple)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
     gradient = zeros(numParticles*numDimensions)
     for particle=1:numParticles
-        gradient[(particle-1)*numDimensions + 1: (particle-1)*numDimensions + numDimensions] = slaterGaussianComputeGradient(system, wavefunctionElement, particle)
+        gradient[(particle-1)*numDimensions + 1: (particle-1)*numDimensions + numDimensions] = gaussianSimpleComputeGradient(system, wavefunctionElement, particle)
     end
     return gradient
 end
 
-function slaterGaussianComputeGradient(system, gaussian::Gaussian, particle_num)
+function gaussianSimpleComputeGradient(system, gaussian::GaussianSimple, particle_num)
     coordinates = system.particles[particle_num,:]
-    omega = system.omega 
     alpha = gaussian.variationalParameter[1][1]
-    grad = -omega*alpha*coordinates
+    distance = sqrt(dot(coordinates, coordinates))
+    grad = -alpha*coordinates/distance
     return grad
 end
 
@@ -88,17 +94,23 @@ Computes the laplacian of the wave function with respect to all particles coordi
 - `Array{Float}`: An array with the laplacian of the wave function with respect 
     to each particle. 
 """
-function wavefunction.computeLaplacian(system, wavefunctionElement::Gaussian)
-    return slaterGaussianComputeLaplacian(system, wavefunctionElement)
+function wavefunction.computeLaplacian(system, wavefunctionElement::GaussianSimple)
+    return gaussianSimpleComputeLaplacian(system, wavefunctionElement)
 end
 
 
-function slaterGaussianComputeLaplacian(system, gaussian::Gaussian)
+function gaussianSimpleComputeLaplacian(system, gaussian::GaussianSimple)
+    laplacian = 0
+    particles = system.particles
     numParticles = system.numParticles
     numDimensions = system.numDimensions 
     alpha = gaussian.variationalParameter[1][1] 
-    omega = system.omega
-    return -alpha*omega*numDimensions*numParticles
+    for i=1:numParticles
+        coordinates = system.particles[i,:]
+        denominator = (dot(coordinates, coordinates))^(3/2)
+        laplacian += sum(coordinates.^2)/denominator
+    end
+    return -(numDimensions-1)*alpha*laplacian
 end
 
 """
@@ -115,12 +127,20 @@ parameter.
 - `Array{Float}`: An array with the gradient of the wave function with respect 
     to the variational parameter. 
 """
-function wavefunction.computeParameterGradient(system, wavefunctionElement::Gaussian)
-    return  [[slaterGaussianComputeParameterGradient(system)]]
+function wavefunction.computeParameterGradient(system, wavefunctionElement::GaussianSimple)
+    return  [[gaussianSimpleComputeParameterGradient(system)]]
 end
 
-function slaterGaussianComputeParameterGradient(system)
-    return -0.5*system.omega*sum(system.particles.^2)
+function gaussianSimpleComputeParameterGradient(system)
+    particles = system.particles
+    parameterGradient = 0
+    numParticles = system.numParticles
+    numDimensions = system.numDimensions
+    for i=1:numParticles
+        coordinates = particles[i, :]
+        parameterGradient += sqrt(dot(coordinates, coordinates))
+    end
+    return -parameterGradient
 end 
 
 """
@@ -139,11 +159,11 @@ of a given particle.
 - `Array{Float}`: The drift force of the wave function with respect to a given 
 coordinate of a given particle.
 """
-function wavefunction.computeDriftForce(system, element::Gaussian, particleToUpdate, coordinateToUpdate)
-    return 2*slaterGaussianComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
+function wavefunction.computeDriftForce(system, element::GaussianSimple, particleToUpdate, coordinateToUpdate)
+    return 2*gaussianSimpleComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
 end
 
-function wavefunction.updateElement!(system, wavefunctionElement::Gaussian, particle::Int64)
+function wavefunction.updateElement!(system, wavefunctionElement::GaussianSimple, particle::Int64)
 end
 
 end

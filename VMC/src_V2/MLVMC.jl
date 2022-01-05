@@ -13,6 +13,7 @@ module MLVMC
 include("Wavefunctions/wavefunction.jl")
 include("Wavefunctions/slater.jl")
 include("Wavefunctions/gaussian.jl")
+include("Wavefunctions/gaussianSimple.jl")
 include("Wavefunctions/jastrow.jl")
 include("Wavefunctions/rbm.jl")
 include("Wavefunctions/nn.jl")
@@ -27,6 +28,7 @@ using Flux: Descent, ADAM, Momentum, RADAM
 using .wavefunction
 using .slater
 using .gaussian
+using .gaussianSimple
 using .jastrow
 using .rbm
 using .nn
@@ -36,7 +38,7 @@ using .metropolis
 using .vmc
 
 export System, addWaveFunctionElement
-export SlaterMatrix, Jastrow, Gaussian, RBM, NN
+export SlaterMatrix, Jastrow, Gaussian, GaussianSimple, RBM, NN
 export Descent, ADAM, Momentum
 export runVMC!, runMetropolis!
 

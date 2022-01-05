@@ -1,4 +1,4 @@
-module jastrow
+module jastrowBosons
 
 export Jastrow, computeRatio, computeGradient, computeLaplacian, updateElement!, computeParameterGradient, computeDriftForce
 
@@ -17,13 +17,10 @@ wave function.
 - `variationalParameterGradient`: Stores the gradient of the variational parameters. 
 - `distanceMatrix`: Stores the distance between each particle in the system. 
 """
-mutable struct Jastrow 
-    variationalParameter::Array#{Float64, 2}
-    variationalParameterGradient::Array#{Float64, 2}
-
+mutable struct JastrowBosons 
     distanceMatrix::Array{Float64, 2}
 
-    function Jastrow(system)
+    function JastrowBosons(system)
         particles = system.particles
         numParticles = system.numParticles
 
@@ -38,10 +35,8 @@ mutable struct Jastrow
         distanceMatrix = distanceMatrix + distanceMatrix'
 
         rng = MersenneTwister(123)
-        kappa = randn(rng, Float64, (numParticles, numParticles))
-        kappa = 0.5*(kappa + kappa')
 
-        return new([kappa], [zeros(size(kappa))], distanceMatrix)
+        return new(distanceMatrix)
     end
 end
 

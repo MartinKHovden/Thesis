@@ -1,6 +1,8 @@
 module slater
 
-export SlaterMatrix, computeRatio, computeGradient, computeLaplacian, updateElement!, inverseSlaterMatrixUpdate, computeDriftForce
+export SlaterMatrix
+export computeRatio, computeGradient, computeLaplacian
+export updateElement!, inverseSlaterMatrixUpdate, computeDriftForce
 
 include("hermite.jl")
 include("singleParticle.jl")
@@ -22,7 +24,10 @@ struct SlaterMatrix
     R::Array{Float64,1}
 
     function SlaterMatrix(system)
-        sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(system.particles, system.numParticles, system.numDimensions, system.omega)
+        sSU, sSD, iSSU, iSSD = initializeSlaterMatrix(system.particles, 
+                                                    system.numParticles, 
+                                                    system.numDimensions, 
+                                                    system.omega)
         return new(sSU, sSD, iSSU, iSSD, [1.0])
     end
 end
@@ -47,10 +52,17 @@ function initializeSlaterMatrix(particles, numParticles, numDimensions, omega)
     invSlaterMatrixSpinUp = inv(slaterMatrixSpinUp)
     invSlaterMatrixSpinDown = inv(slaterMatrixSpinDown)
 
-    return (slaterMatrixSpinUp, slaterMatrixSpinDown, invSlaterMatrixSpinUp, invSlaterMatrixSpinDown)
+    return (slaterMatrixSpinUp, 
+        slaterMatrixSpinDown, 
+        invSlaterMatrixSpinUp, 
+        invSlaterMatrixSpinDown)
 end
 
-function wavefunction.computeRatio(system, wavefunctionElement::SlaterMatrix, particleToUpdate::Int64, coordinateToUpdate::Int64, oldPosition)
+function wavefunction.computeRatio(system, 
+                                wavefunctionElement::SlaterMatrix, 
+                                particleToUpdate::Int64, 
+                                coordinateToUpdate::Int64, 
+                                oldPosition)
     R = slaterMatrixComputeRatio(system, wavefunctionElement, particleToUpdate)
     wavefunctionElement.R[1] = R
     return R^2
@@ -87,7 +99,9 @@ function slaterDeterminantComputeGradient(system, slater::SlaterMatrix, particle
     end 
 end
 
-function slaterDeterminantSpinUpComputeGradient(system, slater::SlaterMatrix, particle_num::Int64)
+function slaterDeterminantSpinUpComputeGradient(system, 
+                                            slater::SlaterMatrix, 
+                                            particle_num::Int64)
     d = system.numDimensions
     N = Int64(system.numParticles/2)
     omega = system.omega
@@ -98,7 +112,8 @@ function slaterDeterminantSpinUpComputeGradient(system, slater::SlaterMatrix, pa
     return grad
 end 
 
-function slaterDeterminantSpinDownComputeGradient(system,slater::SlaterMatrix, particle_num::Int64)
+function slaterDeterminantSpinDownComputeGradient(system,slater::SlaterMatrix, 
+                                                particle_num::Int64)
     d = system.numDimensions
     row = Int(particle_num - system.numParticles/2)
     N = Int64(system.numParticles/2)
@@ -115,12 +130,16 @@ function wavefunction.computeLaplacian(system, wavefunctionElement::SlaterMatrix
     numDimensions = system.numDimensions
     laplacian = 0
     for particle=1:numParticles
-        laplacian += slaterDeterminantComputeLaplacian(system, wavefunctionElement::SlaterMatrix, particle::Int64)
+        laplacian += slaterDeterminantComputeLaplacian(system, 
+                                                    wavefunctionElement::SlaterMatrix, 
+                                                    particle::Int64)
     end
     return laplacian
 end 
 
-function slaterDeterminantComputeLaplacian(system, slater::SlaterMatrix, particle_num::Int64)
+function slaterDeterminantComputeLaplacian(system, 
+                                        slater::SlaterMatrix, 
+                                        particle_num::Int64)
     if particle_num <= system.numParticles/2
         return slaterDeterminantSpinUpComputeLaplacian(system, slater, particle_num)
     else 
@@ -128,7 +147,9 @@ function slaterDeterminantComputeLaplacian(system, slater::SlaterMatrix, particl
     end 
 end
 
-function slaterDeterminantSpinUpComputeLaplacian(system, slater::SlaterMatrix, particle_num::Int64)
+function slaterDeterminantSpinUpComputeLaplacian(system, 
+                                            slater::SlaterMatrix, 
+                                            particle_num::Int64)
     d = system.numDimensions
     N = Int64(system.numParticles/2)
     omega = system.omega
@@ -144,7 +165,9 @@ function slaterDeterminantSpinUpComputeLaplacian(system, slater::SlaterMatrix, p
     return laplacian - dot(temp, temp)
 end
 
-function slaterDeterminantSpinDownComputeLaplacian(system, slater::SlaterMatrix, particle_num::Int64)
+function slaterDeterminantSpinDownComputeLaplacian(system, 
+                                                slater::SlaterMatrix, 
+                                                particle_num::Int64)
     d = system.numDimensions
     row = Int(particle_num - system.numParticles/2)
     N = Int64(system.numParticles/2)
@@ -161,7 +184,9 @@ function slaterDeterminantSpinDownComputeLaplacian(system, slater::SlaterMatrix,
     return laplacian - dot(temp, temp)
 end
 
-function wavefunction.updateElement!(system, wavefunctionElement::SlaterMatrix, particleNum::Int64)
+function wavefunction.updateElement!(system, 
+                                wavefunctionElement::SlaterMatrix, 
+                                particleNum::Int64)
     slaterMatrixUpdate!(system, wavefunctionElement, particleNum)
 end
 
@@ -239,7 +264,10 @@ function inverseSlaterMatrixSpinDownUpdateCol(system, slater::SlaterMatrix, col,
     return nothing
 end
 
-function wavefunction.computeDriftForce(system, element::SlaterMatrix, particleToUpdate, coordinateToUpdate)
+function wavefunction.computeDriftForce(system, 
+                                    element::SlaterMatrix, 
+                                    particleToUpdate, 
+                                    coordinateToUpdate)
     return 2*slaterDeterminantComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
 end
 

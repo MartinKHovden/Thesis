@@ -4,30 +4,40 @@ include("MLVMC.jl")
 using .MLVMC
 
 #Set up the system:
-numParticles = 2
+numParticles = 6
 numDimensions = 2
-hamiltonian = "quantumDot" # Use "quantumDot" or "calogeroSutherland"
+hamiltonian = "quantumDot" # Use "quantumDot" or "calogeroSutherland" or "bosons"
 harmonicOscillatorFrequency = 1.0
-interactingParticles = false
-s = System(numParticles, numDimensions, hamiltonian, omega=harmonicOscillatorFrequency, interacting = interactingParticles)
+interactingParticles = true
+s = System(numParticles, 
+        numDimensions, 
+        hamiltonian, 
+        omega=harmonicOscillatorFrequency, 
+        interacting = interactingParticles)
 
 #Add the wavefunction elements:
-addWaveFunctionElement(s, SlaterMatrix( s ))
+# addWaveFunctionElement(s, SlaterMatrix( s ))
 addWaveFunctionElement(s, Gaussian( 1.0 ))
-# addWaveFunctionElement(s, Jastrow(s))
-# addWaveFunctionElement(s, NN(s, 4, 2, "sigmoid"))
+addWaveFunctionElement(s, Jastrow(s))
+# addWaveFunctionElement(s, NN(s, 20, 10, "tanh"))
 # addWaveFunctionElement(s, RBM(s, 2, 1.0))
-@time runMetropolis!(s, 100000,  sampler="is", 0.5, writeToFile = false, calculateOnebody = false)
+# @time runMetropolis!(s, 
+#                 100000,  
+#                 0.0005, 
+#                 optimizationIteration = 1000,
+#                 sampler="is", 
+#                 writeToFile = true, 
+#                 calculateOnebody = false)
 
 # #Set up the optimiser from Flux: 
-learningrate = 0.5
-optim = Descent(learningrate)
+learningrate = 0.01
+optim = ADAM(learningrate)
 
 # #Set up and run the VMC-calculation:
-numOptimizationSteps = 40000
+numOptimizationSteps = 80
 numMCMCSteps = 100000
-mcmcStepLength = 0.5
-# runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim)
+mcmcStepLength = 0.01
+runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = true)
 
 end
 

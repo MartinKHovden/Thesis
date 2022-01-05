@@ -30,8 +30,12 @@ mutable struct NN
     activationFunction 
     activationFunctionDerivative 
     activationFunctionDoubleDerivative
+    activationFunctionName
 
-    function NN(system, numNodesLayer1::Int64, numNodesLayer2::Int64, activationFunction::String)
+    function NN(system, 
+                numNodesLayer1::Int64, 
+                numNodesLayer2::Int64, 
+                activationFunction::String)
         numParticles = system.numParticles
         numDimensions = system.numDimensions
 
@@ -131,11 +135,26 @@ mutable struct NN
 
         aFunction, aFunctionDerivative, aFunctionDoubleDerivative = getActivationFunctions(activationFunction)
 
-        return new(params, paramGrads, a, z, aGrad, aDoubleGrad, aDoubleGradTemp, delta, aFunction, aFunctionDerivative, aFunctionDoubleDerivative)
+        return new(params, 
+                paramGrads, 
+                a, 
+                z, 
+                aGrad, 
+                aDoubleGrad, 
+                aDoubleGradTemp, 
+                delta, 
+                aFunction, 
+                aFunctionDerivative, 
+                aFunctionDoubleDerivative, 
+                activationFunction)
     end
 end 
 
-function wavefunction.computeRatio(system, wavefunctionElement::NN, particleToUpdate, coordinateToUpdate, oldPosition)
+function wavefunction.computeRatio(system, 
+                                wavefunctionElement::NN, 
+                                particleToUpdate, 
+                                coordinateToUpdate, 
+                                oldPosition)
     return nnAnalyticalComputeRatio!(system, wavefunctionElement, oldPosition)
 end
 
@@ -174,10 +193,10 @@ function nnAnalyticalComputeGradient!(system, model::NN)
     gradient = I
 
     mul!(model.aGrad[1], model.variationalParameter[1], gradient)
-    broadcast!(*, model.aGrad[1], sigmoid_derivative.(model.z[1]), model.aGrad[1])
+    broadcast!(*, model.aGrad[1], model.activationFunctionDerivative.(model.z[1]), model.aGrad[1])
 
     mul!(model.aGrad[2], model.variationalParameter[3], model.aGrad[1])
-    broadcast!(*, model.aGrad[2],sigmoid_derivative.(model.z[2]), model.aGrad[2])
+    broadcast!(*, model.aGrad[2],model.activationFunctionDerivative.(model.z[2]), model.aGrad[2])
 
     mul!(model.aGrad[3], model.variationalParameter[5], model.aGrad[2])
     # broadcast!(*, model.a3_grad, sigmoid_derivative.(model.z3),model.a3_grad)
@@ -260,7 +279,12 @@ function nnAnalyticalComputeParameterGradient!(system, model::NN)
     # model.variationalParameterGradient[2][:] = copy(model.delta[1])
     copyto!(model.variationalParameterGradient[2][:], model.delta[1])
 
-    returnValues = [copy(model.variationalParameterGradient[1]), copy(model.variationalParameterGradient[2]), copy(model.variationalParameterGradient[3]), copy(model.variationalParameterGradient[4]), copy(model.variationalParameterGradient[5]), copy(model.variationalParameterGradient[6])]
+    returnValues = [copy(model.variationalParameterGradient[1]), 
+                copy(model.variationalParameterGradient[2]), 
+                copy(model.variationalParameterGradient[3]), 
+                copy(model.variationalParameterGradient[4]), 
+                copy(model.variationalParameterGradient[5]), 
+                copy(model.variationalParameterGradient[6])]
 
     resetArrays!(model)
 
@@ -310,7 +334,9 @@ end
 
 function getActivationFunctions(activationFunction::String)
     if activationFunction == "sigmoid"
-        return sigmoid, sigmoid_derivative, sigmoid_double_derivative
+        return sigmoid, sigmoidDerivative, sigmoidDoubleDerivative
+    elseif activationFunction == "tanh"
+        return tanH, tanHDerivative, tanHDoubleDerivative
     else
         println("The acitvation function is not implemented. Please use one of the following: sigmoid, ")
     end
@@ -320,14 +346,27 @@ function sigmoid(z)
     return 1/(1 + exp(-z))
 end
 
-function sigmoid_derivative(z)
+function sigmoidDerivative(z)
     sig = sigmoid(z)
     return sig*(1-sig)
 end
 
-function sigmoid_double_derivative(z)
+function sigmoidDoubleDerivative(z)
     sig = sigmoid(z)
     return sig*(1-sig)*(1-2*sig)
+end
+
+function tanH(z)
+    temp = exp(2*z)
+    return (temp - 1)/(temp + 1)
+end 
+
+function tanHDerivative(z)
+    return 1 - tanH(z)^2
+end 
+
+function tanHDoubleDerivative(z)
+    return -2*tanH(z)*(1 - tanH(z)^2)
 end
 
 end

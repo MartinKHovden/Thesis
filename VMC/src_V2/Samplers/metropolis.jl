@@ -9,10 +9,28 @@ using ..jastrow
 using ..rbm 
 using ..nn
 
+"""
+    runMetropolis!(args...)
+
+Function for running the Metropolis algorithm.
+
+# Arguments
+- `system`: The system struct.
+- `numMCIterations::Int64`: 
+- `stepLength::Float64`: 
+- `sampler`:
+- `burnIn`:
+- `writeToFile`:
+- `calculateOnebody`:
+
+# Returns
+- `Float`: The local energy of the system. 
+"""
 function runMetropolis!(
     system, 
     numMcIterations::Int64, 
-    stepLength::Float64; 
+    stepLength::Float64;
+    optimizationIteration::Int64 = 0,
     sampler = "bf", 
     burnIn = 0.01, 
     writeToFile = false, 
@@ -48,7 +66,7 @@ function runMetropolis!(
     for i = 1:numMcIterations
         stepFunction(system, stepLength)
 
-        localEnergy = computeLocalEnergy(system, i)
+        localEnergy = computeLocalEnergy(system, optimizationIteration)
         localEnergies[i] = localEnergy
 
         optimizerElement.variationalParameterGradient = computeParameterGradient(system, optimizerElement)
@@ -90,6 +108,18 @@ function runMetropolis!(
     return mcLocalEnergy, localEnergyParameterDerivative
 end 
 
+"""
+    metropolisStepBruteForce!(args...)
+
+Computes the ratio between the current and previous squared wave function value.
+
+# Arguments
+- `system`: The system struct.
+- `stepLength`:
+
+# Returns
+- `Float`: The local energy of the system. 
+"""
 function metropolisStepBruteForce!(system, stepLength)
     numParticles = system.numParticles 
     numDimensions = system.numDimensions
@@ -107,14 +137,21 @@ function metropolisStepBruteForce!(system, stepLength)
 
     for element in system.wavefunctionElements
         updateElement!(system, element, particleToUpdate)
-        ratio *= computeRatio(system, element, particleToUpdate, coordinateToUpdate, oldPosition)
+        ratio *= computeRatio(system, 
+                            element, 
+                            particleToUpdate, 
+                            coordinateToUpdate, 
+                            oldPosition)
     end
 
     U = rand(Float64)
 
     if U < ratio
         if system.slaterInWF
-            inverseSlaterMatrixUpdate(system, system.wavefunctionElements[1], particleToUpdate, system.wavefunctionElements[1].R)
+            inverseSlaterMatrixUpdate(system, 
+                                    system.wavefunctionElements[1], 
+                                    particleToUpdate, 
+                                    system.wavefunctionElements[1].R)
         end
     else 
         system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
@@ -124,6 +161,18 @@ function metropolisStepBruteForce!(system, stepLength)
     end
 end
 
+"""
+    metropolisStepImportanceSampling!(args...)
+
+Computes the ratio between the current and previous squared wave function value.
+
+# Arguments
+- `system`: The system struct.
+- `stepLength`:
+
+# Returns
+- `Float`: The local energy of the system. 
+"""
 function metropolisStepImportanceSampling!(system, stepLength)
     numParticles = system.numParticles
     numDimensions = system.numDimensions
@@ -139,7 +188,10 @@ function metropolisStepImportanceSampling!(system, stepLength)
 
     currentDriftForce = 0.0
     for element in system.wavefunctionElements
-        currentDriftForce += computeDriftForce(system, element, particleToUpdate, coordinateToUpdate)
+        currentDriftForce += computeDriftForce(system, 
+                                            element, 
+                                            particleToUpdate, 
+                                            coordinateToUpdate)
     end
 
     system.particles[particleToUpdate, coordinateToUpdate] += D*currentDriftForce*stepLength + randn(Float64)*sqrt(stepLength)
@@ -149,16 +201,25 @@ function metropolisStepImportanceSampling!(system, stepLength)
         newDriftForce += computeDriftForce(system, element, particleToUpdate, coordinateToUpdate)
     end
 
-    greensFunction = computeGreensFunction(oldPosition, system.particles, particleToUpdate,
-                                            coordinateToUpdate, currentDriftForce, 
-                                            newDriftForce, D, stepLength)
+    greensFunction = computeGreensFunction(oldPosition,
+                                        system.particles,
+                                        particleToUpdate,
+                                        coordinateToUpdate,
+                                        currentDriftForce,
+                                        newDriftForce,
+                                        D,
+                                        stepLength)
 
     # Update the slater matrix:
     ratio = 1.0
 
     for element in system.wavefunctionElements
         updateElement!(system, element, particleToUpdate)
-        ratio *= computeRatio(system, element, particleToUpdate, coordinateToUpdate, oldPosition)
+        ratio *= computeRatio(system, 
+                            element,
+                            particleToUpdate,
+                            coordinateToUpdate,
+                            oldPosition)
     end
 
     U = rand(Float64)
@@ -175,13 +236,26 @@ function metropolisStepImportanceSampling!(system, stepLength)
     end
 end
 
-function computeGreensFunction(oldPosition, newPosition, 
-                                particleToUpdate,        
-                                coordinateToUpdate, 
-                                oldDriftForce, 
-                                newDriftForce, 
-                                D,
-                                stepLength)
+"""
+    computeGreensFunction(args...)
+
+Computes the ratio between the current and previous squared wave function value.
+
+# Arguments
+- `system`: The system struct.
+- `stepLength`:
+
+# Returns
+- `Float`: The local energy of the system. 
+"""
+function computeGreensFunction(oldPosition, 
+                            newPosition, 
+                            particleToUpdate,        
+                            coordinateToUpdate, 
+                            oldDriftForce, 
+                            newDriftForce, 
+                            D,
+                            stepLength)
 
     greensFunctionArgument = (oldPosition[particleToUpdate, coordinateToUpdate] +
                                 - newPosition[particleToUpdate, coordinateToUpdate] +
@@ -217,7 +291,7 @@ function makeFilename(system, steplength, numsteps, sampler)
     elseif system.interacting == false
         folder = "Non_Interacting"
     end
-    filename = "Data/MC/" * folder *"/" * wavefunctionCombination * "sysInfo_" * sampler * "_stepLength_" * string(steplength)* "_numMCSteps_"* string(numsteps) * "_numDims_" * string(system.numDimensions) * "_numParticles_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
+    filename = "Data/"* system.hamiltonian * "/MC/" * folder *"/" * wavefunctionCombination * "sysInfo_" * sampler * "_stepLength_" * string(steplength)* "_numMCSteps_"* string(numsteps) * "_numDims_" * string(system.numDimensions) * "_numParticles_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
     return filename
 end
 
@@ -238,7 +312,7 @@ function wavefunctionName(element::RBM)
 end
 
 function wavefunctionName(element::NN)
-    return [("nn_numhidden1_" * string(size(element.a[1])) * "_numhidden2_ " * string(size(element.a[2]))), "nn"]
+    return [("nn_numhidden1_" * string(size(element.a[1])[1]) * "_numhidden2_" * string(size(element.a[2])[1])) * "_activationFunction_" * string(element.activationFunction), "nn"]
 end
 
 end

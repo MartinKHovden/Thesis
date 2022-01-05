@@ -26,10 +26,23 @@ mutable struct System
 
     interacting::Bool
 
-    function System(numParticles::Int64, numDimensions::Int64, hamiltonian::String; omega::Float64=1.0, interacting = false, beta = 2.0)
+    function System(numParticles::Int64, 
+                numDimensions::Int64, 
+                hamiltonian::String; 
+                omega::Float64=1.0, 
+                interacting = false, 
+                beta = 2.0)
         os = OrderedSet()
         particles = initializeParticlesNormalDist(numParticles, numDimensions)
-        return new(numParticles, numDimensions, particles, omega, os, false, hamiltonian, beta, interacting)
+        return new(numParticles, 
+                numDimensions, 
+                particles, 
+                omega, 
+                os, 
+                false, 
+                hamiltonian, 
+                beta, 
+                interacting)
     end
 end
 

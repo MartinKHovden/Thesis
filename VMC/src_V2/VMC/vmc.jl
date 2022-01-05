@@ -11,10 +11,16 @@ using ..jastrow
 using ..rbm 
 using ..nn
 
-function runVMC!(system, numOptimizationIterations, numMCMCIterations, mcmcStepLength, optimizer, sampler = "bf", write_to_file = false)
-    localEnergies::Array{Float64, 2} = zeros(Float64, (numMCMCIterations, 1))
+function runVMC!(system, 
+                numOptimizationIterations, 
+                numMCMCIterations, 
+                mcmcStepLength, 
+                optimizer;
+                sampler = "bf", 
+                writeToFile = false)     
+    localEnergies::Array{Float64, 2} = zeros(Float64, (numOptimizationIterations, 1))
     for k = 1:numOptimizationIterations
-        localEnergy, grads = runMetropolis!(system, numMCMCIterations, mcmcStepLength, sampler = sampler)
+        localEnergy, grads = runMetropolis!(system, numMCMCIterations, mcmcStepLength, optimizationIteration = k, sampler = sampler)
         numGrads = size(last(system.wavefunctionElements).variationalParameter)[1]
         for i = 1:numGrads
             update!(optimizer, last(system.wavefunctionElements).variationalParameter[i], grads[i])
@@ -23,8 +29,13 @@ function runVMC!(system, numOptimizationIterations, numMCMCIterations, mcmcStepL
         println("Iteration = ", k, "    E = ", localEnergy)#, "variationalParameter = ", last(system.wavefunctionElements).variationalParameter)
     end
 
-    if write_to_file
-        filename = makeFilename(system, mcmcStepLength, numMCMCIterations, numOptimizationIterations, sampler, optimizer)
+    if writeToFile
+        filename = makeFilename(system, 
+                                mcmcStepLength, 
+                                numMCMCIterations, 
+                                numOptimizationIterations, 
+                                sampler, 
+                                optimizer)
         saveDataToFile(localEnergies, filename)
     end
     return localEnergies
@@ -38,7 +49,12 @@ function saveDataToFile(data, filename::String)
     end
 end
 
-function makeFilename(system, steplength, numMCsteps, numoptimsteps, sampler, optimizier)
+# function checkIfOverlap(system)
+#     for i=1:system.numParticles
+#         for j=i+1:system.numParticles
+#             if system.particles
+
+function makeFilename(system, steplength, numMCsteps, numoptimsteps, sampler, optimizer)
     wavefunctionCombination = "wf_"
     wavefunctionElementsInfo = "_elementinfo_"
     for element in system.wavefunctionElements
@@ -53,7 +69,7 @@ function makeFilename(system, steplength, numMCsteps, numoptimsteps, sampler, op
         folder = "Non_Interacting"
     end
     println(wavefunctionCombination)
-    filename = "Data/VMC/" * folder * "/" * wavefunctionCombination * "sysInfo_" * sampler  * "_stepLength_" * string(steplength)* "_numMCSteps_"* string(numMCsteps) * "_optimizer_" * optimizerName(optimizer) * "_learningRate_" * string(optimizer.eta) * "_numOptimSteps_" * string(numoptimsteps)  * "_numDims_" * string(system.numDimensions) * "_numParticles_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
+    filename = "Data/" * system.hamiltonian * "/VMC/" * folder * "/" * wavefunctionCombination * "sysInfo_" * sampler  * "_stepLength_" * string(steplength)* "_numMCSteps_"* string(numMCsteps) * "_optimizer_" * optimizerName(optimizer) * "_learningRate_" * string(optimizer.eta) * "_numOptimSteps_" * string(numoptimsteps)  * "_numDims_" * string(system.numDimensions) * "_numParticles_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
     return filename
 end
 
@@ -74,7 +90,7 @@ function wavefunctionName(element::RBM)
 end
 
 function wavefunctionName(element::NN)
-    return [("nn_numhidden1_" * string(size(element.a[1]))* "_numhidden2_ "* string(size(element.a[2]))), "nn"]
+    return [("nn_numhidden1_" * string(size(element.a[1])[1]) * "_numhidden2_" * string(size(element.a[2])[1])) * "_activationFunction_" * string(element.activationFunction), "nn"]
 end
 
 function optimizerName(optimizer::ADAM)
