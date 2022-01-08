@@ -141,4 +141,9 @@ function computeParticleInteractionHelium(system)
     return interaction
 end
 
+function computeParticleInteractionHydrogenMolecule(system)
+    nucleus1 = [-1.0,0]
+    nucleus2 = [1.0,0]
+end
+
 end
