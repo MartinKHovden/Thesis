@@ -1,6 +1,6 @@
 module nn 
 
-export NN, computeRatio, computeGradient, computeLaplacian, computeParameterGradient
+export NN, computeRatio, computeGradient, computeLaplacian, computeParameterGradient, computePsi!
 
 using StaticArrays
 using LinearAlgebra
