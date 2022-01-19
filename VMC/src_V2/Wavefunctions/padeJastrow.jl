@@ -45,9 +45,9 @@ mutable struct PadeJastrow
         for i = 1:numParticles 
             for j = 1:numParticles
                 if (i/numParticles <= 0.5 && j/numParticles <= 0.5) ||  (i/numParticles > 0.5 && j/numParticles > 0.5)
-                    a[i,j] = 1/(numDimensions + 1)
+                    a[i,j] = 1.0/(numDimensions + 1.0)
                 else 
-                    a[i,j] = 1/(numDimensions - 1)
+                    a[i,j] = 1.0/(numDimensions - 1.0)
                 end
             end
         end 
@@ -55,6 +55,18 @@ mutable struct PadeJastrow
         return new([[beta]], [[0.0]], distanceMatrix, a)
     end
 end
+
+function padeJastrowComputeWaveFunction(padeJastrow, particles)
+    argument = 0
+    for i=1:2
+        for j =i+1:2
+            difference = particles[i,:] - particles[j,:]
+            distance = sqrt(dot(difference, difference))
+            argument += padeJastrow.a[i, j]*distance/(1 + padeJastrow.variationalParameter[1][1]*distance)
+        end 
+    end
+    return exp(argument)
+end 
 
 function wavefunction.computeRatio(system, 
                                 wavefunctionElement::PadeJastrow, 
@@ -77,8 +89,8 @@ function padeJastrowComputeRatio(system, padeJastrow::PadeJastrow, oldPosition, 
             oldDifference = oldPosition[j, :] - oldPosition[particleMoved, :]
             oldDistance = sqrt(dot(oldDifference, oldDifference))
 
-            newH = newDistance/(1 + beta*newDistance)
-            oldH = oldDistance/(1 + beta*oldDistance)
+            newH = newDistance/(1.0 + beta*newDistance)
+            oldH = oldDistance/(1.0 + beta*oldDistance)
 
             positionDifferenceSum += a[particleMoved, j]*(newH - oldH)
         end
@@ -110,7 +122,7 @@ function padeJastrowComputeGradient(system, padeJastrow::PadeJastrow, particleNu
         if j != particleNum
             difference = particles[particleNum, :] - particles[j, :]
             distance = sqrt(dot(difference, difference))
-            f = a[particleNum, j]/((1 + beta*distance)^2)
+            f = a[particleNum, j]/((1.0 + beta*distance)^2)
             g = difference./distance
             gradient += f*g
         end
@@ -134,18 +146,17 @@ function padeJastrowComputeLaplacian(system, padeJastrow::PadeJastrow, i)
     particles = system.particles
     a = padeJastrow.a
     beta = padeJastrow.variationalParameter[1][1]
-
     laplacian = 0
 
     for j=1:numParticles
         if i!=j
             difference = particles[i, :] - particles[j, :]
             distance = sqrt(dot(difference, difference))
-            f = a[i, j]/((1 + beta*distance)^2)
-            g = difference/distance
-            h = distance/(1 + beta*distance)
+            f = a[i, j]/((1.0 + beta*distance)^2)
+            g = difference./distance
+            h = distance/(1.0 + beta*distance)
             for k=1:numDimensions
-                laplacian += (f/distance)*(1 - (1 + 2*beta*h)*g[k]^2)
+                laplacian += (f/distance)*(1.0 - (1.0 + 2.0*beta*h)*(g[k]^2))
             end
         end
     end
@@ -157,14 +168,17 @@ function wavefunction.computeParameterGradient(system, wavefunctionElement::Pade
     grad = 0
     a = wavefunctionElement.a 
     beta = wavefunctionElement.variationalParameter[1][1]
-    distance = wavefunctionElement.distanceMatrix
+    particles = system.particles
+    # distance = wavefunctionElement.distanceMatrix
     for i = 1:numParticles
-        for j=i+1:numParticles
-            
-            f = a[i, j]/((1 + beta*distance[i,j])^2)
-            grad += f*distance[i,j]^2
+        for j=i+1:numParticles 
+            difference = particles[i, :] - particles[j, :]
+            distance = sqrt(dot(difference, difference))
+            f = a[i, j]/((1.0 + beta*distance)^2)
+            grad += f*dot(difference, difference)
         end 
     end
+    
     return [[-grad]]
 end
 
@@ -184,7 +198,7 @@ function padeJastrowUpdateDistanceMatrix!(system, padeJastrow::PadeJastrow)
     distanceMatrix = zeros(numParticles, numParticles)
     particles = system.particles
     for i=1:numParticles
-        for j=i:numParticles 
+        for j=i+1:numParticles 
             difference = particles[i, :] - particles[j, :]
             distance = sqrt(dot(difference, difference))
             distanceMatrix[i,j] = distance
