@@ -15,6 +15,7 @@ include("Wavefunctions/slater.jl")
 include("Wavefunctions/gaussian.jl")
 include("Wavefunctions/gaussianSimple.jl")
 include("Wavefunctions/jastrow.jl")
+include("Wavefunctions/padeJastrow.jl")
 include("Wavefunctions/rbm.jl")
 include("Wavefunctions/nn.jl")
 include("system.jl")
@@ -30,6 +31,7 @@ using .slater
 using .gaussian
 using .gaussianSimple
 using .jastrow
+using .padeJastrow
 using .rbm
 using .nn
 using .system
@@ -38,7 +40,7 @@ using .metropolis
 using .vmc
 
 export System, addWaveFunctionElement
-export SlaterMatrix, Jastrow, Gaussian, GaussianSimple, RBM, NN
+export SlaterMatrix, Jastrow, PadeJastrow, Gaussian, GaussianSimple, RBM, NN
 export Descent, ADAM, Momentum
 export runVMC!, runMetropolis!
 

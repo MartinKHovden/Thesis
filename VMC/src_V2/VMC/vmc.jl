@@ -11,10 +11,10 @@ using ..jastrow
 using ..rbm 
 using ..nn
 
-function runVMC!(system, 
-                numOptimizationIterations, 
-                numMCMCIterations, 
-                mcmcStepLength, 
+function runVMC!(system,
+                numOptimizationIterations,
+                numMCMCIterations,
+                mcmcStepLength,
                 optimizer;
                 sampler = "bf", 
                 writeToFile = false)     
@@ -26,7 +26,7 @@ function runVMC!(system,
             update!(optimizer, last(system.wavefunctionElements).variationalParameter[i], grads[i])
         end
         localEnergies[k] = localEnergy
-        println("Iteration = ", k, "    E = ", localEnergy)#, "variationalParameter = ", last(system.wavefunctionElements).variationalParameter)
+        println("Iteration = ", k, "    E = ", localEnergy, "variationalParameter = ", last(system.wavefunctionElements).variationalParameter)
     end
 
     if writeToFile

@@ -70,7 +70,6 @@ function runMetropolis!(
         localEnergies[i] = localEnergy
 
         optimizerElement.variationalParameterGradient = computeParameterGradient(system, optimizerElement)
-
         if i > burnIn*numMcIterations
             localEnergySum += localEnergy
             localEnergyPsiParameterDerivativeSum += localEnergy*optimizerElement.variationalParameterGradient
@@ -103,7 +102,7 @@ function runMetropolis!(
     mcPsiParameterDerivative = psiParameterDerivativeSum/samples
     localEnergyParameterDerivative = 2*(mcLocalEnergyPsiParameterDerivative - mcLocalEnergy*mcPsiParameterDerivative)
 
-    println("Ground state energy: ", mcLocalEnergy)
+    # println("Ground state energy: ", mcLocalEnergy)
 
     return mcLocalEnergy, localEnergyParameterDerivative
 end 

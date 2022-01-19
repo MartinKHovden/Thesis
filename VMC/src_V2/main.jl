@@ -4,54 +4,78 @@ include("MLVMC.jl")
 using .MLVMC
 
 #Set up the system:
-numParticles = 6
+numParticles = 2
 numDimensions = 2
 hamiltonian = "quantumDot" # Use "quantumDot" or "calogeroSutherland" or "bosons"
 harmonicOscillatorFrequency = 1.0
-interactingParticles = true
+interactingParticles = false
+
+
+
+# #Set up the optimiser from Flux: 
+
+learningrate = 0.1
+optim = ADAM(learningrate)
+
+s = System(numParticles, 
+numDimensions, 
+hamiltonian, 
+omega=harmonicOscillatorFrequency, 
+interacting = interactingParticles)
+
+#Add the wavefunction elements:
+addWaveFunctionElement(s, SlaterMatrix( s ))
+addWaveFunctionElement(s, Gaussian( 1.0 ))
+# addWaveFunctionElement(s, Jastrow(s))
+addWaveFunctionElement(s, PadeJastrow(s))
+# addWaveFunctionElement(s, NN(s, 2, 2, "sigmoid"))
+# addWaveFunctionElement(s, RBM(s, 4, 1.0))
+# println(s)
 
 # @time runMetropolis!(s, 
 #                 100000,  
 #                 0.0005, 
-#                 optimizationIteration = 1000,
 #                 sampler="is", 
-#                 writeToFile = true, 
+#                 writeToFile = false, 
 #                 calculateOnebody = false)
 
-# #Set up the optimiser from Flux: 
-learningrate = 0.01
-optim = ADAM(learningrate)
+numOptimizationSteps = 1000
+numMCMCSteps = 10000
+mcmcStepLength = 0.05
+runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "bf", writeToFile = false)
 
 # #Set up and run the VMC-calculation:
 
-for mcmcStepLength in (0.5, 0.05, 0.005, 0.0005)
-        s = System(numParticles, 
-        numDimensions, 
-        hamiltonian, 
-        omega=harmonicOscillatorFrequency, 
-        interacting = interactingParticles)
+# for mcmcStepLength in (0.5, 0.05, 0.005, 0.005)
+#         learningrate = 0.1
+#         optim = ADAM(learningrate)
 
-        #Add the wavefunction elements:
-        addWaveFunctionElement(s, SlaterMatrix( s ))
-        addWaveFunctionElement(s, Gaussian( 0.6 ))
-        # addWaveFunctionElement(s, Jastrow(s))
-        addWaveFunctionElement(s, NN(s, 20, 10, "sigmoid"))
-        # addWaveFunctionElement(s, RBM(s, 4, 1.0))
+#         s = System(numParticles, 
+#         numDimensions, 
+#         hamiltonian, 
+#         omega=harmonicOscillatorFrequency, 
+#         interacting = interactingParticles)
+
+#         #Add the wavefunction elements:
+#         addWaveFunctionElement(s, SlaterMatrix( s ))
+#         addWaveFunctionElement(s, Gaussian( 0.8 ))
+#         addWaveFunctionElement(s, Jastrow(s))
+#         # addWaveFunctionElement(s, NN(s, 2, 2, "sigmoid"))
+#         # addWaveFunctionElement(s, RBM(s, 4, 1.0))
 
 
-        numOptimizationSteps = 400
-        numMCMCSteps = 10000
-        # mcmcStepLength = 0.01
-        runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
-        println(last(s.wavefunctionElements))
-        @time runMetropolis!(s, 
-                        2^18,  
-                        mcmcStepLength, 
-                        optimizationIteration = 1000,
-                        sampler="is", 
-                        writeToFile = true, 
-                        calculateOnebody = false)
-end
+#         numOptimizationSteps = 100
+#         numMCMCSteps = 10000
+#         # mcmcStepLength = 0.01
+#         runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
+#         println(last(s.wavefunctionElements))
+#         @time runMetropolis!(s, 
+#                         2^18,  
+#                         mcmcStepLength, 
+#                         sampler="is", 
+#                         writeToFile = true, 
+#                         calculateOnebody = false)
+# end
 
 end
 
