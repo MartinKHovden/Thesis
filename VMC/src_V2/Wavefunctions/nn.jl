@@ -256,18 +256,19 @@ function nnAnalyticalComputeParameterGradient!(system, model::NN)
     map!(x -> 1, model.delta[3], model.z[3])
 
     # model.variationalParameterGradient[5][:,:] = copy(model.delta[3]'.*model.a[2])
-    copyto!(model.variationalParameterGradient[5][:,:], model.delta[3]'.*model.a[2])
+    copy!(model.variationalParameterGradient[5], reshape(model.delta[3]'.*model.a[2], size(model.variationalParameterGradient[5])))
+
 
     # model.variationalParameterGradient[6][:] = copy(model.delta[3])
-    copyto!(model.variationalParameterGradient[6][:], model.delta[3])
+    copy!(model.variationalParameterGradient[6], model.delta[3])
 
     mul!(model.delta[2], model.variationalParameter[5]', model.delta[3])
     broadcast!(*, model.delta[2], model.activationFunctionDerivative.(model.z[2]), model.delta[2])
 
     # model.variationalParameterGradient[3][:,:] = copy(model.delta[2].*(model.a[1]'))
-    copyto!(model.variationalParameterGradient[3][:,:], model.delta[2].*(model.a[1]'))
+    copy!(model.variationalParameterGradient[3], model.delta[2].*(model.a[1]'))
     # model.variationalParameterGradient[4][:] = copy(model.delta[2])
-    copyto!(model.variationalParameterGradient[4][:], model.delta[2])
+    copy!(model.variationalParameterGradient[4], model.delta[2])
 
 
     mul!(model.delta[1], model.variationalParameter[3]', model.delta[2])
@@ -275,9 +276,9 @@ function nnAnalyticalComputeParameterGradient!(system, model::NN)
     broadcast!(*, model.delta[1], model.activationFunctionDerivative.(model.z[1]), model.delta[1])
 
     # model.variationalParameterGradient[1][:,:] = copy(model.delta[1].*(x'))
-    copyto!(model.variationalParameterGradient[1][:,:], model.delta[1].*(x'))
+    copy!(model.variationalParameterGradient[1], model.delta[1].*(x'))
     # model.variationalParameterGradient[2][:] = copy(model.delta[1])
-    copyto!(model.variationalParameterGradient[2][:], model.delta[1])
+    copy!(model.variationalParameterGradient[2], model.delta[1])
 
     returnValues = [copy(model.variationalParameterGradient[1]), 
                 copy(model.variationalParameterGradient[2]), 
@@ -290,6 +291,47 @@ function nnAnalyticalComputeParameterGradient!(system, model::NN)
 
     return returnValues
 end
+
+# function nnAnalyticalComputeParameterGradient!(system, model::NN)
+#     x = reshape(system.particles', 1,:)'
+
+#     map!(x -> 1, model.delta[3], model.z[3])
+
+#     # model.variationalParameterGradient[5][:,:] = copy(model.delta[3]'.*model.a[2])
+#     copyto!(model.variationalParameterGradient[5][:,:], model.delta[3]'.*model.a[2])
+
+#     # model.variationalParameterGradient[6][:] = copy(model.delta[3])
+#     copyto!(model.variationalParameterGradient[6][:], model.delta[3])
+
+#     mul!(model.delta[2], model.variationalParameter[5]', model.delta[3])
+#     broadcast!(*, model.delta[2], model.activationFunctionDerivative.(model.z[2]), model.delta[2])
+
+#     # model.variationalParameterGradient[3][:,:] = copy(model.delta[2].*(model.a[1]'))
+#     copyto!(model.variationalParameterGradient[3][:,:], model.delta[2].*(model.a[1]'))
+#     # model.variationalParameterGradient[4][:] = copy(model.delta[2])
+#     copyto!(model.variationalParameterGradient[4][:], model.delta[2])
+
+
+#     mul!(model.delta[1], model.variationalParameter[3]', model.delta[2])
+
+#     broadcast!(*, model.delta[1], model.activationFunctionDerivative.(model.z[1]), model.delta[1])
+
+#     # model.variationalParameterGradient[1][:,:] = copy(model.delta[1].*(x'))
+#     copyto!(model.variationalParameterGradient[1][:,:], model.delta[1].*(x'))
+#     # model.variationalParameterGradient[2][:] = copy(model.delta[1])
+#     copyto!(model.variationalParameterGradient[2][:], model.delta[1])
+
+#     returnValues = [copy(model.variationalParameterGradient[1]), 
+#                 copy(model.variationalParameterGradient[2]), 
+#                 copy(model.variationalParameterGradient[3]), 
+#                 copy(model.variationalParameterGradient[4]), 
+#                 copy(model.variationalParameterGradient[5]), 
+#                 copy(model.variationalParameterGradient[6])]
+
+#     resetArrays!(model)
+
+#     return returnValues
+# end
 
 function wavefunction.computeDriftForce(system, element::NN, particleToUpdate, coordinateToUpdate)
     return 2*nnAnalyticalComputeGradient!(system, element)[(particleToUpdate - 1)*system.numDimensions + coordinateToUpdate]
