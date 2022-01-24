@@ -36,18 +36,20 @@ for stepLength in [5.0, 0.5, 0.05, 0.005, 0.0005, 0.00005, 0.000005]
     #Add the wavefunction elements:
     addWaveFunctionElement(s, SlaterMatrix( s ))
     addWaveFunctionElement(s, Gaussian( 1.0 ))
-    addWaveFunctionElement(s, NN(s, 12, 12, "tanh"))
+    # addWaveFunctionElement(s, NN(s, 12, 12, "tanh"))
+    addWaveFunctionElement(s, RBM(s, 4, 1.0))
+
 
     numOptimizationSteps = 100
-    numMCMCSteps = 1000
+    numMCMCSteps = 10000
     mcmcStepLength = stepLength
-    runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "bf", writeToFile = false)
+    runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
 
 
     @time runMetropolis!(s, 
                 2^18,  
                 stepLength, 
-                sampler="bf", 
+                sampler="is", 
                 writeToFile = true, 
                 calculateOnebody = false)
 end
