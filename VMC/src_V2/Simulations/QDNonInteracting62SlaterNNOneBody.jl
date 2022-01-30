@@ -1,10 +1,10 @@
-module QDNonInteracting22Slater
+module QDNonInteracting22SlaterOneBody
 
 include("../MLVMC.jl")
 using .MLVMC
 
 #Set up the system:
-numParticles = 2
+numParticles = 6
 numDimensions = 2
 hamiltonian = "quantumDot" # Use "quantumDot" or "calogeroSutherland" or "bosons"
 harmonicOscillatorFrequency = 1.0
@@ -32,16 +32,24 @@ s = System(numParticles,
 
 #Add the wavefunction elements:
 addWaveFunctionElement(s, SlaterMatrix( s ))
-addWaveFunctionElement(s, Gaussian( 1.3 ))
+addWaveFunctionElement(s, Gaussian( 1.0 ))
+addWaveFunctionElement(s, NN(s, 12, 12, "tanh"))
 
-for stepLength in [50, 5.0, 0.5, 0.05]#, 0.005]
-    @time runMetropolis!(s, 
-                2^21,  
-                stepLength, 
-                sampler="bf", 
-                writeToFile = true, 
-                calculateOnebody = false)
-end
+
+
+mcmcStepLength = 0.05
+numOptimizationSteps = 100
+numMCMCSteps = 1000
+
+runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
+
+
+@time runMetropolis!(s, 
+            2^21,  
+            mcmcStepLength, 
+            sampler="is", 
+            writeToFile = false, 
+            calculateOnebody = true)
 
 
 end
