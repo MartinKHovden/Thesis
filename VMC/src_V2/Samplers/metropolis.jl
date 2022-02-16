@@ -6,6 +6,7 @@ using ..harmonicOscillator
 using ..slater
 using ..gaussian
 using ..jastrow 
+using ..padeJastrow
 using ..rbm 
 using ..nn
 
@@ -55,18 +56,17 @@ function runMetropolis!(
     end
 
     if calculateOnebody
-        numBins = 1000
-        maxLength = 10
+        numBins = 2000
+        maxLength = 5
         dr = maxLength/numBins
-        onebody = zeros(1000)
+        onebody = zeros(numBins)
     end
 
     optimizerElement = last(system.wavefunctionElements)
-
     for i = 1:numMcIterations
         stepFunction(system, stepLength)
 
-        localEnergy = computeLocalEnergy(system, optimizationIteration)
+        localEnergy = computeLocalEnergy(system, i)
         localEnergies[i] = localEnergy
 
         optimizerElement.variationalParameterGradient = computeParameterGradient(system, optimizerElement)
@@ -81,11 +81,11 @@ function runMetropolis!(
                 r = sqrt(sum(system.particles[particle,:].^2))
                 onebody[floor(Int, r ÷ dr) + 1] += 1
             end
-        end
+        end 
     end
 
     if calculateOnebody
-        saveDataToFile(onebody, "onebodytest.txt")
+        saveDataToFile(onebody, "Data/"*system.hamiltonian* "/OneBody/onebodytest.txt")
     end 
 
     runtime = time() - start
@@ -304,6 +304,10 @@ end
 
 function wavefunctionName(element::Jastrow)
     return ["jastrow_none", "jastrow"]
+end
+
+function wavefunctionName(element::PadeJastrow)
+    return ["padeJastrow_none", "padeJastrow"]
 end
 
 function wavefunctionName(element::RBM)

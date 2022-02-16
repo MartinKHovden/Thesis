@@ -44,8 +44,6 @@ function computeLocalEnergy(system, iteration)
         interactionTerm = computeParticleInteraction(system, iteration)
     end
 
-
-    
     harmonicTerm = omega*omega*sum(system.particles.^2)
 
     if system.hamiltonian == "helium"
@@ -112,11 +110,12 @@ function computeParticleInteractionCalogeroSutherland(system, iteration)
             interaction += beta*(beta-1)/(distance) 
         end 
     end
+    # println(iteration)
     return min(interaction, (0.001*iteration)^2)
 end
 
 function computeParticleInteractionBosons(system)
-    a = 0.0043
+    a = 2.0
     interaction = 0
     numParticles = system.numParticles
     particles = system.particles
@@ -126,7 +125,7 @@ function computeParticleInteractionBosons(system)
             difference = particles[i,:] - particles[j,:]
             distance = sqrt(dot(difference, difference))
             if distance <= a
-                interaction += 10000000000000000000.0
+                interaction += 1000000.0
             else 
                 interaction += 0.0
             end
