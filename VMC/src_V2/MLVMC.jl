@@ -10,6 +10,11 @@ sacrifising readability.
 """
 module MLVMC 
 
+export System, addWaveFunctionElement
+export SlaterMatrix, Jastrow, PadeJastrow, Gaussian, GaussianSimple, RBM, NN
+export Descent, ADAM, Momentum
+export runVMC!, runMetropolis!
+
 include("Wavefunctions/wavefunction.jl")
 include("Wavefunctions/slater.jl")
 include("Wavefunctions/gaussian.jl")
@@ -39,9 +44,6 @@ using .harmonicOscillator
 using .metropolis
 using .vmc
 
-export System, addWaveFunctionElement
-export SlaterMatrix, Jastrow, PadeJastrow, Gaussian, GaussianSimple, RBM, NN
-export Descent, ADAM, Momentum
-export runVMC!, runMetropolis!
+
 
 end

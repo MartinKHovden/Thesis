@@ -38,17 +38,16 @@ optim = Descent(learningrate)
 # #Set up and run the VMC-calculation:
 numOptimizationSteps = 50
 numMCMCSteps = 100000
-mcmcStepLength = 0.001
+mcmcStepLength = 0.1
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
 
 
 addWaveFunctionElement(s, NN(s, 6, 4, "sigmoid"))
 
-learningrate = 0.01
 optim=ADAM(0.1)
 
-numOptimizationSteps = 100
-numMCMCSteps = 10000
+numOptimizationSteps = 1000
+numMCMCSteps = 1000
 
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
 

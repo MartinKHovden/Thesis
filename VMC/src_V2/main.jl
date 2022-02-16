@@ -14,35 +14,38 @@ interactingParticles = false
 
 # #Set up the optimiser from Flux: 
 
-learningrate = 0.1
+learningrate = 0.001
 optim = ADAM(learningrate)
 
 s = System(numParticles, 
-numDimensions, 
-hamiltonian, 
-omega=harmonicOscillatorFrequency, 
-interacting = interactingParticles)
+    numDimensions, 
+    hamiltonian, 
+    omega=harmonicOscillatorFrequency, 
+    interacting = interactingParticles)
 
 #Add the wavefunction elements:
-addWaveFunctionElement(s, SlaterMatrix( s ))
-addWaveFunctionElement(s, Gaussian( 1.0 ))
+# addWaveFunctionElement(s, SlaterMatrix( s ))
+# addWaveFunctionElement(s, Gaussian( 1.1 ))
+addWaveFunctionElement(s, NN(s, 12, 12, "tanh"))
+
 # addWaveFunctionElement(s, Jastrow(s))
-addWaveFunctionElement(s, PadeJastrow(s))
-# addWaveFunctionElement(s, NN(s, 2, 2, "sigmoid"))
+# addWaveFunctionElement(s, PadeJastrow( s; beta = 5000.0 ))
 # addWaveFunctionElement(s, RBM(s, 4, 1.0))
 # println(s)
 
-# @time runMetropolis!(s, 
-#                 100000,  
-#                 0.0005, 
-#                 sampler="is", 
-#                 writeToFile = false, 
-#                 calculateOnebody = false)
 
-numOptimizationSteps = 1000
+numOptimizationSteps = 200
 numMCMCSteps = 10000
 mcmcStepLength = 0.05
-runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "bf", writeToFile = false)
+runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
+
+# @time runMetropolis!(s, 
+#                 100000,  
+#                 0.5, 
+#                 sampler="is", 
+#                 writeToFile = true, 
+#                 calculateOnebody = false)
+
 
 # #Set up and run the VMC-calculation:
 

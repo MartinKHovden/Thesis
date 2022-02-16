@@ -33,10 +33,10 @@ s = System(numParticles,
 #Add the wavefunction elements:
 addWaveFunctionElement(s, SlaterMatrix( s ))
 addWaveFunctionElement(s, Gaussian( 1.0 ))
-addWaveFunctionElement(s, NN(s, 12, 12, "tanh"))
+addWaveFunctionElement(s, NN(s, 6, 4, "tanh"))
 
 numOptimizationSteps = 100
-numMCMCSteps = 1000
+numMCMCSteps = 10000
 mcmcStepLength = 0.05
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "bf", writeToFile = false)
 

@@ -21,8 +21,8 @@ interactingParticles = false
 # addWaveFunctionElement(s, RBM(s, 4, 1.0))
 # println(s)
 
-learningrate = 0.1
-optim = Descent(learningrate)
+learningrate = 0.01
+optim = ADAM(learningrate)
 
 s = System(numParticles, 
     numDimensions, 
@@ -33,7 +33,7 @@ s = System(numParticles,
 #Add the wavefunction elements:
 addWaveFunctionElement(s, SlaterMatrix( s ))
 addWaveFunctionElement(s, Gaussian( 1.0 ))
-addWaveFunctionElement(s, NN(s, 12, 12, "tanh"))
+addWaveFunctionElement(s, NN(s, 20, 10, "tanh"))
 
 
 

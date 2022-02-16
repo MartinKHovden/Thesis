@@ -8,6 +8,7 @@ using ..harmonicOscillator
 using ..slater
 using ..gaussian
 using ..jastrow 
+using ..padeJastrow
 using ..rbm 
 using ..nn
 
@@ -26,7 +27,7 @@ function runVMC!(system,
             update!(optimizer, last(system.wavefunctionElements).variationalParameter[i], grads[i])
         end
         localEnergies[k] = localEnergy
-        println("Iteration = ", k, "    E = ", localEnergy, "variationalParameter = ", last(system.wavefunctionElements).variationalParameter)
+        println("Iteration = ", k, "    E = ", localEnergy)#, "variationalParameter = ", last(system.wavefunctionElements).variationalParameter)
     end
 
     if writeToFile
@@ -83,6 +84,10 @@ end
 
 function wavefunctionName(element::Jastrow)
     return ["jastrow_none", "jastrow"]
+end
+
+function wavefunctionName(element::PadeJastrow)
+    return ["padeJastrow_none", "padeJastrow"]
 end
 
 function wavefunctionName(element::RBM)
