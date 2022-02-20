@@ -32,7 +32,6 @@ for stepLength in [1.0, 0.1, 0.01, 0.001]
     # addWaveFunctionElement(s, PadeJastrow( s; beta = 1.0 ))
     # addWaveFunctionElement(s, RBM(s, 4, 1.0))
     # println(s)
-s
 
     numOptimizationSteps = 1000
     numMCMCSteps = 1000

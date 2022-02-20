@@ -6,7 +6,7 @@ using .hermite
 export singleParticleHermitian, singleParticleHermitianGradient, singleParticleHermitianLaplacian
 
 function prefactor(omega, n)
-    return (omega/(pi))^(1.0/4)*(1.0/(sqrt(factorial(n)*(2^n))))
+    return (omega/(4*pi))^(1.0/4)*(1.0/(sqrt(factorial(n)*(2^n))))
 end
 
 function singleParticleHermitian(particle_coordinates, qN::Array{Int64, 1}, omega)

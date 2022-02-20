@@ -33,7 +33,7 @@ function runMetropolis!(
     stepLength::Float64;
     optimizationIteration::Int64 = 0,
     sampler = "bf", 
-    burnIn = 0.01, 
+    burnIn = 0.001, 
     writeToFile = false, 
     calculateOnebody = false
 )
@@ -67,21 +67,24 @@ function runMetropolis!(
         stepFunction(system, stepLength)
 
         localEnergy = computeLocalEnergy(system, i)
+        # println(localEnergy)
         localEnergies[i] = localEnergy
 
         optimizerElement.variationalParameterGradient = computeParameterGradient(system, optimizerElement)
-        if i > burnIn*numMcIterations
+        if i > ceil(burnIn*numMcIterations)
             localEnergySum += localEnergy
             localEnergyPsiParameterDerivativeSum += localEnergy*optimizerElement.variationalParameterGradient
             psiParameterDerivativeSum += optimizerElement.variationalParameterGradient
+
+            if calculateOnebody
+                for particle=1:system.numParticles
+                    r = sqrt(sum(system.particles[particle,:].^2))
+                    onebody[floor(Int, r ÷ dr) + 1] += 1
+                end
+            end 
         end
 
-        if calculateOnebody
-            for particle=1:system.numParticles
-                r = sqrt(sum(system.particles[particle,:].^2))
-                onebody[floor(Int, r ÷ dr) + 1] += 1
-            end
-        end 
+        
     end
 
     if calculateOnebody
@@ -95,7 +98,7 @@ function runMetropolis!(
         saveDataToFile(localEnergies, filename)
     end
 
-    samples = numMcIterations - burnIn*numMcIterations
+    samples = numMcIterations - ceil(burnIn*numMcIterations) 
 
     mcLocalEnergy = localEnergySum/samples
     mcLocalEnergyPsiParameterDerivative = localEnergyPsiParameterDerivativeSum/samples

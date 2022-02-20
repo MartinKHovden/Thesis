@@ -23,7 +23,7 @@ interactingParticles = false
 
 
 
-for stepLength in [0.0000005]#5.0, 0.5, 0.05, 0.005, 0.0005, 0.00005, 0.000005]
+for stepLength in [5.0, 0.5, 0.05, 0.005, 0.0005, 0.00005, 0.000005]
     learningrate = 0.01
     optim = ADAM(learningrate)
 

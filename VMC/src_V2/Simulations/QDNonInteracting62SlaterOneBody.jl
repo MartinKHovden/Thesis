@@ -34,13 +34,13 @@ s = System(numParticles,
 addWaveFunctionElement(s, SlaterMatrix( s ))
 addWaveFunctionElement(s, Gaussian( 1.0 ))
 
-stepLength = 0.005
+stepLength = 0.5
 
 @time runMetropolis!(s, 
-            2^21,  
+            2^20,  
             stepLength, 
-            sampler="is", 
-            writeToFile = false, 
+            sampler="bf", 
+            writeToFile = true, 
             calculateOnebody = true)
 
 
