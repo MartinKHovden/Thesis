@@ -1,4 +1,4 @@
-module QDNonInteracting22SlaterOneBody
+module QDNonInteracting62SlaterOneBody
 
 include("../MLVMC.jl")
 using .MLVMC
@@ -34,12 +34,12 @@ s = System(numParticles,
 addWaveFunctionElement(s, SlaterMatrix( s ))
 addWaveFunctionElement(s, Gaussian( 1.0 ))
 
-stepLength = 0.5
+stepLength = 0.001
 
 @time runMetropolis!(s, 
-            2^20,  
+            2^22,  
             stepLength, 
-            sampler="bf", 
+            sampler="is", 
             writeToFile = true, 
             calculateOnebody = true)
 

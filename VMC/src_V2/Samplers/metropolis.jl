@@ -226,11 +226,15 @@ function metropolisStepImportanceSampling!(system, stepLength)
 
     U = rand(Float64)
 
+
+
     if U < greensFunction*ratio
+        # println(1, " ", greensFunction, ratio, greensFunction*ratio)
         if system.slaterInWF
             inverseSlaterMatrixUpdate(system, system.wavefunctionElements[1], particleToUpdate, system.wavefunctionElements[1].R)
         end
     else 
+        # println(2, " ", greensFunction, ratio, greensFunction*ratio)
         system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
         for element in system.wavefunctionElements
             updateElement!(system, element, particleToUpdate)

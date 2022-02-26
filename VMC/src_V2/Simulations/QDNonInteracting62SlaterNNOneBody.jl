@@ -1,4 +1,4 @@
-module QDNonInteracting22SlaterOneBody
+module QDNonInteracting22SlaterNNOneBody
 
 include("../MLVMC.jl")
 using .MLVMC
@@ -21,8 +21,8 @@ interactingParticles = false
 # addWaveFunctionElement(s, RBM(s, 4, 1.0))
 # println(s)
 
-learningrate = 0.01
-optim = ADAM(learningrate)
+learningrate = 0.001
+optim = Descent(learningrate)
 
 s = System(numParticles, 
     numDimensions, 
@@ -33,20 +33,20 @@ s = System(numParticles,
 #Add the wavefunction elements:
 addWaveFunctionElement(s, SlaterMatrix( s ))
 addWaveFunctionElement(s, Gaussian( 1.0 ))
-addWaveFunctionElement(s, NN(s, 20, 10, "tanh"))
+addWaveFunctionElement(s, NN(s, 6, 4, "tanh"))
 
 
 
-mcmcStepLength = 0.05
-numOptimizationSteps = 100
+mcmcStepLength = 0.01
+numOptimizationSteps = 200
 numMCMCSteps = 1000
 
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
 
 
 @time runMetropolis!(s, 
-            2^21,  
-            mcmcStepLength, 
+            2^22,  
+            0.001, 
             sampler="is", 
             writeToFile = false, 
             calculateOnebody = true)
