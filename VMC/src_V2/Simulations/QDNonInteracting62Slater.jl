@@ -34,9 +34,9 @@ s = System(numParticles,
 addWaveFunctionElement(s, SlaterMatrix( s ))
 addWaveFunctionElement(s, Gaussian( 1.1 ))
 
-for stepLength in [0.0005]#5.0, 0.5, 0.05, 0.005]
+for stepLength in [0.02, 0.015, 0.01, 0.005]
     @time runMetropolis!(s, 
-                2^21,  
+                2^22,  
                 stepLength, 
                 sampler="is", 
                 writeToFile = true, 
