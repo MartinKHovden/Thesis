@@ -26,7 +26,7 @@ for stepLength in [1.0, 0.1, 0.01, 0.001]
     #Add the wavefunction elements:
     addWaveFunctionElement(s, SlaterMatrix( s ))
     addWaveFunctionElement(s, Gaussian( 1.0 ))
-    addWaveFunctionElement(s, NN(s, 12, 12, "tanh"))
+    addWaveFunctionElement(s, NN(s, 12, 12, "sigmoid"))
 
     # addWaveFunctionElement(s, Jastrow(s))
     # addWaveFunctionElement(s, PadeJastrow( s; beta = 1.0 ))

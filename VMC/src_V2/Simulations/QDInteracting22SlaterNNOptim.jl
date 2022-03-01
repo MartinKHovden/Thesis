@@ -3,7 +3,7 @@ module QDInteracting22SlaterNNOptim
 include("../MLVMC.jl")
 using .MLVMC
 
-for lr in [1.0, 0.1, 0.01, 0.001]
+for lr in [0.1, 0.01, 0.001]
     numParticles = 2
     numDimensions = 2
     hamiltonian = "quantumDot" # Use "quantumDot" or "calogeroSutherland" or "bosons"
@@ -26,7 +26,7 @@ for lr in [1.0, 0.1, 0.01, 0.001]
     #Add the wavefunction elements:
     addWaveFunctionElement(s, SlaterMatrix( s ))
     addWaveFunctionElement(s, Gaussian( 1.0 ))
-    addWaveFunctionElement(s, NN(s, 12, 12, "tanh"))
+    addWaveFunctionElement(s, NN(s, 15, 15, "sigmoid"))
 
     # addWaveFunctionElement(s, Jastrow(s))
     # addWaveFunctionElement(s, PadeJastrow( s; beta = 1.0 ))
