@@ -27,7 +27,7 @@ function runVMC!(system,
             update!(optimizer, last(system.wavefunctionElements).variationalParameter[i], grads[i])
         end
         localEnergies[k] = localEnergy
-        println("Iteration = ", k, "    E = ", localEnergy)#, "variationalParameter = ", last(system.wavefunctionElements).variationalParameter)
+        println("Iteration = ", k, "    E = ", localEnergy, "variationalParameter = ", last(system.wavefunctionElements).variationalParameter)
     end
 
     if writeToFile
