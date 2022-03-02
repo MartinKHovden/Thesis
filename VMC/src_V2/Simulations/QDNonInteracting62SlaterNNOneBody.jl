@@ -1,4 +1,4 @@
-module QDNonInteracting22SlaterNNOneBody
+module QDNonInteracting62SlaterNNOneBody
 
 include("../MLVMC.jl")
 using .MLVMC

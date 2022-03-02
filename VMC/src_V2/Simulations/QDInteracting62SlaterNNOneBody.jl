@@ -1,4 +1,4 @@
-module QDInteracting62SlaterJastrowOneBody
+module QDInteracting62SlaterNNOneBody
 
 include("../MLVMC.jl")
 using .MLVMC
@@ -22,7 +22,7 @@ interactingParticles = true
 # println(s)
 
 learningrate = 0.01
-optim = Descent(learningrate)
+optim = ADAM(learningrate)
 
 s = System(numParticles, 
     numDimensions, 
@@ -33,22 +33,21 @@ s = System(numParticles,
 #Add the wavefunction elements:
 addWaveFunctionElement(s, SlaterMatrix( s ))
 addWaveFunctionElement(s, Gaussian( 1.0 ))
-addWaveFunctionElement(s, PadeJastrow( s; beta = 0.45702))
+addWaveFunctionElement(s, NN(s, 40, 40, "sigmoid"))
 
 
-
-mcmcStepLength = 0.01
+mcmcStepLength = 0.001
 numOptimizationSteps = 1000
-numMCMCSteps = 10000
+numMCMCSteps = 2000
 
-# runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
+runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
 
 
 @time runMetropolis!(s, 
             2^24,  
             0.0005, 
             sampler="is", 
-            writeToFile = false, 
+            writeToFile = true, 
             calculateOnebody = true)
 
 
