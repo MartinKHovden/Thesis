@@ -1,16 +1,16 @@
-module QDInteracting22SlaterNNNumberOfLayersAndActivationFunction
+module QDInteracting62SlaterNNNumberOfLayersAndActivationFunction
 
 include("../MLVMC.jl")
 using .MLVMC
 
 numRuns = 3
-layerVariations = [5, 15, 25]
+layerVariations = [20, 40, 60]
 
 values = zeros(5, length(layerVariations))
 
 for j=1:numRuns
     for i=1:length(layerVariations)
-        numParticles = 2
+        numParticles = 6
         numDimensions = 2
         hamiltonian = "quantumDot" # Use "quantumDot" or "calogeroSutherland" or "bosons"
         harmonicOscillatorFrequency = 1.0
@@ -38,11 +38,11 @@ for j=1:numRuns
         # println(s)
 
         numOptimizationSteps = 1000
-        numMCMCSteps = 1000
-        mcmcStepLength = 0.1
+        numMCMCSteps = 2000
+        mcmcStepLength = 0.0005
         runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
         mc, _ =  runMetropolis!(s, 
-                            2^20,  
+                            2^21,  
                             mcmcStepLength, 
                             sampler="is", 
                             writeToFile = false, 
@@ -52,6 +52,6 @@ for j=1:numRuns
 end
 
 using DelimitedFiles
-writedlm("Test.csv", values)
+writedlm("Test2.csv", values)
 
 end

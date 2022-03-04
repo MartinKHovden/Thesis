@@ -56,8 +56,8 @@ function runMetropolis!(
     end
 
     if calculateOnebody
-        numBins = 2000
-        maxLength = 5
+        numBins = 4000
+        maxLength = 10
         dr = maxLength/numBins
         onebody = zeros(numBins)
     end
