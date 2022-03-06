@@ -337,6 +337,10 @@ function wavefunction.computeDriftForce(system, element::NN, particleToUpdate, c
     return 2*nnAnalyticalComputeGradient!(system, element)[(particleToUpdate - 1)*system.numDimensions + coordinateToUpdate]
 end
 
+function wavefunction.computeDriftForceFull(system, element::NN, particleToUpdate)
+    return 2*nnAnalyticalComputeGradient!(system, element)#[(particleToUpdate - 1)*system.numDimensions + 1: (particleToUpdate - 1)*system.numDimensions + system.numDimensions]
+end
+
 function wavefunction.updateElement!(system, wavefunctionElement::NN, particle::Int64)
 end
 

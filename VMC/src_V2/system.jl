@@ -26,6 +26,8 @@ mutable struct System
 
     interacting::Bool
 
+    iteration::Int
+
     function System(numParticles::Int64, 
                 numDimensions::Int64, 
                 hamiltonian::String; 
@@ -42,7 +44,8 @@ mutable struct System
                 false, 
                 hamiltonian, 
                 beta, 
-                interacting)
+                interacting,
+                0)
     end
 end
 

@@ -37,7 +37,7 @@ optim = Descent(learningrate)
 
 # #Set up and run the VMC-calculation:
 numOptimizationSteps = 50
-numMCMCSteps = 100000
+numMCMCSteps = 10000
 mcmcStepLength = 0.1
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
 

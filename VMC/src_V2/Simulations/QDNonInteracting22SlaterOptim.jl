@@ -4,7 +4,7 @@ include("../MLVMC.jl")
 using .MLVMC
 
 #Set up the system:
-for lr in [1.0, 0.1, 0.01, 0.001]
+for lr in [ 0.1, 0.01, 0.001]
     numParticles = 2
     numDimensions = 2
     hamiltonian = "quantumDot" # Use "quantumDot" or "calogeroSutherland" or "bosons"
@@ -36,7 +36,7 @@ for lr in [1.0, 0.1, 0.01, 0.001]
 
 
     numOptimizationSteps = 500
-    numMCMCSteps = 100000
+    numMCMCSteps = 10000
     mcmcStepLength = 0.5
     runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = true)
 end

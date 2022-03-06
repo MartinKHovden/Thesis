@@ -18,10 +18,11 @@ function runVMC!(system,
                 mcmcStepLength,
                 optimizer;
                 sampler = "bf", 
-                writeToFile = false)     
+                writeToFile = false,
+                sortInput = false)     
     localEnergies::Array{Float64, 2} = zeros(Float64, (numOptimizationIterations, 1))
     for k = 1:numOptimizationIterations
-        localEnergy, grads = runMetropolis!(system, numMCMCIterations, mcmcStepLength, optimizationIteration = k, sampler = sampler)
+        localEnergy, grads = runMetropolis!(system, numMCMCIterations, mcmcStepLength, optimizationIteration = k, sampler = sampler, sortInput = sortInput)
         numGrads = size(last(system.wavefunctionElements).variationalParameter)[1]
         for i = 1:numGrads
             update!(optimizer, last(system.wavefunctionElements).variationalParameter[i], grads[i])

@@ -271,6 +271,12 @@ function wavefunction.computeDriftForce(system,
     return 2*slaterDeterminantComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
 end
 
+function wavefunction.computeDriftForceFull(system, 
+                                    element::SlaterMatrix, 
+                                    particleToUpdate)
+    return 2*slaterDeterminantComputeGradient(system, element, particleToUpdate)
+end
+
 const quantumNumbers1D = [0
 1
 2

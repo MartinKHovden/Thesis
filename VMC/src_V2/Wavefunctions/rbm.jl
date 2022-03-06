@@ -211,6 +211,10 @@ function wavefunction.computeDriftForce(system, element::RBM, particleToUpdate, 
     return 2*rbmComputeGradient(system, element)[(particleToUpdate - 1)*system.numDimensions + coordinateToUpdate]
 end
 
+function wavefunction.computeDriftForceFull(system, element::RBM, particleToUpdate)
+    return 2*rbmComputeGradient(system, element)#[(particleToUpdate - 1)*system.numDimensions + 1: (particleToUpdate - 1)*system.numDimensions + system.numDimensions]
+end
+
 function wavefunction.updateElement!(system, wavefunctionElement::RBM, particle)
 end
 end

@@ -18,7 +18,7 @@ Computes the local energy of the system.
 # Returns
 - `Float`: The local energy of the system. 
 """
-function computeLocalEnergy(system, iteration)
+function computeLocalEnergy(system)
     particleCoordinates = system.particles
     numParticles = system.numParticles
     numDimensions = system.numDimensions
@@ -41,7 +41,7 @@ function computeLocalEnergy(system, iteration)
 
     interactionTerm = 0
     if system.interacting
-        interactionTerm = computeParticleInteraction(system, iteration)
+        interactionTerm = computeParticleInteraction(system)
     end
 
     harmonicTerm = omega*omega*sum(system.particles.^2)
@@ -53,6 +53,8 @@ function computeLocalEnergy(system, iteration)
         end
         harmonicTerm*=2.0
     end
+
+    # println(localEnergy, harmonicTerm, interactionTerm)
 
     return -0.5*localEnergy + 0.5*harmonicTerm + interactionTerm
 end
@@ -70,11 +72,11 @@ for two different hamiltonians: quantum dots and Calogero-Sutherland.
 # Returns
 - `Float`: The interaction part of the local energy. 
 """
-function computeParticleInteraction(system, iteration)
+function computeParticleInteraction(system)
     if system.hamiltonian == "quantumDot"
         return computeParticleInteractionQuantumDot(system)
     elseif system.hamiltonian == "calogeroSutherland"
-        return computeParticleInteractionCalogeroSutherland(system, iteration)
+        return computeParticleInteractionCalogeroSutherland(system)
     elseif system.hamiltonian == "bosons"
         return computeParticleInteractionBosons(system)
     elseif system.hamiltonian == "helium"
@@ -98,7 +100,7 @@ function computeParticleInteractionQuantumDot(system)
     return interaction
 end
 
-function computeParticleInteractionCalogeroSutherland(system, iteration)
+function computeParticleInteractionCalogeroSutherland(system)
     interaction = 0
     numParticles = system.numParticles
     particles = system.particles
@@ -111,7 +113,7 @@ function computeParticleInteractionCalogeroSutherland(system, iteration)
         end 
     end
     # println(iteration)
-    return min(interaction, (0.001*iteration)^2)
+    return min(interaction, (0.00001*system.iteration)^2)
 end
 
 function computeParticleInteractionBosons(system)
@@ -125,13 +127,13 @@ function computeParticleInteractionBosons(system)
             difference = particles[i,:] - particles[j,:]
             distance = sqrt(dot(difference, difference))
             if distance <= a
-                interaction += 1000000.0
+                interaction += 2.0
             else 
                 interaction += 0.0
             end
         end 
     end
-    return interaction
+    return min(interaction, (system.iteration)^2)
 end
 
 function computeParticleInteractionHelium(system)

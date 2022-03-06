@@ -21,36 +21,42 @@ s = System(numParticles,
 addWaveFunctionElement(s, GaussianSimple( 1.0 ))
 
 # addWaveFunctionElement(s, PadeJastrow(s, beta = 1.0))
-addWaveFunctionElement(s, NN(s, 6, 2, "sigmoid"))
+# addWaveFunctionElement(s, NN(s, 6, 2, "sigmoid"))
 # addWaveFunctionElement(s, RBM(s, 2, 1.0))
 # @time runMetropolis!(s, 
-#                 100000,  
-#                 0.0005, 
+#                 1000000,  
+#                 0.5, 
 #                 optimizationIteration = 1000,
 #                 sampler="is", 
-#                 writeToFile = true, 
+#                 writeToFile = false, 
 #                 calculateOnebody = false)
 
 # #Set up the optimiser from Flux: 
 learningrate = 0.1
-optim = ADAM(learningrate)
+optim = Descent(learningrate)
 
-# #Set up and run the VMC-calculation:
-numOptimizationSteps = 1000
-numMCMCSteps = 1000
+#Set up and run the VMC-calculation:
+numOptimizationSteps = 100
+numMCMCSteps = 50000
 mcmcStepLength = 0.1
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
 
+addWaveFunctionElement(s, NN(s, 20, 20, "sigmoid"))
 
-# addWaveFunctionElement(s, NN(s, 15, 15, "sigmoid"))
-
-optim=ADAM(0.1)
+optim=Momentum(0.01)
 #
-numOptimizationSteps = 1000
-numMCMCSteps = 1000
+numOptimizationSteps = 100
+numMCMCSteps = 3000
+mcmcStepLength = 0.01
 
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
-
+@time runMetropolis!(s, 
+                1000000,  
+                0.1, 
+                optimizationIteration = 1000,
+                sampler="is", 
+                writeToFile = true, 
+                calculateOnebody = true)
 
 
 

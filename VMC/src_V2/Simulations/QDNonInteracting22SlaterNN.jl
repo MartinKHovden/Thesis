@@ -38,7 +38,7 @@ addWaveFunctionElement(s, NN(s, 6, 4, "tanh"))
 numOptimizationSteps = 100
 numMCMCSteps = 10000
 mcmcStepLength = 0.05
-runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "bf", writeToFile = false)
+runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
 
 
 for stepLength in [50.0, 5.0, 0.5, 0.05, 0.005, 0.0005, 0.00005]

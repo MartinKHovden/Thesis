@@ -25,6 +25,10 @@ function computeDriftForce()
     return nothing 
 end
 
+function computeDriftForceFull()
+    return nothing
+end
+
 function updateElement!()
     return nothing
 end

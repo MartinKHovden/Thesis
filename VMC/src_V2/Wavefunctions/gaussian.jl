@@ -143,6 +143,10 @@ function wavefunction.computeDriftForce(system, element::Gaussian, particleToUpd
     return 2*slaterGaussianComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
 end
 
+function wavefunction.computeDriftForceFull(system, element::Gaussian, particleToUpdate)
+    return 2*slaterGaussianComputeGradient(system, element, particleToUpdate)
+end
+
 function wavefunction.updateElement!(system, wavefunctionElement::Gaussian, particle::Int64)
 end
 

@@ -189,6 +189,12 @@ function wavefunction.computeDriftForce(system,
     return 2*padeJastrowComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
 end
 
+function wavefunction.computeDriftForceFull(system, 
+    element::PadeJastrow, 
+    particleToUpdate)
+return 2*padeJastrowComputeGradient(system, element, particleToUpdate)
+end
+
 function wavefunction.updateElement!(system, wavefunctionElement::PadeJastrow, particle::Int64)
     padeJastrowUpdateDistanceMatrix!(system, wavefunctionElement)
 end
