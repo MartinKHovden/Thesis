@@ -67,16 +67,30 @@ function runMetropolis!(
         onebody = zeros(numBins)
     end
 
+    numMoves = 0
+
     # optimizerElement = last(system.wavefunctionElements)
     for i = 1:numMcIterations
+        temp = copy(system.particles)
         stepFunction(system, stepLength)
 
         if sortInput
             sortParticles!(system.particles)
         end
+
+   
         # println(system.particles)
 
         localEnergy = computeLocalEnergy(system)
+        # println(localEnergy)
+        
+        # if(writeToFile)
+        #     println(system.particles - temp)#, " ", localEnergy, " ", system.particles, system.wavefunctionElements[1])
+        # end
+
+        if maximum(temp-system.particles)!=0
+            numMoves += 1
+        end
         # println(localEnergy)
         localEnergies[i] = localEnergy
 
@@ -103,6 +117,8 @@ function runMetropolis!(
 
         
     end
+
+    println(numMoves/numMcIterations)
 
     if calculateOnebody
         saveDataToFile(onebody, "onebodytest.txt")

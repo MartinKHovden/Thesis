@@ -56,6 +56,8 @@ function computeLocalEnergy(system)
 
     # println(localEnergy, harmonicTerm, interactionTerm)
 
+    # println(localEnergy," ", harmonicTerm, "",interactionTerm)
+
     return -0.5*localEnergy + 0.5*harmonicTerm + interactionTerm
 end
 

@@ -36,7 +36,7 @@ function runVMC!(system,
         localEnergies[k] = localEnergy
         variationalParameters[k] = system.wavefunctionElements[2].variationalParameter[1][1]
         println("Iteration = ", k, "    E = ", localEnergy)#, "variationalParameter = ")
-        display(system.wavefunctionElements[2].variationalParameter)
+        # display(system.wavefunctionElements[2].variationalParameter)
         # display(system.wavefunctionElements[3].variationalParameter )
     end
 

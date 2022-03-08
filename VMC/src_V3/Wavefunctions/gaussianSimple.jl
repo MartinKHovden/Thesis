@@ -19,8 +19,10 @@ mutable struct GaussianSimple
     variationalParameter::Array
     variationalParameterGradient::Array
 
+    localEnergyPsiParameterDerivativeSum 
+    psiParameterDerivativeSum
     function GaussianSimple(alpha)
-        g = new([[alpha]], [[0.0]])
+        g = new([[alpha]], [[0.0]], [[0.0]], [[0.0]])
         return g
     end
 end
@@ -161,6 +163,10 @@ coordinate of a given particle.
 """
 function wavefunction.computeDriftForce(system, element::GaussianSimple, particleToUpdate, coordinateToUpdate)
     return 2*gaussianSimpleComputeGradient(system, element, particleToUpdate)[coordinateToUpdate]
+end
+
+function wavefunction.computeDriftForceFull(system, element::GaussianSimple, particleToUpdate)
+    return 2*slaterGaussianSimpleComputeGradient(system, element, particleToUpdate)
 end
 
 function wavefunction.updateElement!(system, wavefunctionElement::GaussianSimple, particle::Int64)
