@@ -88,7 +88,7 @@ function runMetropolis!(
         #     println(system.particles - temp)#, " ", localEnergy, " ", system.particles, system.wavefunctionElements[1])
         # end
 
-        if maximum(temp-system.particles)!=0
+        if maximum(abs.(temp-system.particles))!=0
             numMoves += 1
         end
         # println(localEnergy)
@@ -127,8 +127,8 @@ function runMetropolis!(
     runtime = time() - start
 
     if writeToFile
-        # filename = makeFilename(system,stepLength, numMcIterations, sampler)
-        saveDataToFile(localEnergies, "mctest.txt")
+        filename = makeFilename(system,stepLength, numMcIterations, sampler)
+        saveDataToFile(localEnergies, filename)
     end
 
     samples = numMcIterations - ceil(burnIn*numMcIterations) 

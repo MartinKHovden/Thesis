@@ -32,33 +32,37 @@ function runVMC!(system,
                 end
             end
         end
-        # println(optimizer)
         localEnergies[k] = localEnergy
         variationalParameters[k] = system.wavefunctionElements[2].variationalParameter[1][1]
-        println("Iteration = ", k, "    E = ", localEnergy)#, "variationalParameter = ")
-        # display(system.wavefunctionElements[2].variationalParameter)
-        # display(system.wavefunctionElements[3].variationalParameter )
+        println("Iteration = ", k, "    E = ", localEnergy, "variationalParameter = ", system.wavefunctionElements[2].variationalParameter[1][1])
+        println("variationalParameter = ", system.wavefunctionElements[3].variationalParameter[1][1])
     end
 
     if writeToFile
-        open("testVMC.txt","w") do file 
-            for d in localEnergies
-                println(file,d)
-            end 
-        end 
+    #     open("testVMC.txt","w") do file 
+    #         for d in localEnergies
+    #             println(file,d)
+    #         end 
+    #     end 
+    #     open("testVP.txt", "w") do file 
+    #         for d in variationalParameters
+    #             println(file,d)
+    #         end 
+    #     end
+    # end
+        filename = makeFilename(system, 
+                                mcmcStepLength, 
+                                numMCMCIterations, 
+                                numOptimizationIterations, 
+                                sampler, 
+                                optimizer)
+        saveDataToFile(localEnergies, filename)
         open("testVP.txt", "w") do file 
             for d in variationalParameters
                 println(file,d)
             end 
         end
     end
-        # filename = makeFilename(system, 
-        #                         mcmcStepLength, 
-        #                         numMCMCIterations, 
-        #                         numOptimizationIterations, 
-        #                         sampler, 
-        #                         optimizer)
-        # saveDataToFile(localEnergies, filename)
     return localEnergies
 end
 
@@ -69,11 +73,6 @@ function saveDataToFile(data, filename::String)
         end
     end
 end
-
-# function checkIfOverlap(system)
-#     for i=1:system.numParticles
-#         for j=i+1:system.numParticles
-#             if system.particles
 
 function makeFilename(system, steplength, numMCsteps, numoptimsteps, sampler, optimizer)
     wavefunctionCombination = "wf_"
