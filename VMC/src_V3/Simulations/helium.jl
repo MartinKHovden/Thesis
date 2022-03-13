@@ -1,13 +1,13 @@
-module QD22slaterJastrowOptim
+module QD22slaterGussianOptim
 
 include("../MLVMC.jl")
 using .MLVMC
 
 #Set up the system:
-numParticles = 6
-numDimensions = 2
-hamiltonian = "quantumDot" # Use "quantumDot" or "calogeroSutherland" or "bosons"
-harmonicOscillatorFrequency = 1.0
+numParticles = 2
+numDimensions = 3
+hamiltonian = "helium" # Use "quantumDot" or "calogeroSutherland" or "bosons"
+harmonicOscillatorFrequency = 0.0
 interactingParticles = true
 
 
@@ -24,16 +24,15 @@ s = System(numParticles,
     interacting = interactingParticles)
 
 #Add the wavefunction elements:
-addWaveFunctionElement(s, SlaterMatrix( s ))
-addWaveFunctionElement(s, Gaussian( 1.0 ))
-addWaveFunctionElement(s, PadeJastrow(s, beta= 1.0))
-# addWaveFunctionElement(s, NN(s, 20, 20, "sigmoid"))
+# addWaveFunctionElement(s, SlaterMatrix( s ))
+addWaveFunctionElement(s, GaussianSimple( 1.0 ))
+addWaveFunctionElement(s, NN(s, 10, 10, "sigmoid"))
 
 
 
-numOptimizationSteps = 2000
+numOptimizationSteps = 1000
 numMCMCSteps = 10000
-mcmcStepLength = 0.001#0.001
+mcmcStepLength = 0.01#0.001
 
 
 

@@ -3,9 +3,9 @@ module QDNonInteracting62SlaterNNFrequency
 include("../MLVMC.jl")
 using .MLVMC
 
-for frequency in [0.2, 0.4, 0.6, 0.8, 1.0]
-    numParticles = 6
-    numDimensions = 2
+for frequency in [0.2]
+    numParticles = 8
+    numDimensions = 3
     hamiltonian = "quantumDot" # Use "quantumDot" or "calogeroSutherland" or "bosons"
     harmonicOscillatorFrequency = frequency
     interactingParticles = false
@@ -24,7 +24,7 @@ for frequency in [0.2, 0.4, 0.6, 0.8, 1.0]
     addWaveFunctionElement(s, NN(s, 12, 12, "tanh"))
     
     numOptimizationSteps = 100
-    numMCMCSteps = 1000
+    numMCMCSteps = 10000
     mcmcStepLength = 0.05
     runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = false)
 

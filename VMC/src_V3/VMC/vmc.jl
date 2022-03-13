@@ -7,6 +7,7 @@ using Flux:update!, ADAM, Descent
 using ..harmonicOscillator
 using ..slater
 using ..gaussian
+using ..gaussianSimple
 using ..jastrow 
 using ..padeJastrow
 using ..rbm 
@@ -33,9 +34,9 @@ function runVMC!(system,
             end
         end
         localEnergies[k] = localEnergy
-        variationalParameters[k] = system.wavefunctionElements[2].variationalParameter[1][1]
-        println("Iteration = ", k, "    E = ", localEnergy, "variationalParameter = ", system.wavefunctionElements[2].variationalParameter[1][1])
-        println("variationalParameter = ", system.wavefunctionElements[3].variationalParameter[1][1])
+        variationalParameters[k] = system.wavefunctionElements[1].variationalParameter[1][1]
+        println("Iteration = ", k, "    E = ", localEnergy, "variationalParameter = ", system.wavefunctionElements[1].variationalParameter[1][1])
+        # println("variationalParameter = ", system.wavefunctionElements[3].variationalParameter[1][1])
     end
 
     if writeToFile
@@ -99,6 +100,10 @@ end
 
 function wavefunctionName(element::Gaussian)
     return ["gaussian_none", "gaussian"]
+end
+
+function wavefunctionName(element::GaussianSimple)
+    return ["gaussianSimple_none", "gaussianSimple"]
 end
 
 function wavefunctionName(element::Jastrow)
