@@ -108,9 +108,11 @@ function runMetropolis!(
             if calculateOnebody
                 for particle=1:system.numParticles
                     r = sqrt(sum(system.particles[particle,:].^2))
-                    onebody[floor(Int, r ÷ dr) + 1] += 1
+                    if(r <15)
+                        onebody[floor(Int, r ÷ dr) + 1] += 1
+                    end
                 end
-            end 
+            end
         end
 
         system.iteration += 1
