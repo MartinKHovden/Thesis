@@ -61,8 +61,8 @@ function runMetropolis!(
     end
 
     if calculateOnebody
-        numBins = 4000
-        maxLength = 10
+        numBins = 6000
+        maxLength = 15
         dr = maxLength/numBins
         onebody = zeros(numBins)
     end
@@ -121,14 +121,15 @@ function runMetropolis!(
     println(numMoves/numMcIterations)
 
     if calculateOnebody
-        saveDataToFile(onebody, "onebodytest.txt")
+        filenameOnebody = makeFilenameOnebody(system,stepLength, numMcIterations, sampler)
+        saveDataToFile(onebody, filenameOnebody)
     end 
 
     runtime = time() - start
 
     if writeToFile
-        filename = makeFilename(system,stepLength, numMcIterations, sampler)
-        saveDataToFile(localEnergies, filename)
+        filenameSamples = makeFilenameSamples(system,stepLength, numMcIterations, sampler)
+        saveDataToFile(localEnergies, filenameSamples)
     end
 
     samples = numMcIterations - ceil(burnIn*numMcIterations) 
@@ -450,7 +451,7 @@ function saveDataToFile(data, filename::String)
     end
 end
 
-function makeFilename(system, steplength, numsteps, sampler)
+function makeFilenameSamples(system, steplength, numMCsteps, sampler)
     wavefunctionCombination = "wf_"
     wavefunctionElementsInfo = "_elementinfo_"
     for element in system.wavefunctionElements
@@ -464,7 +465,25 @@ function makeFilename(system, steplength, numsteps, sampler)
     elseif system.interacting == false
         folder = "Non_Interacting"
     end
-    filename = "Data/"* system.hamiltonian * "/MC/" * folder *"/" * wavefunctionCombination * "sysInfo_" * sampler * "_stepLength_" * string(steplength)* "_numMCSteps_"* string(numsteps) * "_numDims_" * string(system.numDimensions) * "_numParticles_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
+    filename = "Data/"* system.hamiltonian * "/MC/" * folder *"/" * wavefunctionCombination * "sysInfo_" * sampler  *"_omega_" * string(system.omega) * "_sl_" * string(steplength)* "_mcSteps_"* string(numMCsteps) * "_numD_" * string(system.numDimensions) * "_numP_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
+    return filename
+end
+
+function makeFilenameOnebody(system, steplength, numMCsteps, sampler)
+    wavefunctionCombination = "wf_"
+    wavefunctionElementsInfo = "_elementinfo_"
+    for element in system.wavefunctionElements
+        elementinfo = wavefunctionName(element) 
+        wavefunctionCombination  = wavefunctionCombination * elementinfo[2] * "_"
+        wavefunctionElementsInfo = wavefunctionElementsInfo * elementinfo[1] * "_"
+    end
+
+    if system.interacting == true
+        folder = "Interacting"
+    elseif system.interacting == false
+        folder = "Non_Interacting"
+    end
+    filename = "Data/"* system.hamiltonian * "/Onebody/" * folder *"/" * wavefunctionCombination * "sysInfo_" * sampler  *"_omega_" * string(system.omega) * "_sl_" * string(steplength)* "_mcSteps_"* string(numMCsteps) * "_numD_" * string(system.numDimensions) * "_numP_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
     return filename
 end
 
@@ -493,8 +512,9 @@ function wavefunctionName(element::RBM)
 end
 
 function wavefunctionName(element::NN)
-    return [("nn_numhidden1_" * string(size(element.a[1])[1]) * "_numhidden2_" * string(size(element.a[2])[1])) * "_activationFunction_" * string(element.activationFunction), "nn"]
+    return [("nn_nh1_" * string(size(element.a[1])[1]) * "_nh2_" * string(size(element.a[2])[1])) * "_af_" * string(element.activationFunction), "nn"]
 end
+
 
 function sortParticles!(particles)
     distance = vec(sqrt.(sum(particles.^2,dims=2)))

@@ -23,6 +23,7 @@ function runVMC!(system,
                 sortInput = false)     
     localEnergies::Array{Float64, 2} = zeros(Float64, (numOptimizationIterations, 1))
     variationalParameters::Array{Float64, 2} = zeros(Float64, (numOptimizationIterations, 1))
+    weightNorms = []
     for k = 1:numOptimizationIterations
         localEnergy = runMetropolis!(system, numMCMCIterations, mcmcStepLength, optimizationIteration = k, sampler = sampler, sortInput = sortInput)
         for wavefunctionElement in system.wavefunctionElements
@@ -34,35 +35,37 @@ function runVMC!(system,
             end
         end
         localEnergies[k] = localEnergy
-        variationalParameters[k] = system.wavefunctionElements[1].variationalParameter[1][1]
-        println("Iteration = ", k, "    E = ", localEnergy, "variationalParameter = ", system.wavefunctionElements[1].variationalParameter[1][1])
+        variationalParameters[k] = system.wavefunctionElements[2].variationalParameter[1][1]
+        println(sum(system.wavefunctionElements[3].variationalParameter[1].^2))
+        push!(weightNorms, [sum(system.wavefunctionElements[3].variationalParameter[1].^2), sum(system.wavefunctionElements[3].variationalParameter[2].^2), sum(system.wavefunctionElements[3].variationalParameter[3].^2)])
+        println("Iteration = ", k, "    E = ", localEnergy, "variationalParameter = ", system.wavefunctionElements[2].variationalParameter[1][1])
         # println("variationalParameter = ", system.wavefunctionElements[3].variationalParameter[1][1])
     end
 
     if writeToFile
-    #     open("testVMC.txt","w") do file 
-    #         for d in localEnergies
-    #             println(file,d)
-    #         end 
-    #     end 
-    #     open("testVP.txt", "w") do file 
-    #         for d in variationalParameters
-    #             println(file,d)
-    #         end 
-    #     end
-    # end
-        filename = makeFilename(system, 
+        filenameEnergy = makeFilenameOptimizationEnergy(system, 
                                 mcmcStepLength, 
                                 numMCMCIterations, 
                                 numOptimizationIterations, 
                                 sampler, 
                                 optimizer)
-        saveDataToFile(localEnergies, filename)
-        open("testVP.txt", "w") do file 
-            for d in variationalParameters
-                println(file,d)
-            end 
-        end
+        saveDataToFile(localEnergies, filenameEnergy)
+
+        filenameAlpha = makeFilenameOptimizationAlpha(system, 
+                                mcmcStepLength, 
+                                numMCMCIterations, 
+                                numOptimizationIterations, 
+                                sampler, 
+                                optimizer)
+        saveDataToFile(variationalParameters, filenameAlpha)
+
+        filenameWeightNorms = makeFilenameOptimizationWeightNorms(system, 
+                                mcmcStepLength, 
+                                numMCMCIterations, 
+                                numOptimizationIterations, 
+                                sampler, 
+                                optimizer)
+        saveDataToFile(weightNorms, filenameWeightNorms)
     end
     return localEnergies
 end
@@ -75,7 +78,7 @@ function saveDataToFile(data, filename::String)
     end
 end
 
-function makeFilename(system, steplength, numMCsteps, numoptimsteps, sampler, optimizer)
+function makeFilenameOptimizationEnergy(system, steplength, numMCsteps, numoptimsteps, sampler, optimizer)
     wavefunctionCombination = "wf_"
     wavefunctionElementsInfo = "_elementinfo_"
     for element in system.wavefunctionElements
@@ -90,7 +93,45 @@ function makeFilename(system, steplength, numMCsteps, numoptimsteps, sampler, op
         folder = "Non_Interacting"
     end
     println(wavefunctionCombination)
-    filename = "Data/" * system.hamiltonian * "/VMC/" * folder * "/" * wavefunctionCombination * "sysInfo_" * sampler  * "_stepLength_" * string(steplength)* "_numMCSteps_"* string(numMCsteps) * "_optimizer_" * optimizerName(optimizer) * "_learningRate_" * string(optimizer.eta) * "_numOptimSteps_" * string(numoptimsteps)  * "_numDims_" * string(system.numDimensions) * "_numParticles_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
+    filename = "Data/" * system.hamiltonian * "/VMC/" * folder * "/energy_" * wavefunctionCombination * "sysInfo_" * sampler  *"_omega_" * string(system.omega) * "_sl_" * string(steplength)* "_mcSteps_"* string(numMCsteps) * "_optim_" * optimizerName(optimizer) * "_lr_" * string(optimizer.eta) * "_optSteps_" * string(numoptimsteps)  * "_numD_" * string(system.numDimensions) * "_numP_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
+    return filename
+end
+
+function makeFilenameOptimizationAlpha(system, steplength, numMCsteps, numoptimsteps, sampler, optimizer)
+    wavefunctionCombination = "wf_"
+    wavefunctionElementsInfo = "_elementinfo_"
+    for element in system.wavefunctionElements
+        elementinfo = wavefunctionName(element) 
+        wavefunctionCombination  = wavefunctionCombination * elementinfo[2] * "_"
+        wavefunctionElementsInfo = wavefunctionElementsInfo * elementinfo[1] * "_"
+    end
+
+    if system.interacting == true
+        folder = "Interacting"
+    elseif system.interacting == false
+        folder = "Non_Interacting"
+    end
+    println(wavefunctionCombination)
+    filename = "Data/" * system.hamiltonian * "/VMC/" * folder * "/alpha_" * wavefunctionCombination * "sysInfo_" * sampler  *"_omega_" * string(system.omega) * "_sl_" * string(steplength)* "_mcSteps_"* string(numMCsteps) * "_optim_" * optimizerName(optimizer) * "_lr_" * string(optimizer.eta) * "_optSteps_" * string(numoptimsteps)  * "_numD_" * string(system.numDimensions) * "_numP_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
+    return filename
+end
+
+function makeFilenameOptimizationWeightNorms(system, steplength, numMCsteps, numoptimsteps, sampler, optimizer)
+    wavefunctionCombination = "wf_"
+    wavefunctionElementsInfo = "_elementinfo_"
+    for element in system.wavefunctionElements
+        elementinfo = wavefunctionName(element) 
+        wavefunctionCombination  = wavefunctionCombination * elementinfo[2] * "_"
+        wavefunctionElementsInfo = wavefunctionElementsInfo * elementinfo[1] * "_"
+    end
+
+    if system.interacting == true
+        folder = "Interacting"
+    elseif system.interacting == false
+        folder = "Non_Interacting"
+    end
+    println(wavefunctionCombination)
+    filename = "Data/" * system.hamiltonian * "/VMC/" * folder * "/weightNorms_" * wavefunctionCombination * "sysInfo_" * sampler  *"_omega_" * string(system.omega) * "_sl_" * string(steplength)* "_mcSteps_"* string(numMCsteps) * "_optim_" * optimizerName(optimizer) * "_lr_" * string(optimizer.eta) * "_optSteps_" * string(numoptimsteps)  * "_numD_" * string(system.numDimensions) * "_numP_" * string(system.numParticles) * wavefunctionElementsInfo *".txt"
     return filename
 end
 
@@ -119,7 +160,7 @@ function wavefunctionName(element::RBM)
 end
 
 function wavefunctionName(element::NN)
-    return [("nn_numhidden1_" * string(size(element.a[1])[1]) * "_numhidden2_" * string(size(element.a[2])[1])) * "_activationFunction_" * string(element.activationFunction), "nn"]
+    return [("nn_nh1_" * string(size(element.a[1])[1]) * "_nh2_" * string(size(element.a[2])[1])) * "_af_" * string(element.activationFunction), "nn"]
 end
 
 function optimizerName(optimizer::ADAM)
