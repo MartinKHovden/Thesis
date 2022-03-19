@@ -46,8 +46,8 @@ learningrate = parsed_args["learningRate"]
 numHiddenLayers = parsed_args["numHiddenLayers"]
 mcmcStepLength = parsed_args["stepLength"]
 
-numOptimizationSteps =20 # 10000
-numMCMCSteps = 30 # 100000
+numOptimizationSteps =2000 # 10000
+numMCMCSteps = 5000 # 100000
 
 # #Set up the optimiser from Flux: 
 # learningrate = 0.01#0.01
@@ -66,14 +66,15 @@ addWaveFunctionElement(s, NN(s, numHiddenLayers, numHiddenLayers, "sigmoid"))
 
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = true)
 
-numMCSamplesFinal = 2^2
+numMCSamplesFinal = 2^22
 
 runMetropolis!(s, 
                             numMCSamplesFinal,  
                             mcmcStepLength, 
                             sampler="is", 
                             writeToFile = true, 
-                            calculateOnebody = true)
+                            calculateOnebody = true,
+                            learningRate = learningrate)
 
 end
 
