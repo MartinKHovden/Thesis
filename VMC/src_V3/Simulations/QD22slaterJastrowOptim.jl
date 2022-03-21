@@ -31,19 +31,19 @@ addWaveFunctionElement(s, padeJastrow(s, beta= 1.0))
 
 
 
-numOptimizationSteps = 2000
-numMCMCSteps = 10000
-mcmcStepLength = 0.1#0.001
+numOptimizationSteps = 2
+numMCMCSteps = 10
+mcmcStepLength = 0.01#0.001
 
 
 
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = true)
-# @time runMetropolis!(s, 
-#                         2^22,  
-#                         mcmcStepLength, 
-#                         sampler="is", 
-#                         writeToFile = true, 
-#                         calculateOnebody = true)
+@time runMetropolis!(s, 
+                        2^2,  
+                        mcmcStepLength, 
+                        sampler="is", 
+                        writeToFile = true, 
+                        calculateOnebody = true)
 
 
 

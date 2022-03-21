@@ -37,7 +37,8 @@ function runVMC!(system,
         localEnergies[k] = localEnergy
         variationalParameters[k] = system.wavefunctionElements[2].variationalParameter[1][1]
         println(sum(system.wavefunctionElements[3].variationalParameter[1].^2))
-        push!(weightNorms, [sum(system.wavefunctionElements[3].variationalParameter[1].^2), sum(system.wavefunctionElements[3].variationalParameter[2].^2), sum(system.wavefunctionElements[3].variationalParameter[3].^2)])
+        push!(weightNorms, system.wavefunctionElements[3].variationalParameter[1][1])
+        # push!(weightNorms, [sum(system.wavefunctionElements[3].variationalParameter[1].^2), sum(system.wavefunctionElements[3].variationalParameter[2].^2), sum(system.wavefunctionElements[3].variationalParameter[3].^2)])
         println("Iteration = ", k, "    E = ", localEnergy, "variationalParameter = ", system.wavefunctionElements[2].variationalParameter[1][1])
         # println("variationalParameter = ", system.wavefunctionElements[3].variationalParameter[1][1])
     end

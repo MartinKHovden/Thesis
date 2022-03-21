@@ -1,4 +1,4 @@
-module QDSlaterNN
+module QDSlaterJastrow
 
 include("../MLVMC.jl")
 using .MLVMC
@@ -19,9 +19,6 @@ s = ArgParseSettings()
     "--learningRate"
         help = "learning rate of optim"
         arg_type = Float64
-    "--numHiddenLayers"
-        help = "num hidden layers in network"
-        arg_type = Int
     "--stepLength"
         arg_type = Float64
 end
@@ -43,11 +40,11 @@ numParticles = parsed_args["numParticles"]
 numDimensions = parsed_args["numDimensions"]
 harmonicOscillatorFrequency = parsed_args["omega"]
 learningrate = parsed_args["learningRate"]
-numHiddenLayers = parsed_args["numHiddenLayers"]
+# numHiddenLayers = parsed_args["numHiddenLayers"]
 mcmcStepLength = parsed_args["stepLength"]
 
-numOptimizationSteps =5000 # 10000
-numMCMCSteps = 5000 # 100000
+numOptimizationSteps =1000 # 10000
+numMCMCSteps = 10000 # 100000
 
 # #Set up the optimiser from Flux: 
 # learningrate = 0.01#0.01
@@ -62,11 +59,12 @@ s = System(numParticles,
 #Add the wavefunction elements:
 addWaveFunctionElement(s, SlaterMatrix( s ))
 addWaveFunctionElement(s, Gaussian( 1.0 ))
-addWaveFunctionElement(s, NN(s, numHiddenLayers, numHiddenLayers, "sigmoid"))
+# addWaveFunctionElement(s, NN(s, numHiddenLayers, numHiddenLayers, "sigmoid"))
+addWaveFunctionElement(s, PadeJastrow(s, beta=1.0))
 
 runVMC!(s, numOptimizationSteps, numMCMCSteps, mcmcStepLength, optim, sampler = "is", writeToFile = true)
 
-numMCSamplesFinal = 2^22
+numMCSamplesFinal = 2^24
 
 runMetropolis!(s, 
                             numMCSamplesFinal,  
