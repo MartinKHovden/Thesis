@@ -57,7 +57,6 @@ function wavefunction.computeRatio(system,
                                 coordinateToUpdate, 
                                 oldPosition)
     ratio = rbmComputeRatio(system, wavefunctionElement, oldPosition)
-    # println("RBM = ", ratio)
     return ratio
 end
 
@@ -198,7 +197,6 @@ function rbmComputeParameterGradient!(system, rbm::RBM)
     for n = 1:num_hidden
         rbm.variationalParameterGradient[2][n, 1] =  1.0/((exp(-precalc[n]) + 1.0)) 
     end
-    # println(rbm.variationalParameterGradient[2])
 
     for n=1:num_hidden
         for m=1:num_visible
@@ -212,7 +210,7 @@ function wavefunction.computeDriftForce(system, element::RBM, particleToUpdate, 
 end
 
 function wavefunction.computeDriftForceFull(system, element::RBM, particleToUpdate)
-    return 2*rbmComputeGradient(system, element)#[(particleToUpdate - 1)*system.numDimensions + 1: (particleToUpdate - 1)*system.numDimensions + system.numDimensions]
+    return 2*rbmComputeGradient(system, element)
 end
 
 function wavefunction.updateElement!(system, wavefunctionElement::RBM, particle)

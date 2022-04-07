@@ -18,8 +18,8 @@ wave function.
 - `distanceMatrix`: Stores the distance between each particle in the system. 
 """
 mutable struct PadeJastrow 
-    variationalParameter::Array#{Float64, 2}
-    variationalParameterGradient::Array#{Float64, 2}
+    variationalParameter::Array
+    variationalParameterGradient::Array
 
     distanceMatrix::Array{Float64, 2}
     a::Array{Float64,2} # Matrix of spin-constants

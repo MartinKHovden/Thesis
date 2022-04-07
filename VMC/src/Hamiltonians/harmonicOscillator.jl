@@ -54,10 +54,6 @@ function computeLocalEnergy(system)
         harmonicTerm*=2.0
     end
 
-    # println(localEnergy, harmonicTerm, interactionTerm)
-
-    # println(localEnergy," ", harmonicTerm, "",interactionTerm)
-
     return -0.5*localEnergy + 0.5*harmonicTerm + interactionTerm
 end
 
@@ -107,6 +103,7 @@ function computeParticleInteractionCalogeroSutherland(system)
     numParticles = system.numParticles
     particles = system.particles
     beta = system.beta
+
     for i=1:numParticles
         for j=i+1:numParticles
             difference = particles[i,:] - particles[j,:]
@@ -114,7 +111,7 @@ function computeParticleInteractionCalogeroSutherland(system)
             interaction += beta*(beta-1)/(distance) 
         end 
     end
-    # println(iteration)
+
     return min(interaction, (0.00001*system.iteration)^2)
 end
 
@@ -124,6 +121,7 @@ function computeParticleInteractionBosons(system)
     numParticles = system.numParticles
     particles = system.particles
     beta = system.beta
+
     for i=1:numParticles
         for j=i+1:numParticles
             difference = particles[i,:] - particles[j,:]
@@ -135,11 +133,11 @@ function computeParticleInteractionBosons(system)
             end
         end 
     end
+
     return min(interaction, (system.iteration)^2)
 end
 
 function computeParticleInteractionHelium(system)
-    # println("Here")
     interaction = computeParticleInteractionQuantumDot(system)
     return interaction
 end

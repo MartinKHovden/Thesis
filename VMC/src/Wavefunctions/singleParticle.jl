@@ -11,25 +11,20 @@ end
 
 function singleParticleHermitian(particle_coordinates, qN::Array{Int64, 1}, omega)
     omegaSqrt = sqrt(omega)
-    # H = prod(prefactor.(omega,qN).*hermitePolynomial.(omega_sqrt*particle_coordinates, qN))
     H = prod(@. prefactor(omega,qN)*hermitePolynomial(omegaSqrt*particle_coordinates, qN))
-
     return H
 end
 
 function singleParticleHermitian(particle_coordinates, qN::Array{Int64, 1}, omega, H)
     omegaSqrt = sqrt(omega)
     H = prod(@. prefactor(omega,qN)*hermitePolynomial(omegaSqrt*particle_coordinates, qN))
-    # return H
 end
 
 function singleParticleHermitianGradient(particle_coordinates::Array{Float64,1}, qN::Array{Int64, 1}, omega)
     numDimensions = length(qN)
     omegaSqrt = sqrt(omega)
-    # H = prefactor.(omega, qN).*hermitePolynomial.(omega_sqrt*particle_coordinates, qN)
     H = @. prefactor(omega, qN)*hermitePolynomial(omegaSqrt*particle_coordinates, qN)
 
-    # H_gradient = prefactor.(omega, qN).*hermitePolynomialDerivative.(omega_sqrt*particle_coordinates, qN)
     H_gradient = @. prefactor(omega, qN)*hermitePolynomialDerivative(omegaSqrt*particle_coordinates, qN)
 
     grad = zeros(numDimensions)
@@ -42,20 +37,16 @@ function singleParticleHermitianGradient(particle_coordinates::Array{Float64,1},
         end 
     end
     grad*=omegaSqrt
-    # grad = omega_sqrt*H_gradient.*reverse(H)
     return grad
 end 
 
 function singleParticleHermitianLaplacian(particle_coordinates::Array{Float64,1}, qN::Array{Int64,1}, omega)
     numDimensions = length(qN)
     omega_sqrt = sqrt(omega)
-    # H = prefactor.(omega, qN).*hermitePolynomial.(omega_sqrt*particle_coordinates, qN)
     H = @. prefactor(omega, qN)*hermitePolynomial(omega_sqrt*particle_coordinates, qN)
 
-    # H_gradient = prefactor.(omega, qN).*hermitePolynomialDerivative.(omega_sqrt*particle_coordinates, qN)
     H_gradient = @. prefactor(omega, qN)*hermitePolynomialDerivative(omega_sqrt*particle_coordinates, qN)
 
-    # H_doubleDerivative = prefactor.(omega, qN).*hermitePolynomialDoubleDerivative.(omega_sqrt*particle_coordinates, qN)
     H_doubleDerivative = @. prefactor(omega, qN)*hermitePolynomialDoubleDerivative(omega_sqrt*particle_coordinates, qN)
 
     double_grads = zeros(numDimensions)
@@ -69,7 +60,6 @@ function singleParticleHermitianLaplacian(particle_coordinates::Array{Float64,1}
     end
     double_grads*=omega^2
     return sum(double_grads)*omega^2
-    # return sum(H_doubleDerivative.*reverse(H))*omega^2
 end
 
 end

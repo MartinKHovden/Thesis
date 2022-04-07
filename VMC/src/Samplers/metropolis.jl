@@ -47,8 +47,6 @@ function runMetropolis!(
     localEnergySum::Float64 = 0.0
 
     localEnergies::Array{Float64, 1} = zeros(Float64, Int(numMcIterations))
-    # localEnergyPsiParameterDerivativeSum = 0 .*last(system.wavefunctionElements).variationalParameterGradient
-    # psiParameterDerivativeSum = 0 .*last(system.wavefunctionElements).variationalParameterGradient
 
     start = time()
 
@@ -71,7 +69,6 @@ function runMetropolis!(
     numMoves = 0
     numParticles = system.numParticles
 
-    # optimizerElement = last(system.wavefunctionElements)
     for i = 1:numMcIterations
         temp = copy(system.particles)
         stepFunction(system, stepLength)
@@ -80,24 +77,12 @@ function runMetropolis!(
             sortParticles!(system.particles)
         end
 
-        # distanceMatrix = zeros(numParticles, numParticles)
-        # particles = system.particles
-        # difference = [0.0,0.0]
-
-
-        # println(system.particles)
-
         localEnergy = computeLocalEnergy(system)
-        # println(localEnergy)
-        
-        # if(writeToFile)
-        #     println(system.particles - temp)#, " ", localEnergy, " ", system.particles, system.wavefunctionElements[1])
-        # end
 
         if maximum(abs.(temp-system.particles))!=0
             numMoves += 1
         end
-        # println(localEnergy)
+
         localEnergies[i] = localEnergy
 
         if i > ceil(burnIn*numMcIterations)
@@ -123,7 +108,6 @@ function runMetropolis!(
 
         system.iteration += 1
 
-        
     end
 
     println(numMoves/numMcIterations)
@@ -148,13 +132,10 @@ function runMetropolis!(
         if typeof(wavefunctionElement) != SlaterMatrix
             mcLocalEnergyPsiParameterDerivative = wavefunctionElement.localEnergyPsiParameterDerivativeSum/samples
             mcPsiParameterDerivative = wavefunctionElement.psiParameterDerivativeSum/samples
-            # println( 2*(mcLocalEnergyPsiParameterDerivative - mcLocalEnergy*mcPsiParameterDerivative))
             wavefunctionElement.variationalParameterGradient = 2*(mcLocalEnergyPsiParameterDerivative - mcLocalEnergy*mcPsiParameterDerivative)
-            # println("Here" ,wavefunctionElement.variationalParameterGradient)
 
             wavefunctionElement.localEnergyPsiParameterDerivativeSum .*=0
             wavefunctionElement.psiParameterDerivativeSum .*=0
-            # println("Here" ,wavefunctionElement.variationalParameterGradient)
         end
     end
     return mcLocalEnergy
@@ -252,11 +233,6 @@ function metropolisStepImportanceSampling!(system, stepLength)
                                             element)
     end
 
-
-    # println(currentDriftForce," ", currentDriftForceFull)
-
-
-
     system.particles[particleToUpdate, coordinateToUpdate] += D*currentDriftForce*stepLength + randn(Float64)*sqrt(stepLength)
 
     newDriftForce = 0.0
@@ -270,33 +246,6 @@ function metropolisStepImportanceSampling!(system, stepLength)
                                             element)
     end
 
-    # println(newDriftForce, " ", newDriftForceFull)
-
-    # greensFunction = computeGreensFunction(oldPosition,
-    #                                     system.particles,
-    #                                     particleToUpdate,
-    #                                     coordinateToUpdate,
-    #                                     currentDriftForce,
-    #                                     newDriftForce,
-    #                                     D,
-    #                                     stepLength)
-
-    # greensFunction2 = computeGreensFunction2(oldPosition,
-    #                                         system.particles,
-    #                                         currentDriftForceFull,
-    #                                         newDriftForceFull,
-    #                                         particleToUpdate,
-    #                                         D,
-    #                                         stepLength,
-    #                                         numDimensions)
-
-    # greensFunction3 = computeGreensFunction3(oldPosition,
-    #                                             system.particles,
-    #                                             currentDriftForceFull,
-    #                                             newDriftForceFull,
-    #                                             particleToUpdate,
-    #                                             D,
-    #                                             stepLength)    
     greensFunction = computeGreensFunction4(oldPosition,
                                             system.particles,
                                             particleToUpdate,
@@ -307,26 +256,6 @@ function metropolisStepImportanceSampling!(system, stepLength)
                                             stepLength,
                                             numDimensions)                                   
 
-    # greensFunction5 = computeGreensFunction5(oldPosition,
-    #                                             system.particles,
-    #                                             currentDriftForce,
-    #                                             newDriftForce,
-    #                                             particleToUpdate,
-    #                                             coordinateToUpdate,
-    #                                             D,
-    #                                             stepLength)  
-
-    # greensFunction = computeGreensFunction2(oldPosition,
-    #                                     system.particles,
-    #                                     particleToUpdate,
-    #                                     coordinateToUpdate,
-    #                                     currentDriftForce,
-    #                                     newDriftForce,
-    #                                     D,
-    #                                     stepLength)
-
-    # println( greensFunction, greensFunction2," ", greensFunction3)#, " ", greensFunction4, " ", greensFunction5)                                   
-    # Update the slater matrix:
     ratio = 1.0
 
     for element in system.wavefunctionElements
@@ -343,12 +272,10 @@ function metropolisStepImportanceSampling!(system, stepLength)
 
 
     if U < greensFunction*ratio
-        # println(1, " ", greensFunction, ratio, greensFunction*ratio)
         if system.slaterInWF
             inverseSlaterMatrixUpdate(system, system.wavefunctionElements[1], particleToUpdate, system.wavefunctionElements[1].R)
         end
     else 
-        # println(2, " ", greensFunction, ratio, greensFunction*ratio)
         system.particles[particleToUpdate, coordinateToUpdate] = oldPosition[particleToUpdate, coordinateToUpdate]
         for element in system.wavefunctionElements
             updateElement!(system, element, particleToUpdate)
